@@ -6,7 +6,7 @@
 
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from pint import Quantity
 
 from opticks import u
@@ -34,8 +34,7 @@ class MTF_Model:
         self, input_line_freq: Quantity | np.ndarray[Quantity]
     ) -> float | NDArray[np.float64]:
         """
-        Gets the MTF value (between 0 and 1) for the given
-        input line frequency.
+        Gets the MTF value for the given input line frequency.
 
         Parameters
         ----------
