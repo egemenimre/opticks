@@ -106,8 +106,8 @@ class Optics(ImagerComponent):
         # perfect incoherent optics
         return (1.0 * u.lp) / (ref_wavelength * self.f_number).to(u.mm)
 
-    @u.check(None, "[length]", None)
-    def ideal_mtf(self, wavelength: Quantity, input_line_freq: Quantity) -> float:
+    @u.check(None, None, "[length]")
+    def ideal_mtf(self, input_line_freq: Quantity, wavelength: Quantity) -> float:
         """
         Ideal optical MTF for the given input line frequency.
 
