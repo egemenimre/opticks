@@ -1,0 +1,19 @@
+name: opticks
+channels:
+  - conda-forge
+dependencies:
+  - pint
+  - numpy
+  - scipy
+  - matplotlib
+# packages needed for document generation
+#  - python=3.11
+  - pip
+  - pip:
+      - ipykernel
+      - nbsphinx
+      - myst_parser
+      - sphinx_autodoc_typehints
+      - sphinx_copybutton
+      - sphinx-notfound-page
+      - sphinx-hoverxref
