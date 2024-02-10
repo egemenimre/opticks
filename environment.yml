@@ -5,11 +5,11 @@ dependencies:
   - pint
   - numpy
   - scipy
-  - matplotlib
 # packages needed for document generation
 #  - python=3.11
   - pip
   - pip:
+      - matplotlib
       - ipykernel
       - nbsphinx
       - myst_parser
