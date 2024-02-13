@@ -1,0 +1,7 @@
+# Sample Pushbroom Imager
+# Sample Optics
+optics name: Sample Reflective Optics
+
+focal length: 580 mm
+aperture diameter: 95 mm
+image diameter on focal plane: 30 mm

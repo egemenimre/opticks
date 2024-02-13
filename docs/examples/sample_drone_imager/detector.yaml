@@ -1,0 +1,24 @@
+# Sample Full-Frame Drone Imager
+# Sample Full-Frame Detector
+detector name: Sample Full-Frame Detector
+
+detector type: full-frame
+pixel pitch: 12 um
+horizontal pixels: 1920
+vertical pixels: 1080
+horizontal pixels used: 1920
+vertical pixels used: 1080
+binning: 1
+#  full_well_capacity = XX * u.e
+
+# noise:
+#   dark_current = XX * u.e/u.s
+#   temporal_dark_noise = XX * u.e
+
+timings:
+  frame rate: 29.97 Hz
+  integration duration: 13.34 ms
+# frame duration that cannot be used for integration or imaging
+#  frame overhead duration = XX * u.us
+# time between frame durations that can be used for integration or imaging
+#  frame overlap duration = XX * u.us
