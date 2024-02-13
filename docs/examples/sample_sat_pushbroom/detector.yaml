@@ -1,6 +1,6 @@
 # Sample Pushbroom Imager
 # Sample Pushbroom Detector
-detector name: Sample Pushbroom Detector
+name: Sample Pushbroom Detector
 
 detector type: pushbroom
 pixel pitch: 5.5 um

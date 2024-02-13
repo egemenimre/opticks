@@ -1,6 +1,6 @@
 # Sample Full-Frame Drone Imager
 # Sample Full-Frame Detector
-detector name: Sample Full-Frame Detector
+name: Sample Full-Frame Detector
 
 detector type: full-frame
 pixel pitch: 12 um

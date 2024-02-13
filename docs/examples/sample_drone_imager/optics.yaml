@@ -1,6 +1,6 @@
 # Sample Full-Frame Drone Imager
 # Sample Optics
-optics name: Sample Reflective Optics
+name: Sample Reflective Optics
 
 focal length: 1270 mm
 aperture diameter: 25 inch
