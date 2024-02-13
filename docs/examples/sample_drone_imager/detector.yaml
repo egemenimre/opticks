@@ -2,7 +2,7 @@
 # Sample Full-Frame Detector
 name: Sample Full-Frame Detector
 
-detector type: full-frame
+detector type: full frame
 pixel pitch: 12 um
 horizontal pixels: 1920
 vertical pixels: 1080
