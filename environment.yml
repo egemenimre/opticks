@@ -5,6 +5,7 @@ dependencies:
   - pint
   - numpy
   - scipy
+  - strictyaml
 # packages needed for document generation
 #  - python=3.11
   - pip
