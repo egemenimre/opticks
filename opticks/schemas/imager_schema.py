@@ -9,13 +9,13 @@ from strictyaml import Map, Str, Enum, Int, Optional, Float, Bool
 from opticks import u
 from opticks.utils.yaml_helpers import Qty
 
-# An Imager is made up of two necessary and one optinal part
-# Optics, Detector and Read-out / Write Electronics
+# An Imager is made up of two necessary and one optional part
+# Optics, Detector and Read-out / Write Electronics (Optional)
 # There are separate schemas for each.
 
 
 optics_schema = {
-    "optics name": Str(),
+    "name": Str(),
     "focal length": Qty(),
     "aperture diameter": Qty(),
     "image diameter on focal plane": Qty(),
