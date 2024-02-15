@@ -68,4 +68,4 @@ class Qty(ScalarValidator):
         if isinstance(data, Quantity):
             if is_quantity(str(data)):
                 return str(f"{data:~}")
-        raise YAMLSerializationError("'{}' not a Quantity object.".format(data))
+        raise YAMLSerializationError(f"'{data}' is not a Quantity object.")
