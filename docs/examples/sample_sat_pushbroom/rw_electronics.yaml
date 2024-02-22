@@ -2,7 +2,7 @@
 # Sample Read-out and Write Electronics
 name: Sample RW Electronics
 
-pixel encoding: 12 bpp  # bits per pixel
-data write overhead: 0.02  # percentage as float
-compression on: False
-compression ratio: 2.4
+pixel_encoding: 12 bpp  # bits per pixel
+data_write_overhead: 0.02  # percentage as float
+compression_on: False
+compression_ratio: 2.4

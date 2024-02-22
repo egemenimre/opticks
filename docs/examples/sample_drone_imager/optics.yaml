@@ -2,7 +2,7 @@
 # Sample Optics
 name: Sample Reflective Optics
 
-focal length: 1270 mm
-aperture diameter: 25 inch
-image diameter on focal plane: 27 mm
+focal_length: 1270 mm
+aperture_diameter: 25 inch
+image_diam_on_focal_plane: 27 mm
 

@@ -1,15 +1,16 @@
 # Sample Pushbroom Imager
+# -----------------------
 # Sample Pushbroom Detector
 name: Sample Pushbroom Detector
 
-detector type: pushbroom
-pixel pitch: 5.5 um
-horizontal pixels: 4096
-vertical pixels: 3072
-horizontal pixels used: 4096
-vertical pixels used: 3072
+detector_type: pushbroom
+pixel_pitch: 5.5 um
+horizontal_pixels: 4096
+vertical_pixels: 3072
+horizontal_pixels_used: 4096
+vertical_pixels_used: 3072
 binning: 1
-tdi stages: 2 # disregarded for a full frame sensor
+tdi_stages: 2 # disregarded for a full frame sensor
 #  full_well_capacity = XX * u.e
 
 # noise:
@@ -17,8 +18,8 @@ tdi stages: 2 # disregarded for a full frame sensor
 #   temporal_dark_noise = XX * u.e
 
 timings:
-  integration duration: 0.2847 ms
+  integration_duration: 0.2847 ms
 # frame duration that cannot be used for integration or imaging
-#  frame overhead duration = XX * u.us
+#  frame overhead duration: XX * u.us
 # time between frame durations that can be used for integration or imaging
-#  frame overlap duration = XX * u.us
+#  frame overlap duration: XX * u.us
