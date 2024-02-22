@@ -53,6 +53,7 @@ class Detector(ImagerComponent):
     def schema(cls) -> Map:
         return Map(detector_schema)
 
+    @classmethod
     def _params_class_name(cls) -> str:
         return "DetectorParams"
 

@@ -30,6 +30,7 @@ class RWElectronics(ImagerComponent):
     def schema(cls) -> Map:
         return Map(rw_electronics_schema)
 
+    @classmethod
     def _params_class_name(cls) -> str:
         return "RWElectronicsParams"
 
