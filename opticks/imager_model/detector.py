@@ -3,38 +3,39 @@
 # Copyright (C) 2024 Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
-
+from pint import Quantity
 from strictyaml import Map, Str, Enum, Int, Optional
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.utils.yaml_helpers import Qty
 
+
 detector_schema = {
     "name": Str(),
-    "detector type": Enum(["pushbroom", "full frame"]),
-    "pixel pitch": Qty(),
-    "horizontal pixels": Int(),
-    "vertical pixels": Int(),
-    "horizontal pixels used": Int(),
-    "vertical pixels used": Int(),
+    "detector_type": Enum(["pushbroom", "full frame"]),
+    "pixel_pitch": Qty(),
+    "horizontal_pixels": Int(),
+    "vertical_pixels": Int(),
+    "horizontal_pixels_used": Int(),
+    "vertical_pixels_used": Int(),
     Optional("binning", default=1): Int(),
     # TDI ignored for full frame detectors
-    Optional("tdi stages", default=1): Int(),
-    Optional("full well capacity"): Qty(),
+    Optional("tdi_stages", default=1): Int(),
+    Optional("full_well_capacity"): Qty(),
     Optional("noise"): Map(
         {
-            Optional("dark current"): Qty(),
-            Optional("temporal dark noise"): Qty(),
+            Optional("dark_current"): Qty(),
+            Optional("temporal_dark_noise"): Qty(),
         }
     ),
     "timings": Map(
         {
             # TODO revalid: required for frame-rate imager only
-            Optional("frame rate", default=None): Qty(),
-            "integration duration": Qty(),
-            Optional("frame overhead duration", default=0 * u.ms): Qty(),
-            Optional("frame overlap duration", default=0 * u.ms): Qty(),
+            Optional("frame_rate", default=None): Qty(),
+            "integration_duration": Qty(),
+            Optional("frame_overhead_duration", default=0 * u.ms): Qty(),
+            Optional("frame_overlap_duration", default=0 * u.ms): Qty(),
         }
     ),
 }
@@ -51,5 +52,8 @@ class Detector(ImagerComponent):
     @classmethod
     def schema(cls) -> Map:
         return Map(detector_schema)
+
+    def _params_class_name(cls) -> str:
+        return "DetectorParams"
 
     # ---------- begin modelling functions ----------
