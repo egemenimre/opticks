@@ -6,8 +6,11 @@
 
 from pathlib import Path
 
+import numpy as np
+from pint import Quantity
 from strictyaml import YAML
 
+from opticks import u
 from opticks.imager_model.detector import Detector
 from opticks.imager_model.optics import Optics
 from opticks.imager_model.rw_electronics import RWElectronics
@@ -135,3 +138,51 @@ class Imager:
 
         # return a new instance of Imager
         return cls(optics, detector, rw_electronics)
+
+    # ---------- begin modelling functions ----------
+
+    def ifov(self, with_binning: bool = True) -> Quantity:
+        """
+        Computes the Instantaneous field of view (works in vertical and horizontal).
+
+        Assumes constant IFOV per pixel.
+
+        Parameters
+        ----------
+        with_binning : bool
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            IFOV angle
+
+        """
+        return 2 * np.arctan(
+            (self.detector.pix_pitch(with_binning) / 2.0)
+            / self.optics.params.focal_length
+        )
+
+    def pix_solid_angle(self, with_binning=True) -> Quantity:
+        """
+        Pixel solid angle (of a pyramid).
+
+        Parameters
+        ----------
+        with_binning : bool
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            Pixel solid angle in steradians
+        """
+        #
+
+        pix_solid_angle = 4 * np.arcsin(
+            np.sin(self.ifov(with_binning) / 2.0)
+            * np.sin(self.ifov(with_binning) / 2.0)
+        )
+
+        # correct the unit from rad to sr (or rad**2)
+        return (pix_solid_angle * u.rad).to(u.steradian)
