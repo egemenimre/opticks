@@ -14,9 +14,9 @@ from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
     "name": Str(),
-    "focal length": Qty(),
-    "aperture diameter": Qty(),
-    "image diameter on focal plane": Qty(),
+    "focal_length": Qty(),
+    "aperture_diameter": Qty(),
+    "image_diam_on_focal_plane": Qty(),
 }
 """Schema containing optical parameters."""
 
@@ -30,12 +30,16 @@ class Optics(ImagerComponent):
     def schema(cls) -> Map:
         return Map(optics_schema)
 
+    @classmethod
+    def _params_class_name(cls) -> str:
+        return "OpticsParams"
+
     # ---------- begin modelling functions ----------
 
     @property
     def f_number(self) -> float:
         return (
-            (self.params["focal length"] / self.params["aperture diameter"])
+            (self.params.focal_length / self.params.aperture_diameter)
             .to_reduced_units()
             .m
         )
@@ -43,21 +47,19 @@ class Optics(ImagerComponent):
     @property
     def full_optical_fov(self) -> Quantity:
         return 2 * np.arctan(
-            (self.params["image diameter on focal plane"] / 2.0)
-            / self.params["focal length"]
+            (self.params.image_diam_on_focal_plane / 2.0) / self.params.focal_length
         ).to(u.deg)
 
     @property
     def aperture_area(self) -> Quantity:
-        return np.pi * (self.params["aperture diameter"] / 2.0) ** 2
+        return np.pi * (self.params.aperture_diameter / 2.0) ** 2
 
     @property
     def aperture_solid_angle(self) -> Quantity:
         # solid angle = 2pi h/r
         return (
             np.pi
-            / (self.params["focal_length"] / (self.params["aperture diameter"] / 2.0))
-            ** 2
+            / (self.params.focal_length / (self.params.aperture_diameter / 2.0)) ** 2
             * u.steradian
         )
 

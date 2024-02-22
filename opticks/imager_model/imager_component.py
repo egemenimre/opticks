@@ -10,6 +10,8 @@ from pathlib import Path
 from strictyaml import YAML, Map
 from strictyaml import load
 
+from opticks.utils.yaml_helpers import dict_to_obj_creator
+
 
 class ImagerComponent(ABC):
     """
@@ -22,12 +24,20 @@ class ImagerComponent(ABC):
     """
 
     def __init__(self, yaml: YAML):
-        # extract data structures
-        self.params: dict = yaml.data
+        # extract data structures as a class
+        class_name = self._params_class_name()
+        self.params = dict_to_obj_creator(class_name, yaml.data)(class_name, yaml.data)
 
     @classmethod
     @abstractmethod
     def schema(cls) -> Map:
+        """Schema to be used when converting YAML data to/from a dict."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _params_class_name(cls) -> str:
+        """Class name after the dict-to-obj conversion."""
         pass
 
     @classmethod

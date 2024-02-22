@@ -11,12 +11,12 @@ from opticks.utils.yaml_helpers import Qty
 
 rw_electronics_schema = {
     "name": Str(),
-    "pixel encoding": Qty(),
+    "pixel_encoding": Qty(),
     # TODO revalid: data write overhead is percentage
-    "data write overhead": Float(),
+    "data_write_overhead": Float(),
     # TODO revalid: if compression ON, then we need the compression ratio
-    Optional("compression on"): Bool(),
-    Optional("compression ratio"): Float(),
+    Optional("compression_on"): Bool(),
+    Optional("compression_ratio"): Float(),
 }
 """Schema containing read-out / write electronics parameters."""
 
@@ -29,5 +29,8 @@ class RWElectronics(ImagerComponent):
     @classmethod
     def schema(cls) -> Map:
         return Map(rw_electronics_schema)
+
+    def _params_class_name(cls) -> str:
+        return "RWElectronicsParams"
 
     # ---------- begin modelling functions ----------
