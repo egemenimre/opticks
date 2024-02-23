@@ -156,3 +156,25 @@ class Detector(ImagerComponent):
         """
 
         return self.pix_pitch(with_binning) ** 2
+
+    @property
+    def max_integration_duration(self) -> Quantity:
+        """
+        Computes the maximum integration duration, where:
+
+        `max integ duration = line or frame duration (w/o bin) - frame overhead duration + frame overlap duration`
+        """
+        return (
+            self.params.timings.frame_duration
+            - self.params.timings.frame_overhead_duration
+            + self.params.timings.frame_overlap_duration
+        )
+
+    @property
+    def total_tdi_col_duration(self) -> Quantity:
+        """
+        Computes the total TDI column duration (if applicable).
+
+        `total tdi col duration = line or frame duration (w/o bin) x Number of TDI stages`
+        """
+        return (self.params.timings.frame_duration * self.params.tdi_stages).to(u.ms)
