@@ -21,4 +21,4 @@ timings:
 # frame duration that cannot be used for integration or imaging
 #  frame_overhead_duration = XX * u.us
 # time between frame durations that can be used for integration or imaging
-#  frame_overlap_duration = XX * u.us
+#  overlap_duration = XX * u.us

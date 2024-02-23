@@ -18,6 +18,7 @@ tdi_stages: 2 # disregarded for a full frame sensor
 #   temporal_dark_noise = XX * u.e
 
 timings:
+  frame_rate: 1366.63 Hz  # native res 540 km altitude
   integration_duration: 0.2847 ms
 # frame duration that cannot be used for integration or imaging
 #  frame overhead duration: XX * u.us
