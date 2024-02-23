@@ -83,7 +83,13 @@ def _dict_to_obj_init(self, class_name: str, dictionary: dict):
                 key.capitalize(),
                 (object,),
                 value
-                | {"__init__": _dict_to_obj_init, "__str__": lambda x: str(x.__dict__)},
+                | {
+                    "__init__": _dict_to_obj_init,
+                    "__str__": lambda x: str(x.__dict__),
+                    "__setitem__": lambda x, new_key, new_value: x.__dict__.update(
+                        {new_key: new_value}
+                    ),
+                },
             )
 
             # instantiate the new class
@@ -111,5 +117,12 @@ def dict_to_obj_creator(class_name: str, dictionary: dict):
     return type(
         class_name,
         (object,),
-        {"__init__": _dict_to_obj_init, "__str__": lambda self: str(self.__dict__)},
+        {
+            "__init__": _dict_to_obj_init,
+            "__str__": lambda self: str(self.__dict__),
+            # add new item
+            "__setitem__": lambda self, new_key, new_value: self.__dict__.update(
+                {new_key: new_value}
+            ),
+        },
     )
