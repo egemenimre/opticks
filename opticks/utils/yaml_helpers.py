@@ -71,17 +71,28 @@ class Qty(ScalarValidator):
         raise YAMLSerializationError(f"'{data}' is not a Quantity object.")
 
 
-def _dict_to_obj_init(self, class_name, dictionary):
+def _dict_to_obj_init(self, class_name: str, dictionary: dict):
     """
     Converts a (nested) dict to an object.
     """
     for key, value in dictionary.items():
         if isinstance(value, dict):
-            value = type(key.capitalize(), (object,), value)
+
+            # generate the new class from the attributes
+            new_class = type(
+                key.capitalize(),
+                (object,),
+                value
+                | {"__init__": _dict_to_obj_init, "__str__": lambda x: str(x.__dict__)},
+            )
+
+            # instantiate the new class
+            value = new_class(key.capitalize(), value)
+
         setattr(self, key, value)
 
 
-def dict_to_obj_creator(class_name, dictionary):
+def dict_to_obj_creator(class_name: str, dictionary: dict):
     """
     Creates a class that keeps the dict as an object.
 
@@ -100,5 +111,5 @@ def dict_to_obj_creator(class_name, dictionary):
     return type(
         class_name,
         (object,),
-        {"__init__": _dict_to_obj_init, "__repr__": lambda self: str(self.__dict__)},
+        {"__init__": _dict_to_obj_init, "__str__": lambda self: str(self.__dict__)},
     )
