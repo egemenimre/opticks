@@ -63,7 +63,8 @@ class Optics(ImagerComponent):
             * u.steradian
         )
 
-    def spatial_cutoff_freq(self, ref_wavelength) -> Quantity:
+    @u.check(None, "[length]")
+    def spatial_cutoff_freq(self, ref_wavelength: Quantity) -> Quantity:
         u.define("lp = 1 * dimensionless = lp")
         # perfect incoherent optics
         return (1.0 * u.lp) / (ref_wavelength * self.f_number).to(u.mm)
