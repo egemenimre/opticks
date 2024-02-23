@@ -186,3 +186,43 @@ class Imager:
 
         # correct the unit from rad to sr (or rad**2)
         return (pix_solid_angle * u.rad).to(u.steradian)
+
+    @property
+    def horizontal_fov(self) -> Quantity:
+        """
+        Computes the full field of view in the horizontal direction.
+
+        Assumes constant IFOV per pixel.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Quantity
+            Horizontal FOV angle
+
+        """
+        return 2 * np.tan(
+            self.ifov(False) * self.detector.params.horizontal_pixels_used / 2.0
+        ).to(u.deg)
+
+    @property
+    def vertical_fov(self) -> Quantity:
+        """
+        Computes the full field of view in the vertical direction.
+
+        Assumes constant IFOV per pixel.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Quantity
+            Vertical FOV angle
+
+        """
+        return 2 * np.tan(
+            self.ifov(False) * self.detector.params.vertical_pixels_used / 2.0
+        ).to(u.deg)
