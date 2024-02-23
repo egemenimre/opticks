@@ -4,7 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from pint import Quantity
-from strictyaml import Map, Str, Enum, Int, Optional
+from strictyaml import YAML, Map, Str, Enum, Int, Optional
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
@@ -48,6 +48,19 @@ class Detector(ImagerComponent):
     """
     Class containing generic Detector parameters.
     """
+
+    def __init__(self, yaml: YAML):
+        super().__init__(yaml)
+
+        # init some useful parameters
+        self._init_useful_params()
+
+    def _init_useful_params(self):
+        # init some useful parameters
+        self.params.timings["frame_duration"] = (1 / self.params.timings.frame_rate).to(
+            u.ms
+        )
+        self.params["is_binned"] = False if self.params.binning == 1 else True
 
     @classmethod
     def schema(cls) -> Map:
