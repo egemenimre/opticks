@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.2.5"
+__generated_with = "0.2.7"
 app = marimo.App()
 
 
@@ -9,7 +9,7 @@ def __():
     import marimo as mo
 
     mo.md("# Basic Pushbroom Imager on a Satellite")
-    return mo,
+    return (mo,)
 
 
 @app.cell
@@ -29,12 +29,10 @@ def __():
     from opticks import u
     import numpy as np
 
-
     # sat positional params
     # ---------------------
     sat_altitude = 540.0 * u.km
     ground_vel = 6998.1 * u.m / u.s
-
 
     # converted to generic params
     distance = sat_altitude
@@ -67,7 +65,7 @@ def __(mo):
         Certain parameters vary with the light characteristics and therefore wavelength dependent.
         """
     )
-    return slider,
+    return (slider,)
 
 
 @app.cell
@@ -91,7 +89,7 @@ def __(mo, slider, u):
         - nir: 780-2500 nm
         """
     )
-    return ref_wavelength,
+    return (ref_wavelength,)
 
 
 @app.cell
@@ -155,7 +153,6 @@ def __(detector_file, optics_file, rw_electronics_file):
     from pathlib import Path
     from opticks.imager_model.imager import Imager
 
-
     if not optics_file.name(0) and not detector_file.name(0):
 
         # Going with the defaults
@@ -170,21 +167,23 @@ def __(detector_file, optics_file, rw_electronics_file):
 
     else:
 
-        # Use the user-supplied files (loaded by marimo as binary)
-        imager = Imager.from_yaml_text(
-            optics_file.contents(0).decode("utf-8"),
-            detector_file.contents(0).decode("utf-8"),
-            rw_electronics_file.contents(0).decode("utf-8"),
-        )
+        # extract yaml data from the user-supplied files (loaded by marimo as binary)
+        optics_yaml = optics_file.contents(0).decode("utf-8")
+        detector_yaml = detector_file.contents(0).decode("utf-8")
+        rw_electronics_yaml = None
 
+        if rw_electronics_file.name(0):
+            rw_electronics_yaml = rw_electronics_file.contents(0).decode("utf-8")
+
+        # Init imager object
+        imager = Imager.from_yaml_text(optics_yaml, detector_yaml, rw_electronics_yaml)
 
     # shorthands
     optics = imager.optics
     detector = imager.detector
+    rw_electronics = imager.rw_electronics
 
-    # TODO delete it if needed
-    detector.params.binning = 2
-
+    # binning status
     binning_on = False if detector.params.binning == 1 else True
     return (
         Imager,
@@ -192,11 +191,15 @@ def __(detector_file, optics_file, rw_electronics_file):
         binning_on,
         detector,
         detector_file_path,
+        detector_yaml,
         file_directory,
         imager,
         optics,
         optics_file_path,
+        optics_yaml,
+        rw_electronics,
         rw_electronics_file_path,
+        rw_electronics_yaml,
     )
 
 
@@ -271,8 +274,8 @@ def __(binning_on, detector, mo):
 
         ```
         Nyquist freq : {detector.nyquist_freq(False):~P.4} {f"({detector.nyquist_freq(True):~P.4} binned)" if binning_on else ''}
-        number of pixels : {detector.pixel_count(False):~P.4} {f"({detector.pixel_count(True):~P.4} binned)" if binning_on else ''}
-        number of pixels (used) : {detector.pixel_count(False,True):~P.4} {f"({detector.pixel_count(True,True):~P.4} binned)" if binning_on else ''}
+        number of pixels (full frame) : {detector.pixel_count_frame(False):~P.4} {f"({detector.pixel_count_frame(True):~P.4} binned)" if binning_on else ''}
+        number of pixels (full frame, used) : {detector.pixel_count_frame(False,True):~P.4} {f"({detector.pixel_count_frame(True,True):~P.4} binned)" if binning_on else ''}
         ```
     """
     )
@@ -289,12 +292,131 @@ def __(binning_on, imager, mo):
 
         ```
         ifov : {imager.ifov(False):~P.4} {f"({imager.ifov(True):~P.4} binned)" if binning_on else ''}
-        pixel solid angle
-        horiz full fov
-        vert full fov
+        pixel solid angle : {imager.pix_solid_angle(False):~P.4} {f"({imager.pix_solid_angle(True):~P.4} binned)" if binning_on else ''}
+        horizontal full fov: {imager.horizontal_fov:~P.4} (used pixels only)
+        vertical full fov: {imager.vertical_fov:~P.4} (used pixels only)
         ```
     """
     )
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        f"""
+        ### Geometric Projection Parameters
+
+    """
+    )
+    return
+
+
+@app.cell
+def __(distance, imager, np, u):
+    # Ground sample distance at nadir
+    spatial_sample_distance_native = (
+        (
+            distance
+            * (
+                imager.detector.pix_pitch(False)
+                * imager.detector.params.binning
+                / imager.optics.params.focal_length
+            )
+        )
+        .to_reduced_units()
+        .to(u.m)
+    )
+    spatial_sample_distance = (
+        (
+            distance
+            * (
+                imager.detector.pix_pitch(True)
+                * imager.detector.params.binning
+                / imager.optics.params.focal_length
+            )
+        )
+        .to_reduced_units()
+        .to(u.m)
+    )
+
+    # swath assuming flat plate and constant Instantaneous FoV
+    swath = (
+        2
+        * np.tan(
+            imager.ifov(False) * imager.detector.params.horizontal_pixels_used / 2.0
+        )
+        * distance
+    )
+    return spatial_sample_distance, spatial_sample_distance_native, swath
+
+
+@app.cell
+def __(
+    binning_on,
+    mo,
+    spatial_sample_distance,
+    spatial_sample_distance_native,
+    swath,
+):
+    mo.md(
+        f"""
+        ```
+        spatial sample distance : {spatial_sample_distance_native:~P.4} {f"({spatial_sample_distance:~P.4} binned)" if binning_on else ''}
+        swath : {swath:~.4P}  (disregarding Earth curvature)
+        ```
+    """
+    )
+    return
+
+
+@app.cell
+def __(detector, mo):
+    timings = detector.params.timings
+
+    mo.md(
+        f"""
+    ### Timings
+
+        ```
+        line duration : {timings.frame_duration:~P.4} 
+        line rate :  {timings.frame_rate:~P.6} 
+        max integration duration : {timings.max_integration_duration:~P.4}
+        actual integration duration : {timings.integration_duration:~P.4} 
+        total TDI column duration : {timings.total_tdi_col_duration:~P.4} ({detector.params.tdi_stages}x stages)   
+        ```
+    """
+    )
+    return (timings,)
+
+
+@app.cell
+def __(binning_on, detector, mo, rw_electronics):
+    no_rw_electronics = "No Read-out/Write Data loaded."
+
+    rw_electronics_output = f"""    
+        ```
+        pixel read rate (without TDI) : {detector.pix_read_rate(False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
+        pixel read rate (with TDI) : {detector.pix_read_rate(False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
+        
+        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
+        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
+        ```
+        """
+
+    mo.md(
+        f"""
+    ### Read-out/Write Electronics
+
+        {rw_electronics_output if rw_electronics else no_rw_electronics}
+
+    """
+    )
+    return no_rw_electronics, rw_electronics_output
+
+
+@app.cell
+def __():
     return
 
 
