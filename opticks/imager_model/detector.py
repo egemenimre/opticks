@@ -57,10 +57,18 @@ class Detector(ImagerComponent):
 
     def _init_useful_params(self):
         # init some useful parameters
+
+        # frame duration: inverse of the frame rate
         self.params.timings["frame_duration"] = (1 / self.params.timings.frame_rate).to(
             u.ms
         )
         self.params["is_binned"] = False if self.params.binning == 1 else True
+        self.params.timings["max_integration_duration"] = _max_integration_duration(
+            self.params.timings
+        )
+        self.params.timings["total_tdi_col_duration"] = _total_tdi_col_duration(
+            self.params
+        )
 
     @classmethod
     def schema(cls) -> Map:
@@ -90,6 +98,25 @@ class Detector(ImagerComponent):
 
         return self.params.pixel_pitch * binning
 
+    def pix_area(self, with_binning: bool = True) -> Quantity:
+        """
+        Pixel physical area.
+
+        Computed as $text{pix pitch} \times \text{pix pitch}$
+
+        Parameters
+        ----------
+        with_binning : bool
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            Pixel area with or without binning
+        """
+
+        return self.pix_pitch(with_binning) ** 2
+
     def nyquist_freq(self, with_binning: bool = True) -> Quantity:
         """
         Returns Nyquist Frequency / Limit parameter with or without binning.
@@ -113,7 +140,9 @@ class Detector(ImagerComponent):
 
         return 1 * u.lp / (2 * self.pix_pitch(with_binning)).to(u.mm)
 
-    def pixel_count(self, with_binning: bool = True, used: bool = True) -> Quantity:
+    def pixel_count_frame(
+        self, with_binning: bool = True, used: bool = True
+    ) -> Quantity:
         """
         Computes the total number of pixels in the detector with/without binning
         or total pixels/used pixels.
@@ -151,43 +180,98 @@ class Detector(ImagerComponent):
                 * u.pixel
             ).to("Mpixel")
 
-    def pix_area(self, with_binning: bool = True) -> Quantity:
+    def pixel_count_line(
+        self, with_binning: bool = True, used: bool = True
+    ) -> Quantity:
         """
-        Pixel physical area.
-
-        Computed as $text{pix pitch} \times \text{pix pitch}$
+        Computes the total number of pixels in the detector line with/without binning
+        or total pixels/used pixels.
 
         Parameters
         ----------
         with_binning : bool
             Return the value with binning or not
+        used : bool
+            Return the value for used or total number of pixels
+        Returns
+        -------
+        Quantity
+            Total number of pixels for the requested configuration
+        """
+
+        binning = self.params.binning if with_binning else 1
+
+        if used:
+            # number of used pixels in the frame
+            return (self.params.horizontal_pixels_used / binning * u.pixel).to("Mpixel")
+        else:
+            # total number of pixels in the frame
+            return (self.params.horizontal_pixels / binning * u.pixel).to("Mpixel")
+
+    def pix_read_rate(
+        self, with_binning: bool = True, with_tdi: bool = True
+    ) -> Quantity:
+        """
+        Pixel read rate.
+
+        Computed as:
+         - Pushbroom type:
+         $\frac{text{horizontal pixels (binned)} \times \text{TDI stages}}{\text{line duration (binned)}}$
+         - Full frame type:
+         $\frac{text{horizontal pixels (binned)} \times \text{vertical pixels (binned)}}{\text{frame duration (binned)}}$
+
+        Note that the unused pixels are also read, this assumes that the
+        detector does not have ROI functionality.
+
+        Parameters
+        ----------
+        with_binning : bool
+            Return the value with binning or not
+        with_tdi : bool
+            Return the value with TDI or not (valid for pushbroom only)
 
         Returns
         -------
         Quantity
-            Pixel area with or without binning
+            Pixel read rate with or without binning
         """
+        tdi = self.params.tdi_stages if with_tdi else 1
+        binning = self.params.binning if with_binning else 1
 
-        return self.pix_pitch(with_binning) ** 2
+        if self.params.detector_type == "pushbroom":
+            pix_read_rate = (
+                self.pixel_count_line(with_binning, False)
+                * tdi
+                / self.params.timings.frame_duration
+            )
+        elif self.params.detector_type == "full frame":
+            pix_read_rate = (
+                self.pixel_count_frame(with_binning, False)
+                / self.params.timings.frame_duration
+            )
+        else:
+            raise ValueError(f"Invalid detector type: {self.params.detector_type}")
 
-    @property
-    def max_integration_duration(self) -> Quantity:
-        """
-        Computes the maximum integration duration, where:
+        return pix_read_rate.to("Mpixel/s")
 
-        `max integ duration = line or frame duration (w/o bin) - frame overhead duration + frame overlap duration`
-        """
-        return (
-            self.params.timings.frame_duration
-            - self.params.timings.frame_overhead_duration
-            + self.params.timings.frame_overlap_duration
-        )
 
-    @property
-    def total_tdi_col_duration(self) -> Quantity:
-        """
-        Computes the total TDI column duration (if applicable).
+def _max_integration_duration(timings) -> Quantity:
+    """
+    Computes the maximum integration duration, where:
 
-        `total tdi col duration = line or frame duration (w/o bin) x Number of TDI stages`
-        """
-        return (self.params.timings.frame_duration * self.params.tdi_stages).to(u.ms)
+    `max integ duration = line or frame duration (w/o bin) - frame overhead duration + frame overlap duration`
+    """
+    return (
+        timings.frame_duration
+        - timings.frame_overhead_duration
+        + timings.frame_overlap_duration
+    )
+
+
+def _total_tdi_col_duration(params) -> Quantity:
+    """
+    Computes the total TDI column duration (if applicable).
+
+    `total tdi col duration = line or frame duration (w/o bin) x Number of TDI stages`
+    """
+    return (params.timings.frame_duration * params.tdi_stages).to(u.ms)
