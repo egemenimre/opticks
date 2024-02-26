@@ -141,7 +141,7 @@ def __(detector_file, mo, optics_file, rw_electronics_file):
 
         {detector_file} detector file : {detector_file.name(0)}
 
-        {rw_electronics_file} detector file : {rw_electronics_file.name(0)}
+        {rw_electronics_file} rw electronics file : {rw_electronics_file.name(0)}
 
     """
     )
@@ -392,27 +392,28 @@ def __(detector, mo):
 
 @app.cell
 def __(binning_on, detector, mo, rw_electronics):
-    no_rw_electronics = "No Read-out/Write Data loaded."
-
-    rw_electronics_output = f"""    
+    if rw_electronics:
+        rw_electronics_text = f"""    
         ```
         pixel read rate (without TDI) : {detector.pix_read_rate(False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
         pixel read rate (with TDI) : {detector.pix_read_rate(False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
-        
+
         data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
         data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
         ```
         """
+    else:
+        rw_electronics_text = "No Read-out/Write Data loaded."
 
     mo.md(
         f"""
     ### Read-out/Write Electronics
 
-        {rw_electronics_output if rw_electronics else no_rw_electronics}
+        {rw_electronics_text}
 
     """
     )
-    return no_rw_electronics, rw_electronics_output
+    return rw_electronics_text
 
 
 @app.cell
