@@ -161,7 +161,7 @@ class Imager:
         return 2 * np.arctan(
             (self.detector.pix_pitch(with_binning) / 2.0)
             / self.optics.params.focal_length
-        )
+        ).to(u.mdeg)
 
     def pix_solid_angle(self, with_binning=True) -> Quantity:
         """
