@@ -29,15 +29,33 @@ def __():
     from opticks import u
     import numpy as np
 
+    # constants
+    # ---------
+    r_earth = 6378.137 * u.km
+    mu = 398600.5 * u.km**3 / u.s**2
+
+
     # sat positional params
     # ---------------------
     sat_altitude = 540.0 * u.km
-    ground_vel = 6998.1 * u.m / u.s
+
+    n = np.sqrt(mu / (r_earth + sat_altitude) ** 3)
+    ground_vel = (n * r_earth).to("m/s")
 
     # converted to generic params
     distance = sat_altitude
     target_rel_velocity = ground_vel
-    return distance, ground_vel, np, sat_altitude, target_rel_velocity, u
+    return (
+        distance,
+        ground_vel,
+        mu,
+        n,
+        np,
+        r_earth,
+        sat_altitude,
+        target_rel_velocity,
+        u,
+    )
 
 
 @app.cell
