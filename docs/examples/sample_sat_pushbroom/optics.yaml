@@ -1,8 +1,9 @@
-# Sample Pushbroom Imager
-# -----------------------
-# Sample Optics
-name: Sample Reflective Optics
+# Sample Pushbroom Imager: Pléiades
+# ---------------------------------
 
-focal_length: 580 mm
-aperture_diameter: 95 mm
-image_diam_on_focal_plane: 30 mm
+# Pléiades Optics
+name: Pléiades TMA Optics
+
+focal_length: 12905 mm
+aperture_diameter: 650 mm
+image_diam_on_focal_plane: 400 mm # estimated value

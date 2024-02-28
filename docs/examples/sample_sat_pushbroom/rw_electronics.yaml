@@ -1,8 +1,10 @@
-# Sample Pushbroom Imager
-# Sample Read-out and Write Electronics
-name: Sample RW Electronics
+# Sample Pushbroom Imager: Pléiades
+# ---------------------------------
+
+# Pléiades Read-out and Write Electronics
+name: Pléiades RW Electronics
 
 pixel_encoding: 12 bpp  # bits per pixel
-data_write_overhead: 0.02  # percentage as float
-compression_on: False
-compression_ratio: 2.4
+data_write_overhead: 0.02  # percentage as float, exact value not known
+compression_on: True
+compression_ratio: 4 # Wavelet compression algorithm

@@ -8,8 +8,8 @@ app = marimo.App()
 def __():
     import marimo as mo
 
-    mo.md("# Basic Pushbroom Imager on a Satellite")
-    return (mo,)
+    mo.md("# Basic Pushbroom Imager on a Satellite (Pléiades example)")
+    return mo,
 
 
 @app.cell
@@ -18,7 +18,12 @@ def __(mo):
         f"""
         ## Setting the Scene
 
-        Computing the basic parameters of a satellite pushbroom imager. 
+        Computing the basic parameters of the satellite pushbroom imager on the French high-res satellite Pléiades.
+
+        Sources:
+
+        - [ESA Pléiades page](https://earth.esa.int/eogateway/missions/pleiades)
+        - [eoPortal Pléiades page](https://www.eoportal.org/satellite-missions/pleiades#hiri-high-resolution-imager)
         """
     )
     return
@@ -34,10 +39,9 @@ def __():
     r_earth = 6378.137 * u.km
     mu = 398600.5 * u.km**3 / u.s**2
 
-
     # sat positional params
     # ---------------------
-    sat_altitude = 540.0 * u.km
+    sat_altitude = 694.0 * u.km
 
     n = np.sqrt(mu / (r_earth + sat_altitude) ** 3)
     ground_vel = (n * r_earth).to("m/s")
@@ -65,8 +69,8 @@ def __(ground_vel, mo, sat_altitude):
         Reference parameters for the camera position and motion with respect to the target are given below:
 
         ```
-        sat altitude : {sat_altitude:~P}    
-        ground velocity : {ground_vel:~P}
+        sat altitude : {sat_altitude:~P.4}    
+        ground velocity : {ground_vel:~P.6}
         ```
         """
     )
@@ -76,14 +80,14 @@ def __(ground_vel, mo, sat_altitude):
 @app.cell
 def __(mo):
     # init the ref wavelength slider in a separate cell
-    slider = mo.ui.slider(450, 2500, label="reference wavelength")
+    slider = mo.ui.slider(480, 820, label="reference wavelength")
 
     mo.md(
         f"""
         Certain parameters vary with the light characteristics and therefore wavelength dependent.
         """
     )
-    return (slider,)
+    return slider,
 
 
 @app.cell
@@ -98,16 +102,18 @@ def __(mo, slider, u):
         ```
         reference wavelength : {ref_wavelength:~P}    
         ```
-
+        Pléiades PAN works in the range 480 to 820 nm.
+        
         Note the widely used bands:
 
         - blue: 450-485 nm
         - green: 500-565 nm
         - red: 625-750 nm
         - nir: 780-2500 nm
+     
         """
     )
-    return (ref_wavelength,)
+    return ref_wavelength,
 
 
 @app.cell
@@ -194,7 +200,9 @@ def __(detector_file, optics_file, rw_electronics_file):
             rw_electronics_yaml = rw_electronics_file.contents(0).decode("utf-8")
 
         # Init imager object
-        imager = Imager.from_yaml_text(optics_yaml, detector_yaml, rw_electronics_yaml)
+        imager = Imager.from_yaml_text(
+            optics_yaml, detector_yaml, rw_electronics_yaml
+        )
 
     # shorthands
     optics = imager.optics
@@ -250,7 +258,7 @@ def __(mo, optics, ref_wavelength):
         ```
         f-number : {optics.f_number:.4}
         full optical fov : {optics.full_optical_fov:~P.4}
-        aperture area : {optics.aperture_area:~P.6}
+        aperture area : {optics.aperture_area.to("cm**2"):~P.6}
         spatial cutoff freq  : {optics.spatial_cutoff_freq(ref_wavelength):~P.5} (at {ref_wavelength:~P})
         ```
     """
@@ -271,13 +279,13 @@ def __(binning_on, detector, mo):
         horizontal x vertical pixels (total) : {detector.params.horizontal_pixels} x {detector.params.vertical_pixels}
         horizontal x vertical pixels (used) : {detector.params.horizontal_pixels_used} x {detector.params.vertical_pixels_used}
         binning : {detector.params.binning if binning_on else 'None'}
-        pixel pitch : {detector.pix_pitch(False):~P.4} {f"({detector.pix_pitch(True):~P.4} binned)" if binning_on else ''}
-        TDI stages : {'None' if detector.params.tdi_stages == 1 else detector.params.tdi_stages}
+        pixel pitch : {detector.pix_pitch(False):~P} {f"({detector.pix_pitch(True):~P} binned)" if binning_on else ''}
+        TDI stages : {'None' if detector.params.tdi_stages == 1 else detector.params.tdi_stages} (actual value not known)
 
         Timing parameters:
-        integration duration : {detector.params.timings.integration_duration:~}  
-        frame overhead duration : {detector.params.timings.frame_overhead_duration:~}  
-        frame overlap duration : {detector.params.timings.frame_overlap_duration:~}   
+        integration duration : {detector.params.timings.integration_duration:~} (actual value not known) 
+        frame overhead duration : {detector.params.timings.frame_overhead_duration:~} (N/A)
+        frame overlap duration : {detector.params.timings.frame_overlap_duration:~} (N/A)
         ```
     """
     )
@@ -362,7 +370,9 @@ def __(distance, imager, np, u):
     swath = (
         2
         * np.tan(
-            imager.ifov(False) * imager.detector.params.horizontal_pixels_used / 2.0
+            imager.ifov(False)
+            * imager.detector.params.horizontal_pixels_used
+            / 2.0
         )
         * distance
     )
@@ -405,7 +415,7 @@ def __(detector, mo):
         ```
     """
     )
-    return (timings,)
+    return timings,
 
 
 @app.cell
@@ -414,10 +424,10 @@ def __(binning_on, detector, mo, rw_electronics):
         rw_electronics_text = f"""    
         ```
         pixel read rate (without TDI) : {detector.pix_read_rate(False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
-        pixel read rate (with TDI) : {detector.pix_read_rate(False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
+        pixel read rate (with TDI) : {detector.pix_read_rate(False, True):~P.6} {f'({detector.pix_read_rate(True, True):~P.6} binned)' if binning_on else ''}
 
-        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
-        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
+        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.6} {f'({rw_electronics.data_write_rate(detector, True, False):~P.6} binned)' if binning_on else ''}
+        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.6} {f'({rw_electronics.data_write_rate(detector, True, True):~P.6} binned)' if binning_on else ''}
         ```
         """
     else:
@@ -431,7 +441,7 @@ def __(binning_on, detector, mo, rw_electronics):
 
     """
     )
-    return rw_electronics_text
+    return rw_electronics_text,
 
 
 @app.cell
