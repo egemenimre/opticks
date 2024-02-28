@@ -5,6 +5,6 @@
 name: Pléiades RW Electronics
 
 pixel_encoding: 12 bpp  # bits per pixel
-data_write_overhead: 0.02  # percentage as float, exact value not known
+data_write_overhead: 0.03  # percentage as float, exact value not known
 compression_on: True
 compression_ratio: 4 # Wavelet compression algorithm
