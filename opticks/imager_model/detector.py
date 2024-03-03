@@ -4,12 +4,11 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from pint import Quantity
-from strictyaml import YAML, Map, Str, Enum, Int, Optional
+from strictyaml import YAML, Enum, Int, Map, Optional, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.utils.yaml_helpers import Qty
-
 
 detector_schema = {
     "name": Str(),
@@ -102,7 +101,8 @@ class Detector(ImagerComponent):
         """
         Pixel physical area.
 
-        Computed as $text{pix pitch} \times \text{pix pitch}$
+        Computed as the square of pixel pitch. The effective pixel area is smaller,
+        even for a pixel with a single sensing element.
 
         Parameters
         ----------
@@ -118,10 +118,10 @@ class Detector(ImagerComponent):
         return self.pix_pitch(with_binning) ** 2
 
     def nyquist_freq(self, with_binning: bool = True) -> Quantity:
-        """
+        r"""
         Returns Nyquist Frequency / Limit parameter with or without binning.
 
-        Nyquist frequency is defined as: $\frac{1}{2 \times \text{pix pitch}}$,
+        Nyquist frequency is defined as: `1 / (2 x pix pitch)`,
         which translates to one line pair per two pixels (e.g., one pixel white,
         next one black). This is the absolute maximum limiting resolution of the sensor.
 
@@ -132,7 +132,7 @@ class Detector(ImagerComponent):
 
         Returns
         -------
-        Quantity
+        nyquist_limit: Quantity
             Nyquist limit in lp/mm
         """
 
@@ -211,14 +211,13 @@ class Detector(ImagerComponent):
     def pix_read_rate(
         self, with_binning: bool = True, with_tdi: bool = True
     ) -> Quantity:
-        """
+        r"""
         Pixel read rate.
 
         Computed as:
-         - Pushbroom type:
-         $\frac{text{horizontal pixels (binned)} \times \text{TDI stages}}{\text{line duration (binned)}}$
-         - Full frame type:
-         $\frac{text{horizontal pixels (binned)} \times \text{vertical pixels (binned)}}{\text{frame duration (binned)}}$
+         - Pushbroom type: `horiz pix (binned) x TDI stages x line rate`
+         - Full frame type: `horiz pix (binned) x vert pix (binned) x frame rate`
+
 
         Note that the unused pixels are also read, this assumes that the
         detector does not have ROI functionality.
@@ -233,10 +232,9 @@ class Detector(ImagerComponent):
         Returns
         -------
         Quantity
-            Pixel read rate with or without binning
+            Pixel read rate with or without binning (Mpixel/s)
         """
         tdi = self.params.tdi_stages if with_tdi else 1
-        binning = self.params.binning if with_binning else 1
 
         if self.params.detector_type == "pushbroom":
             pix_read_rate = (
@@ -259,7 +257,8 @@ def _max_integration_duration(timings) -> Quantity:
     """
     Computes the maximum integration duration, where:
 
-    `max integ duration = line or frame duration (w/o bin) - frame overhead duration + frame overlap duration`
+    `max integ duration = line or frame duration (w/o bin) - frame overhead duration
+    + frame overlap duration`
     """
     return (
         timings.frame_duration
