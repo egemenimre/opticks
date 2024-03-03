@@ -7,8 +7,7 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from strictyaml import YAML, Map
-from strictyaml import load
+from strictyaml import YAML, Map, load
 
 from opticks.utils.yaml_helpers import dict_to_obj_creator
 
