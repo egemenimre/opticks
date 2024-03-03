@@ -4,7 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from pint import Quantity
-from strictyaml import Str, Optional, Float, Bool, Map
+from strictyaml import Bool, Float, Map, Optional, Str
 
 from opticks.imager_model.detector import Detector
 from opticks.imager_model.imager_component import ImagerComponent
@@ -64,7 +64,7 @@ class RWElectronics(ImagerComponent):
         Returns
         -------
         Quantity
-            Pixel read rate with or without binning
+            Pixel read rate with or without binning (Mbit/s)
         """
         # TDI data is processed but not written unless raw data is needed
         with_tdi = False
