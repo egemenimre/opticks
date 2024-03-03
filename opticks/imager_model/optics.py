@@ -6,7 +6,7 @@
 
 import numpy as np
 from pint import Quantity
-from strictyaml import Str, Map
+from strictyaml import Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
@@ -38,10 +38,11 @@ class Optics(ImagerComponent):
 
     @property
     def f_number(self) -> float:
-        """
+        r"""
         F-number.
 
         Computed as: $\frac{\text{focal length}}{\text{aperture diameter}}$
+
         """
         return (
             (self.params.focal_length / self.params.aperture_diameter)
@@ -51,12 +52,11 @@ class Optics(ImagerComponent):
 
     @property
     def full_optical_fov(self) -> Quantity:
-        """
+        r"""
         Full optical Field of View.
 
         Actual FoV depends on the detector size, but cannot be wider than this value.
 
-        Computed as: $2 \times \arctan\left( \frac{0.5 \times \text{image diameter on focal plane}}{\text{focal length}} \right)$
         """
         return 2 * np.arctan(
             (self.params.image_diam_on_focal_plane / 2.0) / self.params.focal_length
@@ -64,7 +64,7 @@ class Optics(ImagerComponent):
 
     @property
     def aperture_area(self) -> Quantity:
-        """
+        r"""
         Aperture area.
 
         Computed as: $\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$
@@ -73,10 +73,8 @@ class Optics(ImagerComponent):
 
     @property
     def aperture_solid_angle(self) -> Quantity:
-        """
+        r"""
         Aperture solid angle in steradians.
-
-        Computed as: $\frac{\pi}{4} \frac{\text{aperture diameter}^2}{\text{focal length}^2}$
         """
         return (
             np.pi
@@ -86,12 +84,13 @@ class Optics(ImagerComponent):
 
     @u.check(None, "[length]")
     def spatial_cutoff_freq(self, ref_wavelength: Quantity) -> Quantity:
-        """
+        r"""
         Spatial cutoff frequency, assumes perfect incoherent optics.
 
-        Determines the theoretical limit of the optical resolution, or the smallest object resolvable by the optical system.
+        Determines the theoretical limit of the optical resolution, or the smallest
+        object resolvable by the optical system.
 
-        Computed as: $ 1 \over {\lambda F_\#} $ in line pairs per mm
+        Computed as: `1/(wavelength F_nr)` in line pairs per mm
 
         Parameters
         ----------
