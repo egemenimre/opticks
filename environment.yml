@@ -1,20 +1,30 @@
 name: opticks
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   - pint
+  - strictyaml
   - numpy
   - scipy
-  - strictyaml
+#  - python=3.12
+# packages needed for testing and automation
+  - tox
+  - tox-conda
+  - pytest
+  - pytest-xdist
+  - coverage
 # packages needed for document generation
-#  - python=3.11
+  - matplotlib
+  - marimo
+  - sphinx
+  - ipykernel
+  - nbsphinx
+  - sphinx-notfound-page
+  - sphinx-hoverxref
+  - sphinx_rtd_theme
   - pip
   - pip:
-      - matplotlib
-      - ipykernel
-      - nbsphinx
       - myst_parser
       - sphinx_autodoc_typehints
       - sphinx_copybutton
-      - sphinx-notfound-page
-      - sphinx-hoverxref
