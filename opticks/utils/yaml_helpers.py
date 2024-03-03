@@ -7,7 +7,7 @@
 Package for schema and yaml helpers.
 
 """
-from pint import UndefinedUnitError, Quantity
+from pint import Quantity, UndefinedUnitError
 from strictyaml import ScalarValidator
 from strictyaml.exceptions import YAMLSerializationError
 
