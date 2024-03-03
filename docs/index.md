@@ -1,6 +1,8 @@
 # opticks: Sizing Tool for Optical Systems
 
-SAmple text.
+Notes on optical sizing.
+
+This project is Copyright (c) Egemen Imre and licensed under the terms of the GNU GPL v3+ licence.
 
 ```{toctree} 
 ---
