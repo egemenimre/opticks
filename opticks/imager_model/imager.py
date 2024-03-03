@@ -192,7 +192,7 @@ class Imager:
         """
         Computes the full field of view in the horizontal direction.
 
-        Assumes constant IFOV per pixel.
+        Assumes constant IFOV per pixel. Used pixels only.
 
         Parameters
         ----------
@@ -212,7 +212,7 @@ class Imager:
         """
         Computes the full field of view in the vertical direction.
 
-        Assumes constant IFOV per pixel.
+        Assumes constant IFOV per pixel. Used pixels only.
 
         Parameters
         ----------
