@@ -9,7 +9,7 @@ def __():
     import marimo as mo
 
     mo.md("# Basic Pushbroom Imager on a Satellite (Pléiades example)")
-    return mo,
+    return (mo,)
 
 
 @app.cell
@@ -18,11 +18,12 @@ def __(mo):
         f"""
         ## Setting the Scene
 
-        Computing the basic parameters of the satellite pushbroom imager on the French high-res satellite Pléiades.
+        Computing the basic parameters of the satellite pushbroom imager on the 
+        French high-res satellite Pléiades.
 
         Sources:
 
-        - [ESA Pléiades page](https://earth.esa.int/eogateway/missions/pleiades)
+        - [ESA Pléiades page](https://earth.esa.int/eogateway/missions/pleiades#instruments-section)
         - [eoPortal Pléiades page](https://www.eoportal.org/satellite-missions/pleiades#hiri-high-resolution-imager)
         """
     )
@@ -87,7 +88,7 @@ def __(mo):
         Certain parameters vary with the light characteristics and therefore wavelength dependent.
         """
     )
-    return slider,
+    return (slider,)
 
 
 @app.cell
@@ -113,7 +114,7 @@ def __(mo, slider, u):
      
         """
     )
-    return ref_wavelength,
+    return (ref_wavelength,)
 
 
 @app.cell
@@ -200,9 +201,7 @@ def __(detector_file, optics_file, rw_electronics_file):
             rw_electronics_yaml = rw_electronics_file.contents(0).decode("utf-8")
 
         # Init imager object
-        imager = Imager.from_yaml_text(
-            optics_yaml, detector_yaml, rw_electronics_yaml
-        )
+        imager = Imager.from_yaml_text(optics_yaml, detector_yaml, rw_electronics_yaml)
 
     # shorthands
     optics = imager.optics
@@ -370,9 +369,7 @@ def __(distance, imager, np, u):
     swath = (
         2
         * np.tan(
-            imager.ifov(False)
-            * imager.detector.params.horizontal_pixels_used
-            / 2.0
+            imager.ifov(False) * imager.detector.params.horizontal_pixels_used / 2.0
         )
         * distance
     )
@@ -415,7 +412,7 @@ def __(detector, mo):
         ```
     """
     )
-    return timings,
+    return (timings,)
 
 
 @app.cell
@@ -441,7 +438,7 @@ def __(binning_on, detector, mo, rw_electronics):
 
     """
     )
-    return rw_electronics_text,
+    return (rw_electronics_text,)
 
 
 @app.cell
