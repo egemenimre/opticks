@@ -37,4 +37,4 @@ $$ \text{processed data rate} = \text{encoded data rate} / \text{compression} $$
 
 Finally, the processed data is written with some overhead:
 
-$$ \text{write data rate} = \text{processed read rate} \times (1 + \text{overhead percentage}) $$
+$$ \text{write data rate} = \text{processed data rate} \times (1 + \text{overhead percentage}) $$
