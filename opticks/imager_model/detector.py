@@ -3,6 +3,8 @@
 # Copyright (C) 2024 Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
+import numpy as np
+from imager_model.optics import Optics
 from pint import Quantity
 from strictyaml import YAML, Enum, Int, Map, Optional, Str
 
@@ -251,6 +253,97 @@ class Detector(ImagerComponent):
             raise ValueError(f"Invalid detector type: {self.params.detector_type}")
 
         return pix_read_rate.to("Mpixel/s")
+
+    def ifov(self, optics: Optics, with_binning: bool = True) -> Quantity:
+        """
+        Computes the Instantaneous field of view (works in vertical and horizontal).
+
+        Assumes constant IFOV per pixel.
+
+        Parameters
+        ----------
+        optics : Optics
+            Optics in front of the detector
+        with_binning : bool
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            IFOV angle
+
+        """
+        return 2 * np.arctan(
+            (self.pix_pitch(with_binning) / 2.0) / optics.params.focal_length
+        ).to(u.mdeg)
+
+    def pix_solid_angle(self, optics: Optics, with_binning=True) -> Quantity:
+        """
+        Pixel solid angle (of a pyramid).
+
+        Parameters
+        ----------
+        optics : Optics
+            Optics in front of the detector
+        with_binning : bool
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            Pixel solid angle in steradians
+        """
+        #
+
+        pix_solid_angle = 4 * np.arcsin(
+            np.sin(self.ifov(optics, with_binning) / 2.0)
+            * np.sin(self.ifov(optics, with_binning) / 2.0)
+        )
+
+        # correct the unit from rad to sr (or rad**2)
+        return (pix_solid_angle * u.rad).to(u.steradian)
+
+    def horizontal_fov(self, optics: Optics) -> Quantity:
+        """
+        Computes the full field of view in the horizontal direction.
+
+        Assumes constant IFOV per pixel. Used pixels only.
+
+        Parameters
+        ----------
+        optics : Optics
+            Optics in front of the detector
+
+        Returns
+        -------
+        Quantity
+            Horizontal FOV angle
+
+        """
+        return 2 * np.tan(
+            self.ifov(optics, False) * self.params.horizontal_pixels_used / 2.0
+        ).to(u.deg)
+
+    def vertical_fov(self, optics: Optics) -> Quantity:
+        """
+        Computes the full field of view in the vertical direction.
+
+        Assumes constant IFOV per pixel. Used pixels only.
+
+        Parameters
+        ----------
+        optics : Optics
+            Optics in front of the detector
+
+        Returns
+        -------
+        Quantity
+            Vertical FOV angle
+
+        """
+        return 2 * np.tan(
+            self.ifov(optics, False) * self.params.vertical_pixels_used / 2.0
+        ).to(u.deg)
 
 
 def _max_integration_duration(timings) -> Quantity:

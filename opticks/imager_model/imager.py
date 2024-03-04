@@ -6,11 +6,9 @@
 
 from pathlib import Path
 
-import numpy as np
 from pint import Quantity
 from strictyaml import YAML
 
-from opticks import u
 from opticks.imager_model.detector import Detector
 from opticks.imager_model.optics import Optics
 from opticks.imager_model.rw_electronics import RWElectronics
@@ -158,10 +156,7 @@ class Imager:
             IFOV angle
 
         """
-        return 2 * np.arctan(
-            (self.detector.pix_pitch(with_binning) / 2.0)
-            / self.optics.params.focal_length
-        ).to(u.mdeg)
+        return self.detector.ifov(self.optics, with_binning)
 
     def pix_solid_angle(self, with_binning=True) -> Quantity:
         """
@@ -177,15 +172,7 @@ class Imager:
         Quantity
             Pixel solid angle in steradians
         """
-        #
-
-        pix_solid_angle = 4 * np.arcsin(
-            np.sin(self.ifov(with_binning) / 2.0)
-            * np.sin(self.ifov(with_binning) / 2.0)
-        )
-
-        # correct the unit from rad to sr (or rad**2)
-        return (pix_solid_angle * u.rad).to(u.steradian)
+        return self.detector.pix_solid_angle(self.optics, with_binning)
 
     @property
     def horizontal_fov(self) -> Quantity:
@@ -203,9 +190,7 @@ class Imager:
             Horizontal FOV angle
 
         """
-        return 2 * np.tan(
-            self.ifov(False) * self.detector.params.horizontal_pixels_used / 2.0
-        ).to(u.deg)
+        return self.detector.horizontal_fov(self.optics)
 
     @property
     def vertical_fov(self) -> Quantity:
@@ -223,6 +208,4 @@ class Imager:
             Vertical FOV angle
 
         """
-        return 2 * np.tan(
-            self.ifov(False) * self.detector.params.vertical_pixels_used / 2.0
-        ).to(u.deg)
+        return self.detector.vertical_fov(self.optics)
