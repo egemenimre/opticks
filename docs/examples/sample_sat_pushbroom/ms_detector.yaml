@@ -1,0 +1,60 @@
+# Sample Pushbroom Imager: Pléiades MS
+# ------------------------------------
+
+# Pléiades Detector
+name: Pléiades MS Detector
+
+detector_type: pushbroom
+pixel_pitch: 52 um
+horizontal_pixels: 7500
+vertical_pixels: 5
+
+# B0= 450-530 nm (blue),
+# B1= 510-590 nm (green),
+# B2= 620-700 nm (red),
+# B3= 775-915 nm (NIR)
+
+# channels
+channels:
+    b0_blue:
+      name: B0 blue
+      horizontal_pixels: 7500 # exact value not known
+      vertical_pixels: 1
+      binning: 1
+      tdi_stages: 1 # no TDI in MS
+
+    b1_green:
+      name: B1 green
+      horizontal_pixels: 7500 # exact value not known
+      vertical_pixels: 1
+      binning: 1
+      tdi_stages: 1 # no TDI in MS
+
+    b2_red:
+      name: B2 red
+      horizontal_pixels: 7500 # exact value not known
+      vertical_pixels: 1
+      binning: 1
+      tdi_stages: 1 # no TDI in MS
+
+    b3_nir:
+      name: B3 NIR
+      horizontal_pixels: 7500 # exact value not known
+      vertical_pixels: 1
+      binning: 1
+      tdi_stages: 1 # no TDI in MS
+
+
+#  full_well_capacity = XX * u.e
+
+# noise:
+#   dark_current = XX * u.e/u.s
+#   temporal_dark_noise = XX * u.e
+
+timings:
+    frame_rate: 2452.9 Hz  # native res 690 km altitude
+    integration_duration: 0.12 ms # unknown
+# frame duration that cannot be used for integration or imaging
+#  frame overhead duration: XX * u.us
+# time between frame durations that can be used for integration or imaging
+#  frame overlap duration: XX * u.us

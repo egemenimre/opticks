@@ -1,17 +1,24 @@
-# Sample Pushbroom Imager: Pléiades
-# ---------------------------------
+# Sample Pushbroom Imager: Pléiades PAN
+# -------------------------------------
 
 # Pléiades Detector
-name: Pléiades Detector
+name: Pléiades PAN Detector
 
 detector_type: pushbroom
 pixel_pitch: 13 um
 horizontal_pixels: 30000
-vertical_pixels: 5 
-horizontal_pixels_used: 30000 # exact value not known
-vertical_pixels_used: 5 
-binning: 1
-tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+vertical_pixels: 5
+
+# PAN 480-820 nm
+
+channels:
+    pan:
+      name: PAN
+      horizontal_pixels: 30000 # exact value not known
+      vertical_pixels: 1
+      binning: 1
+      tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+
 #  full_well_capacity = XX * u.e
 
 # noise:

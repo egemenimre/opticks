@@ -7,11 +7,15 @@ detector_type: full frame
 pixel_pitch: 8 um
 horizontal_pixels: 1280
 vertical_pixels: 720
-horizontal_pixels_used: 1280
-vertical_pixels_used: 720
-binning: 1
 
 # This is a MWIR detector with a range of 3 to 5 um
+
+channels:
+    mwir:
+      name: MWIR
+      horizontal_pixels: 1280
+      vertical_pixels: 720
+      binning: 1
 
 #  full_well_capacity = XX * u.e
 

@@ -71,7 +71,8 @@ class RWElectronics(ImagerComponent):
 
         # data rate after encoding
         enc_data_rate = (
-            detector.pix_read_rate(with_binning, with_tdi) * self.params.pixel_encoding
+            detector.pix_read_rate(Channel, with_binning, with_tdi)
+            * self.params.pixel_encoding
         )
 
         # data rate after compression and other processing

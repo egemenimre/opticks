@@ -6,7 +6,6 @@
 
 from pathlib import Path
 
-from pint import Quantity
 from strictyaml import YAML
 
 from opticks.imager_model.detector import Detector
@@ -138,74 +137,3 @@ class Imager:
         return cls(optics, detector, rw_electronics)
 
     # ---------- begin modelling functions ----------
-
-    def ifov(self, with_binning: bool = True) -> Quantity:
-        """
-        Computes the Instantaneous field of view (works in vertical and horizontal).
-
-        Assumes constant IFOV per pixel.
-
-        Parameters
-        ----------
-        with_binning : bool
-            Return the value with binning or not
-
-        Returns
-        -------
-        Quantity
-            IFOV angle
-
-        """
-        return self.detector.ifov(self.optics, with_binning)
-
-    def pix_solid_angle(self, with_binning=True) -> Quantity:
-        """
-        Pixel solid angle (of a pyramid).
-
-        Parameters
-        ----------
-        with_binning : bool
-            Return the value with binning or not
-
-        Returns
-        -------
-        Quantity
-            Pixel solid angle in steradians
-        """
-        return self.detector.pix_solid_angle(self.optics, with_binning)
-
-    @property
-    def horizontal_fov(self) -> Quantity:
-        """
-        Computes the full field of view in the horizontal direction.
-
-        Assumes constant IFOV per pixel. Used pixels only.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        Quantity
-            Horizontal FOV angle
-
-        """
-        return self.detector.horizontal_fov(self.optics)
-
-    @property
-    def vertical_fov(self) -> Quantity:
-        """
-        Computes the full field of view in the vertical direction.
-
-        Assumes constant IFOV per pixel. Used pixels only.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        Quantity
-            Vertical FOV angle
-
-        """
-        return self.detector.vertical_fov(self.optics)

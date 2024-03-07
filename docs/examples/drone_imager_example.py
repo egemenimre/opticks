@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.2.7"
+__generated_with = "0.2.13"
 app = marimo.App()
 
 
@@ -147,6 +147,9 @@ def __(detector_file, mo, optics_file, rw_electronics_file):
 @app.cell
 def __(detector_file, optics_file, rw_electronics_file):
     from pathlib import Path
+
+    print(Path.cwd())
+
     from opticks.imager_model.imager import Imager
 
     if not optics_file.name(0) and not detector_file.name(0):
@@ -401,19 +404,18 @@ def __(detector, mo):
 
 
 @app.cell
-def __(binning_on, detector, mo, rw_electronics):
+def __(Channel, binning_on, detector, mo, rw_electronics):
     if rw_electronics:
         rw_electronics_text = f"""    
         ```
-        pixel read rate : {detector.pix_read_rate(False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
+        pixel read rate : {detector.pix_read_rate(Channel, False, False) :~P.4} {f'({detector.pix_read_rate(Channel, True, False) :~P.4} binned)' if binning_on else ''}
 
-        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
-        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.4} {f'({detector.pix_read_rate(True, True):~P.4} binned)' if binning_on else ''}
+        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.4} {f'({detector.pix_read_rate(Channel, True, False) :~P.4} binned)' if binning_on else ''}
+        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.4} {f'({detector.pix_read_rate(Channel, True, True) :~P.4} binned)' if binning_on else ''}
         ```
         """
     else:
         rw_electronics_text = "No Read-out/Write Data loaded."
-
 
     mo.md(
         f"""
