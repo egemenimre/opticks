@@ -21,7 +21,7 @@ def is_quantity(quantity_text: str) -> bool:
     Parameters
     ----------
     quantity_text : str
-        Text containing text that will be parsed as a `Quantity` object
+        Text that will be parsed as a `Quantity` object
 
     Returns
     -------
