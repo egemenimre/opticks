@@ -6,12 +6,12 @@
 from collections.abc import Iterable
 
 import numpy as np
-from imager_model.optics import Optics
 from pint import Quantity
 from strictyaml import YAML, Enum, Int, Map, MapPattern, Optional, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
+from opticks.imager_model.optics import Optics
 from opticks.utils.yaml_helpers import Qty
 
 channel_schema = {
