@@ -26,8 +26,9 @@ def __(mo):
 
 @app.cell
 def __():
-    from opticks import u
     import numpy as np
+
+    from opticks import u
 
     # positional params
     # ---------------------
