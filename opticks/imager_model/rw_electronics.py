@@ -3,10 +3,11 @@
 # Copyright (C) 2024 Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
+from collections.abc import Iterable
 from pint import Quantity
 from strictyaml import Bool, Float, Map, Optional, Str
 
-from opticks.imager_model.detector import Detector
+from opticks.imager_model.detector import Channel, Detector
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.utils.yaml_helpers import Qty
 
@@ -39,6 +40,7 @@ class RWElectronics(ImagerComponent):
 
     def data_write_rate(
         self,
+        channel: Channel | Iterable[Channel],
         detector: Detector,
         with_binning: bool = True,
         with_compression: bool = True,
@@ -54,6 +56,8 @@ class RWElectronics(ImagerComponent):
 
         Parameters
         ----------
+        channel : Channel or Iterable[Channel]
+            Channels to compute the readout
         detector : Detector
             Detector properties
         with_binning : bool
@@ -71,7 +75,7 @@ class RWElectronics(ImagerComponent):
 
         # data rate after encoding
         enc_data_rate = (
-            detector.pix_read_rate(Channel, with_binning, with_tdi)
+            detector.pix_read_rate(channel, with_binning, with_tdi)
             * self.params.pixel_encoding
         )
 
