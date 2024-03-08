@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.2.7"
+__generated_with = "0.3.1"
 app = marimo.App()
 
 
@@ -9,7 +9,7 @@ def __():
     import marimo as mo
 
     mo.md("# Basic Pushbroom Imager on a Satellite (Pléiades example)")
-    return (mo,)
+    return mo,
 
 
 @app.cell
@@ -88,7 +88,7 @@ def __(mo):
         Certain parameters vary with the light characteristics and therefore wavelength dependent.
         """
     )
-    return (slider,)
+    return slider,
 
 
 @app.cell
@@ -104,17 +104,17 @@ def __(mo, slider, u):
         reference wavelength : {ref_wavelength:~P}    
         ```
         Pléiades PAN works in the range 480 to 820 nm.
-        
+
         Note the widely used bands:
 
         - blue: 450-485 nm
         - green: 500-565 nm
         - red: 625-750 nm
         - nir: 780-2500 nm
-     
+
         """
     )
-    return (ref_wavelength,)
+    return ref_wavelength,
 
 
 @app.cell
@@ -178,12 +178,13 @@ def __(detector_file, optics_file, rw_electronics_file):
     from pathlib import Path
     from opticks.imager_model.imager import Imager
 
+
     if not optics_file.name(0) and not detector_file.name(0):
 
         # Going with the defaults
         file_directory = Path("docs", "examples", "sample_sat_pushbroom")
         optics_file_path = file_directory.joinpath("optics.yaml")
-        detector_file_path = file_directory.joinpath("detector.yaml")
+        detector_file_path = file_directory.joinpath("pan_detector.yaml")
         rw_electronics_file_path = file_directory.joinpath("rw_electronics.yaml")
 
         imager = Imager.from_yaml_file(
@@ -201,19 +202,25 @@ def __(detector_file, optics_file, rw_electronics_file):
             rw_electronics_yaml = rw_electronics_file.contents(0).decode("utf-8")
 
         # Init imager object
-        imager = Imager.from_yaml_text(optics_yaml, detector_yaml, rw_electronics_yaml)
+        imager = Imager.from_yaml_text(
+            optics_yaml, detector_yaml, rw_electronics_yaml
+        )
 
     # shorthands
     optics = imager.optics
     detector = imager.detector
     rw_electronics = imager.rw_electronics
 
+    # select the first channel
+    channel = next(iter(detector.params.channels.all.values()))
+
     # binning status
-    binning_on = False if detector.params.binning == 1 else True
+    binning_on = False if channel.binning == 1 else True
     return (
         Imager,
         Path,
         binning_on,
+        channel,
         detector,
         detector_file_path,
         detector_yaml,
@@ -266,25 +273,25 @@ def __(mo, optics, ref_wavelength):
 
 
 @app.cell
-def __(binning_on, detector, mo):
+def __(binning_on, channel, detector, mo):
     mo.md(
         f"""
         ### Detector Parameters
 
-        Basic design parameters are given below for the detector with the name "_{detector.params.name}_":
+        Basic design parameters are given below for the detector with the name "_{detector.params.name}_" and channel "_{channel.name}_":
 
         ```
         detector type : {detector.params.detector_type}
-        horizontal x vertical pixels (total) : {detector.params.horizontal_pixels} x {detector.params.vertical_pixels}
-        horizontal x vertical pixels (used) : {detector.params.horizontal_pixels_used} x {detector.params.vertical_pixels_used}
-        binning : {detector.params.binning if binning_on else 'None'}
-        pixel pitch : {detector.pix_pitch(False):~P} {f"({detector.pix_pitch(True):~P} binned)" if binning_on else ''}
-        TDI stages : {'None' if detector.params.tdi_stages == 1 else detector.params.tdi_stages} (actual value not known)
+        horizontal x vertical pixels (detector) : {detector.params.horizontal_pixels} x {detector.params.vertical_pixels}
+        horizontal x vertical pixels (channel) : {channel.horizontal_pixels} x {channel.vertical_pixels}
+        binning : {channel.binning if binning_on else 'None'}
+        pixel pitch : {channel.pixel_pitch(False):~P} {f"({channel.pixel_pitch(True):~P} binned)" if binning_on else ''}
+        TDI stages : {'None' if channel.tdi_stages == 1 else channel.tdi_stages}
 
         Timing parameters:
-        integration duration : {detector.params.timings.integration_duration:~} (actual value not known) 
-        frame overhead duration : {detector.params.timings.frame_overhead_duration:~} (N/A)
-        frame overlap duration : {detector.params.timings.frame_overlap_duration:~} (N/A)
+        integration duration : {detector.params.timings.integration_duration:~}
+        frame overhead duration : {detector.params.timings.frame_overhead_duration:~}
+        frame overlap duration : {detector.params.timings.frame_overlap_duration:~} 
         ```
     """
     )
@@ -292,15 +299,15 @@ def __(binning_on, detector, mo):
 
 
 @app.cell
-def __(binning_on, detector, mo):
+def __(binning_on, channel, detector, mo):
     mo.md(
         f"""
-        The derived detector parameters are given below for the detector with the name "_{detector.params.name}_":
+        The derived detector parameters are given below for the detector with the name "_{detector.params.name}_" and channel "_{channel.name}_":
 
         ```
-        Nyquist freq : {detector.nyquist_freq(False):~P.4} {f"({detector.nyquist_freq(True):~P.4} binned)" if binning_on else ''}
-        number of pixels (full frame) : {detector.pixel_count_frame(False):~P.4} {f"({detector.pixel_count_frame(True):~P.4} binned)" if binning_on else ''}
-        number of pixels (full frame, used) : {detector.pixel_count_frame(False,True):~P.4} {f"({detector.pixel_count_frame(True,True):~P.4} binned)" if binning_on else ''}
+        Nyquist freq : {channel.nyquist_freq(False):~P.4} {f"({channel.nyquist_freq(True):~P.4} binned)" if binning_on else ''}
+        number of pixels (full frame) : {detector.pixel_count:~P.4}
+        number of pixels (full frame, channel) : {channel.pixel_count_frame(False):~P.4} {f"({channel.pixel_count_frame(True):~P.4} binned)" if binning_on else ''}
         ```
     """
     )
@@ -308,7 +315,7 @@ def __(binning_on, detector, mo):
 
 
 @app.cell
-def __(binning_on, imager, mo):
+def __(binning_on, channel, mo, optics):
     mo.md(
         f"""
         ### Imager Geometry Parameters
@@ -316,10 +323,10 @@ def __(binning_on, imager, mo):
         Basic derived parameters are given below for the imager:
 
         ```
-        ifov : {imager.ifov(False):~P.4} {f"({imager.ifov(True):~P.4} binned)" if binning_on else ''}
-        pixel solid angle : {imager.pix_solid_angle(False):~P.4} {f"({imager.pix_solid_angle(True):~P.4} binned)" if binning_on else ''}
-        horizontal full fov: {imager.horizontal_fov:~P.4} (used pixels only)
-        vertical full fov: {imager.vertical_fov:~P.4} (used pixels only)
+        ifov : {channel.ifov(optics, False):~P.4} {f"({channel.ifov(optics, True):~P.4} binned)" if binning_on else ''}
+        pixel solid angle : {channel.pix_solid_angle(optics, False):~P.4} {f"({channel.pix_solid_angle(optics, True):~P.4} binned)" if binning_on else ''}
+        horizontal full fov: {channel.horizontal_fov(optics):~P.4} 
+        vertical full fov: {channel.vertical_fov(optics):~P.4}
         ```
     """
     )
@@ -338,15 +345,15 @@ def __(mo):
 
 
 @app.cell
-def __(distance, imager, np, u):
+def __(channel, distance, np, optics, u):
     # Ground sample distance at nadir
     spatial_sample_distance_native = (
         (
             distance
             * (
-                imager.detector.pix_pitch(False)
-                * imager.detector.params.binning
-                / imager.optics.params.focal_length
+                channel.pixel_pitch(False)
+                * channel.binning
+                / optics.params.focal_length
             )
         )
         .to_reduced_units()
@@ -356,9 +363,9 @@ def __(distance, imager, np, u):
         (
             distance
             * (
-                imager.detector.pix_pitch(True)
-                * imager.detector.params.binning
-                / imager.optics.params.focal_length
+                channel.pixel_pitch(True)
+                * channel.binning
+                / optics.params.focal_length
             )
         )
         .to_reduced_units()
@@ -368,9 +375,7 @@ def __(distance, imager, np, u):
     # swath assuming flat plate and constant Instantaneous FoV
     swath = (
         2
-        * np.tan(
-            imager.ifov(False) * imager.detector.params.horizontal_pixels_used / 2.0
-        )
+        * np.tan(channel.ifov(optics, False) * channel.horizontal_pixels / 2.0)
         * distance
     )
     return spatial_sample_distance, spatial_sample_distance_native, swath
@@ -396,7 +401,7 @@ def __(
 
 
 @app.cell
-def __(detector, mo):
+def __(channel, detector, mo):
     timings = detector.params.timings
 
     mo.md(
@@ -408,23 +413,23 @@ def __(detector, mo):
         line rate :  {timings.frame_rate:~P.6} 
         max integration duration : {timings.max_integration_duration:~P.4}
         actual integration duration : {timings.integration_duration:~P.4} 
-        total TDI column duration : {timings.total_tdi_col_duration:~P.4} ({detector.params.tdi_stages}x stages)   
+        total TDI column duration : {channel.total_tdi_col_duration:~P.4} ({channel.tdi_stages}x stages)   
         ```
     """
     )
-    return (timings,)
+    return timings,
 
 
 @app.cell
-def __(binning_on, detector, mo, rw_electronics):
+def __(binning_on, channel, detector, mo, rw_electronics, timings):
     if rw_electronics:
         rw_electronics_text = f"""    
         ```
-        pixel read rate (without TDI) : {detector.pix_read_rate(False, False):~P.4} {f'({detector.pix_read_rate(True, False):~P.4} binned)' if binning_on else ''}
-        pixel read rate (with TDI) : {detector.pix_read_rate(False, True):~P.6} {f'({detector.pix_read_rate(True, True):~P.6} binned)' if binning_on else ''}
+        pixel read rate (without TDI) : {channel.pix_read_rate(timings.frame_rate, False, False):~P.6} {f'({channel.pix_read_rate(timings.frame_rate, True, False):~P.6} binned)' if binning_on else ''} ({channel.name} channel)
+        pixel read rate (with TDI) : {channel.pix_read_rate(timings.frame_rate, False, True):~P.6} {f'({channel.pix_read_rate(timings.frame_rate, True, True):~P.6} binned)' if binning_on else ''} ({channel.name} channel)
 
-        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, False):~P.6} {f'({rw_electronics.data_write_rate(detector, True, False):~P.6} binned)' if binning_on else ''}
-        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(detector, False, True):~P.6} {f'({rw_electronics.data_write_rate(detector, True, True):~P.6} binned)' if binning_on else ''}
+        data write rate (uncompressed, incl. overheads) : {rw_electronics.data_write_rate(channel, detector, False, False):~P.6} {f'({rw_electronics.data_write_rate(channel, detector, True, False):~P.6} binned)' if binning_on else ''} ({channel.name} channel)
+        data write rate (compressed, incl. overheads) : {rw_electronics.data_write_rate(channel, detector, False, True):~P.6} {f'({rw_electronics.data_write_rate(channel, detector, True, True):~P.6} binned)' if binning_on else ''} ({channel.name} channel)
         ```
         """
     else:
@@ -438,7 +443,7 @@ def __(binning_on, detector, mo, rw_electronics):
 
     """
     )
-    return (rw_electronics_text,)
+    return rw_electronics_text,
 
 
 @app.cell
