@@ -259,7 +259,7 @@ class Channel:
         )
 
     def pix_read_rate(
-        self, frame_rate: Quantity, with_binning: bool = True, with_tdi: bool = True
+        self, frame_rate: Quantity, with_binning: bool = True, with_tdi: bool = False
     ) -> Quantity:
         r"""
         Pixel read rate.
