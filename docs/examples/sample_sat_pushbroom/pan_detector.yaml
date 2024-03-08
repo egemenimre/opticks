@@ -12,12 +12,12 @@ vertical_pixels: 5
 # PAN 480-820 nm
 
 channels:
-    pan:
-      name: PAN
-      horizontal_pixels: 30000 # exact value not known
-      vertical_pixels: 1
-      binning: 1
-      tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+  pan:
+    name: PAN
+    horizontal_pixels: 30000 # exact value not known
+    vertical_pixels: 1
+    binning: 1
+    tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
 
 #  full_well_capacity = XX * u.e
 
@@ -26,7 +26,7 @@ channels:
 #   temporal_dark_noise = XX * u.e
 
 timings:
-  frame_rate: 9811.6 Hz  # native res 690 km altitude
+  frame_rate: 9811.6 Hz # native res 690 km altitude
   integration_duration: 0.03 ms # unknown
 # frame duration that cannot be used for integration or imaging
 #  frame overhead duration: XX * u.us
