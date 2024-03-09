@@ -4,6 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from collections.abc import Iterable
+
 from pint import Quantity
 from strictyaml import Bool, Float, Map, Optional, Str
 
