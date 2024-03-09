@@ -11,11 +11,11 @@ vertical_pixels: 720
 # This is a MWIR detector with a range of 3 to 5 um
 
 channels:
-    mwir:
-      name: MWIR
-      horizontal_pixels: 1280
-      vertical_pixels: 720
-      binning: 1
+  mwir:
+    name: MWIR
+    horizontal_pixels: 1280
+    vertical_pixels: 720
+    binning: 1
 
 #  full_well_capacity = XX * u.e
 
