@@ -1,0 +1,34 @@
+[project]
+name = "opticks"
+version = "0.0.1"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pint",
+    "strictyaml",
+]
+
+requires-python = ">=3.11"
+
+authors = [{ name = "Egemen Imre" }]
+
+description = "Notes on the design of optical systems."
+readme = "README.md"
+license = { file = "LICENSE.md" }
+
+keywords = ["optics", "optical design", "drone", "robot vision", "satellite", "remote sensing", "earth observation"]
+classifiers = ["Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/egemenimre/opticks/"
+Documentation = "https://opticks.readthedocs.io/en/latest/"
+Repository = "https://github.com/egemenimre/opticks/"
+
