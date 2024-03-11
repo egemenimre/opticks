@@ -1,8 +1,7 @@
 [project]
 name = "opticks"
 version = "0.0.1"
-dependencies = [
-    "numpy",
+dependencies = ["numpy",
     "scipy",
     "pint",
     "strictyaml",
@@ -31,4 +30,11 @@ classifiers = ["Intended Audience :: Science/Research",
 Homepage = "https://github.com/egemenimre/opticks/"
 Documentation = "https://opticks.readthedocs.io/en/latest/"
 Repository = "https://github.com/egemenimre/opticks/"
+
+[project.optional-dependencies]
+test = ["pytest",
+    "coverage",
+    "pytest-xdist",
+]
+doc = ["sphinx"]
 
