@@ -1,6 +1,8 @@
 # opticks
 
-Notes on optical sizing. See [examples](docs/examples) directory for a few sample notebooks.
+Notes and models on optical sizing.
+
+See [examples](docs/examples) directory for a few sample notebooks.
 
 ## Requirements
 
