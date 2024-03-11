@@ -7,14 +7,12 @@ dependencies:
   - strictyaml
   - numpy
   - scipy
-#  - python=3.12
-# packages needed for testing and automation
-  - tox
-  - tox-conda
+  #  - python=3.12
+  # packages needed for testing and automation
   - pytest
   - pytest-xdist
   - coverage
-# packages needed for document generation
+  # packages needed for document generation
   - matplotlib
   - marimo
   - sphinx
@@ -28,3 +26,6 @@ dependencies:
       - myst_parser
       - sphinx_autodoc_typehints
       - sphinx_copybutton
+      # packages needed for testing and automation
+      - tox
+      - tox-conda
