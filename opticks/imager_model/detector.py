@@ -265,8 +265,8 @@ class Channel:
         Pixel read rate.
 
         Computed as:
-         - Pushbroom type: `horiz pix (binned) x TDI stages x line rate`
-         - Full frame type: `horiz pix (binned) x vert pix (binned) x frame rate
+            - Pushbroom type: `horiz pix (binned) x TDI stages x line rate`
+            - Full frame type: `horiz pix (binned) x vert pix (binned) x frame rate`
 
         Parameters
         ----------
