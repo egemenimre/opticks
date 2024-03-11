@@ -1,8 +1,11 @@
 # opticks
+[![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
 Notes and models on optical sizing.
 
 See [examples](docs/examples) directory for a few sample notebooks.
+
+The documentation for opticks is here: <https://opticks.readthedocs.io/>
 
 ## Requirements
 
