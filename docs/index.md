@@ -23,6 +23,14 @@ tutorials/yaml_reader.ipynb
 ```{toctree} 
 ---
 maxdepth: 2
+caption: Examples
+---
+how-to_guides
+```
+
+```{toctree} 
+---
+maxdepth: 2
 caption: References
 ---
 api_index
