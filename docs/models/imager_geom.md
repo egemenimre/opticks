@@ -2,7 +2,9 @@
 
 ## F-number
 
-Computed as: $\frac{\text{focal length}}{\text{aperture diameter}}$
+Computed as: 
+
+$$\frac{\text{focal length}}{\text{aperture diameter}}$$
 
 ## Full Optical FoV
 
@@ -12,22 +14,29 @@ $$2 \times \arctan\left( \frac{0.5 \times \text{image diameter on focal plane}}{
 
 ## Aperture Area
 
-Computed as: $\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$
+Computed as: 
+
+$$\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$$
 
 ## Aperture Solid Angle
 
 Aperture solid angle in steradians.
 
-Computed as: $\frac{\pi}{4} \frac{\text{aperture diameter}^2}{\text{focal length}^2}$
+Computed as: 
+
+$$\frac{\pi}{4} \frac{\text{aperture diameter}^2}{\text{focal length}^2}$$
 
 ## Spatial Cutoff Frequency
 
 Spatial cutoff frequency, assumes perfect incoherent optics.
 
-Determines the theoretical limit of the optical resolution, or the smallest object resolvable by the optical
-system.
+Determines the theoretical limit of the optical resolution, or the smallest object resolvable by the optical system.
 
-Computed as: $ 1 \over {\lambda F_\#} $ in line pairs per mm
+Computed as: 
+
+$$ 1 \over {\lambda F_\#} $$ 
+
+in line pairs per mm.
 
 ## IFOV
 
@@ -49,7 +58,7 @@ IFOV (and the resulting Pixel Solid Angle) may or may not be binned, depending o
 
 ## Horizontal and Vertical FoV
 
-Assumes constant IFOV per pixel. Used pixels only.
+Assumes constant IFOV per pixel.
 
 $$2 \times \tan \left( \frac{ifov \times pixels}{2} \right)$$
 
