@@ -49,7 +49,7 @@ extensions = [
     "sphinx_copybutton",
     "notfound.extension",
     "hoverxref.extension",
-    "sphinx.ext.githubpages",
+    # "sphinx.ext.githubpages",
     "sphinx.ext.doctest",  # Doctest
     "myst_parser",  # MyST parser
     "nbsphinx",  # Jupyter notebook support
@@ -96,6 +96,7 @@ html_theme_path = [
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
 
 # -- Options for Intersphinx -------------------------------------------------
 
