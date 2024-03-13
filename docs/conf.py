@@ -151,6 +151,9 @@ myst_substitutions = {
     "pint_quantity": "[`Quantity`](https://pint.readthedocs.io/en/stable/api/base.html#pint.Quantity)",
 }
 
+# render all links (including html) as external. Prevents download of marimo htmls.
+myst_all_links_external = True
+
 # -- Options for Sphinx-autoapi output -------------------------------------------
 
 # autoapi_type = "python"
