@@ -102,6 +102,6 @@ class Optics(ImagerComponent):
         Quantity
             Spatial cutoff frequency (in lp/mm)
         """
-        u.define("lp = 1 * dimensionless = lp")
+        u.define("line_pair = 1 * cycle = lp = lp")
         # perfect incoherent optics
         return (1.0 * u.lp) / (ref_wavelength * self.f_number).to(u.mm)
