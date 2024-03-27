@@ -137,6 +137,7 @@ dmypy.json
 
 # Other temporary stuff and large data dirs
 temp
+opticks/temp
 /test-results/
 /docs/_autosummary/
 /docs/_themes/
