@@ -151,7 +151,10 @@ myst_substitutions = {
     "pint_quantity": "[`Quantity`](https://pint.readthedocs.io/en/stable/api/base.html#pint.Quantity)",
 }
 
-# render all links (including html) as external. Prevents download of marimo htmls.
+# Render all links (including html) as external. Prevents download of marimo htmls.
+# To apply selectively to specific links, you can enable the attrs_inline extension,
+# then add an external class to the link. For example,
+# [my-external-link](my-external-link){.external} becomes my-external-link.
 myst_all_links_external = True
 
 # -- Options for Sphinx-autoapi output -------------------------------------------
