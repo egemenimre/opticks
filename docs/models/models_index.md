@@ -10,4 +10,5 @@ maxdepth: 1
 ---
 imager_geom
 data_chain
+sharpness
 ```
