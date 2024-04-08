@@ -18,7 +18,7 @@ In practical terms, this means that a good optical system will resolve most of t
 
 ## Modulation Transfer Function (MTF)
 
-Modulation Transfer Function (MTF) is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded.
+Modulation Transfer Function (MTF) is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded. Note that, MTF is defined for sine-wave targets and Contrast Transfer Function (CTF) is defined for square-wave targets. CTF is usually higher than MTF.
 
 While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. All MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
 
@@ -36,7 +36,7 @@ $$\text{MTF}(f) = \frac{2}{\pi} \left[ arccos \left( \frac{f}{f_c} \right) - \fr
 
 where $f$ is the input line frequency and $f_c$ is the spatial cutoff frequency. 
 
-This equation is equivalent to:
+This equation can also be written as:
 
 $$\text{MTF}(f) = \frac{2}{\pi} \left[ \psi - cos(\psi) sin(\psi) \right]$$
 
@@ -44,5 +44,6 @@ where $\psi$ is equal to $arccos\left( \frac{f}{f_c} \right)$.
 
 The real optical MTF will be lower than this value, due to real world design limitations, materials, manufacturing, integration as well as mechanical and thermal loads. This is usually measured in the lab.
 
-[^1]: The Infrared & Electro-Optical Systems Handbook, J. S. Accetta, David L. Shumaker (Ed.), 	Infrared Information Analysis Center, 1993.
+[^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); 	Infrared Information Analysis Center, 1993.
 
+[^2]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
