@@ -7,7 +7,7 @@ name: Pléiades PAN Detector
 detector_type: pushbroom
 pixel_pitch: 13 um
 horizontal_pixels: 30000
-vertical_pixels: 5
+vertical_pixels: 20
 
 # PAN 480-820 nm
 
