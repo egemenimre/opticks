@@ -105,3 +105,34 @@ class Optics(ImagerComponent):
         u.define("line_pair = 1 * cycle = lp = lp")
         # perfect incoherent optics
         return (1.0 * u.lp) / (ref_wavelength * self.f_number).to(u.mm)
+
+    @u.check(None, "[length]", None)
+    def ideal_mtf(self, wavelength: Quantity, input_line_freq: Quantity) -> float:
+        """
+        Ideal optical MTF for the given input line frequency.
+
+        Assumes uniformly illuminated circular aperture, no significant aberrations.
+
+        Returns the MTF value between 0 and 1.
+
+        Parameters
+        ----------
+        wavelength : Quantity
+            Wavelength at which MTF is computed
+        input_line_freq: Quantity
+            Input line frequency (in lp/mm)
+
+        Returns
+        -------
+        Quantity
+            MTF value
+        """
+
+        # normalised optical frequency
+        f_ov_fc = input_line_freq / self.spatial_cutoff_freq(wavelength)
+
+        # This is the alternative formulation
+        # psi = np.arccos(f_ov_fc)
+        # mtf_ideal_optical = 2/np.pi * (psi-np.cos(psi)*np.sin(psi))
+
+        return 2 / np.pi * (np.arccos(f_ov_fc) - f_ov_fc * np.sqrt(1 - f_ov_fc**2)).m
