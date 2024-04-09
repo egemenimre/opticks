@@ -1,0 +1,8 @@
+# Sample Pushbroom Imager
+# Sample Read-out and Write Electronics
+name: Sample RW Electronics
+
+pixel_encoding: 12 bpp  # bits per pixel
+data_write_overhead: 0.02  # percentage as float
+compression_on: False
+compression_ratio: 2.4
