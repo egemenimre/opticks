@@ -22,11 +22,18 @@ Modulation Transfer Function (MTF) is a measure of how well the input "resolutio
 
 While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. All MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
 
-While MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution.
+While MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution. The following plot shows the Optics, Detector and the resulting Imager MTF decrease with the increasing input line frequency, as well as the Nyquist limit.
 
-**** insert MTF plot here ****
+![Static MTF](images/static_mtf.png "Sample MTF plot")
 
-The individual contributors of the MTF are given below:
+As can be imagined, the Optics limits to resolution to the detector limits is a useful metric as to how good the output images will *theoretically* be. The equation is given simply as the ratio of the spatial cut-off frequency to the Nyquist limit.
+
+$$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
+
+It is desirable to have the Q value between 1 and 2. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing. Nor does it take into account the real-world effects that cause blurring, such as vibrations. 
+
+
+## Contributors to the Modulation Transfer Function (MTF)
 
 ### Optical MTF
 
@@ -42,7 +49,7 @@ $$\text{MTF}(f) = \frac{2}{\pi} \left[ \psi - cos(\psi) sin(\psi) \right]$$
 
 where $\psi$ is equal to $arccos\left( \frac{f}{f_c} \right)$.
 
-The real optical MTF will be lower than this value, due to real world design limitations, materials, manufacturing, integration as well as mechanical and thermal loads. This is usually measured in the lab.
+The real optical MTF will be lower than this value, due to real world design limitations, materials, manufacturing, integration as well as mechanical and thermal loads. This is usually simulated in a software like Zemax and eventually measured in the lab.
 
 [^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); 	Infrared Information Analysis Center, 1993.
 
