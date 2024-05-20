@@ -2,7 +2,7 @@
 
 ## F-number
 
-Computed as: 
+Computed as:
 
 $$\frac{\text{focal length}}{\text{aperture diameter}}$$
 
@@ -14,7 +14,7 @@ $$2 \times \arctan\left( \frac{0.5 \times \text{image diameter on focal plane}}{
 
 ## Aperture Area
 
-Computed as: 
+Computed as:
 
 $$\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$$
 
@@ -22,7 +22,7 @@ $$\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$$
 
 Aperture solid angle in steradians.
 
-Computed as: 
+Computed as:
 
 $$\frac{\pi}{4} \frac{\text{aperture diameter}^2}{\text{focal length}^2}$$
 
@@ -32,9 +32,9 @@ Spatial cutoff frequency, assumes perfect incoherent optics.
 
 Determines the theoretical limit of the optical resolution, or the smallest object resolvable by the optical system.
 
-Computed as: 
+Computed as:
 
-$$ 1 \over {\lambda F_\#} $$ 
+$$ 1 \over {\lambda F_\#} $$
 
 in line pairs per mm.
 
@@ -66,7 +66,7 @@ where `pixels` are the horizontal or vertical pixels used.
 
 ## Nyquist Frequency / Limit
 
-Nyquist frequency is defined as: 
+Nyquist frequency is defined as:
 
 $$\frac{1 \ \text{line pair}}{2 \times \text{pix pitch}}$$
 

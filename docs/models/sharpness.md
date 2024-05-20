@@ -26,22 +26,23 @@ While MTF can be evaluated as a single value for a single input line frequency, 
 
 ![Static MTF](images/static_mtf.png "Sample MTF plot")
 
-As can be imagined, the Optics limits to resolution to the detector limits is a useful metric as to how good the output images will *theoretically* be. The equation is given simply as the ratio of the spatial cut-off frequency to the Nyquist limit.
+A rule of thumb is that the resolution limit of the system is at the frequency for which the MTF is equal to 0.1[^1].
+
+As can be imagined, the ratio of the optics limits to the resolution compared to the detector limits is a useful metric as to how good the output images will *theoretically* be. The equation is given simply as the ratio of the spatial cut-off frequency to the Nyquist limit, or for the given wavelength, the ratio of the F-number to the pixel pitch.
 
 $$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
 
-It is desirable to have the Q value between 1 and 2. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing. Nor does it take into account the real-world effects that cause blurring, such as vibrations. 
-
+It is desirable to have the Q value between 1 and 2. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
 
 ## Contributors to the Modulation Transfer Function (MTF)
 
 ### Optical MTF
 
-The _ideal_ optical MTF for a clear circular diffraction-limited aperture with monochromatic illumination is given as[^1]:
+The *ideal* optical MTF for a clear circular diffraction-limited aperture with monochromatic illumination is given as[^2]:
 
 $$\text{MTF}(f) = \frac{2}{\pi} \left[ arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
-where $f$ is the input line frequency and $f_c$ is the spatial cutoff frequency. 
+where $f$ is the input line frequency and $f_c$ is the spatial cutoff frequency.
 
 This equation can also be written as:
 
@@ -51,6 +52,10 @@ where $\psi$ is equal to $arccos\left( \frac{f}{f_c} \right)$.
 
 The real optical MTF will be lower than this value, due to real world design limitations, materials, manufacturing, integration as well as mechanical and thermal loads. This is usually simulated in a software like Zemax and eventually measured in the lab.
 
-[^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); 	Infrared Information Analysis Center, 1993.
+### Aberration Transfer Function
 
-[^2]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
+### Detector Sampling MTF
+
+[^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
+
+[^2]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.);  Infrared Information Analysis Center, 1993.
