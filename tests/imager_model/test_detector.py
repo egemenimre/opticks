@@ -1,20 +1,17 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 from pathlib import Path
 
-import numpy as np
 import pytest
-from pint import DimensionalityError
 
 from opticks import process_paths, u
 from opticks.imager_model.detector import Detector
-from opticks.imager_model.imager import Imager
 from opticks.imager_model.optics import Optics
-from opticks.utils.testing_utils import assert_allclose, assert_equal
+from opticks.utils.testing_utils import assert_allclose
 
 
 class TestDetector:

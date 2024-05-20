@@ -6,13 +6,8 @@
 
 from pathlib import Path
 
-import numpy as np
-import pytest
-from pint import DimensionalityError
-
-from opticks import process_paths, u
+from opticks import process_paths
 from opticks.imager_model.imager import Imager
-from opticks.utils.testing_utils import assert_allclose
 
 
 class TestImager:
