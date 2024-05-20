@@ -44,9 +44,11 @@ def assert_allclose(
     msg: Optional[str] = None,
 ) -> None:
     """
-    Compares `first` and `second` items and checks whether they are equal within a certain tolerance.
+    Compares `first` and `second` items and checks whether they are equal
+    within a certain tolerance.
 
-    `first` and `second` are array-like objects. Tolerance can be relative (dimensionless) or absolute (`Quantity`).
+    `first` and `second` are array-like objects. Tolerance can be
+    relative (dimensionless) or absolute (`Quantity`).
 
     Essentially a wrapper for the pint `assert_allclose`.
 
@@ -79,7 +81,8 @@ def assert_allclose(
             atol = atol.to(first.u).m
 
             # Use rtol or atol for errors given in percent or absolute.
-            # atol does not accept units, but assumed by pint as the unit of the first item.
+            # atol does not accept units, but assumed by pint as the unit
+            # of the first item.
             pint_assert_allclose(first, second, rtol=rtol, atol=atol, msg=msg)
 
         else:
