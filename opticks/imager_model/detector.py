@@ -1,6 +1,6 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from collections.abc import Iterable
@@ -292,41 +292,6 @@ class Channel:
             raise ValueError(f"Invalid detector type: {self._detector_type}")
 
         return pix_read_rate.to("Mpixel/s")
-
-    def detector_mtf(
-        self, input_line_freq: Quantity, with_binning: bool = True
-    ) -> float:
-        """
-        Detector MTF for the given input line frequency.
-
-        Returns the MTF value between 0 and 1.
-
-        Parameters
-        ----------
-        with_binning : bool
-            Return the value with binning or not
-        input_line_freq: Quantity
-            Input line frequency (in lp/mm)
-
-        Returns
-        -------
-        Quantity
-            MTF value
-        """
-
-        # pixel pitch (um) x input line freq (lp/mm)
-        a_fx = (
-            self.pixel_pitch(with_binning=with_binning) * input_line_freq / u.lp
-        ).to_reduced_units()
-
-        # This is the alternative formulation
-        # a_fx = (input_line_freq / self.nyquist_freq).to_reduced_units()/2
-
-        # This is the alternative formulation
-        # mtf_det_sampling = np.abs(np.sin(np.pi*a_fx)/(np.pi*a_fx))
-
-        # sinc does not receive Quantity input.
-        return np.sinc(a_fx.m)
 
 
 class Detector(ImagerComponent):
