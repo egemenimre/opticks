@@ -87,6 +87,52 @@ class MTF_Model:
         return MTF_Model(id, value_func)
 
     @staticmethod
+    @u.check("[length]", None, None)
+    def aberrated_optics(
+        wavelength: Quantity | np.ndarray[Quantity],
+        w_rms: float | NDArray[np.float64],
+        optics: Optics,
+    ) -> "MTF_Model":
+        """
+        Aberrated optical MTF model (for the given input line frequency).
+
+        Uses an empirical model for the optical aberrations, such that:
+        MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
+        Design for more information.
+
+        The 'w_rms' value corresponds to the RMS of the total wavefront error,
+        or how much the actual wavefront deviates from the ideal wavefront.
+        The unit of this deviation is the multiple wavelengths
+        (such as 0.15 x lambda).
+
+        Parameters
+        ----------
+        wavelength : Quantity | ArrayLike[Quantity]
+            Wavelength at which MTF is computed
+        w_rms : float | ArrayLike[float]
+            RMS of the total wavefront error (in wavelengths)
+        optics: Optics
+            Optics model (to compute the spatial cutoff frequency)
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+
+        # set the spatial cutoff frequency
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(wavelength)
+
+        # set the id
+        id = f"Aberrated optical MTF at {wavelength:~P} (W_RMS = {w_rms})"
+
+        # set the value function (with the fixed spatial cutoff frequency and w_rms)
+        def value_func(input_line_freq):
+            return _aberrated_optical_mtf(input_line_freq, spatial_cutoff_freq, w_rms)
+
+        return MTF_Model(id, value_func)
+
+    @staticmethod
     @u.check("[length]")
     def detector_sampling(pixel_pitch: Quantity) -> "MTF_Model":
         """
@@ -160,7 +206,7 @@ def _ideal_optical_mtf(
 
     Parameters
     ----------
-    input_line_freq: QuanQuantity | ArrayLike[Quantity]tity
+    input_line_freq: Quantity | ArrayLike[Quantity]
         Input line frequency (in lp/mm)
     spatial_cutoff_freq: Quantity
         Spatial cutoff frequency (in lp/mm)
@@ -172,10 +218,87 @@ def _ideal_optical_mtf(
     """
 
     # normalised optical frequency
-    f_ov_fc = input_line_freq / spatial_cutoff_freq
+    nu = input_line_freq / spatial_cutoff_freq
 
     # This is the alternative formulation
     # psi = np.arccos(f_ov_fc)
     # mtf_ideal_optical = 2/np.pi * (psi-np.cos(psi)*np.sin(psi))
 
-    return 2 / np.pi * (np.arccos(f_ov_fc) - f_ov_fc * np.sqrt(1 - f_ov_fc**2)).m
+    return 2 / np.pi * (np.arccos(nu) - nu * np.sqrt(1 - nu**2)).m
+
+
+def _aberrated_optical_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity],
+    spatial_cutoff_freq: Quantity,
+    w_rms: float | NDArray[np.float64],
+) -> float | NDArray[np.float64]:
+    """
+    Aberrated optical MTF for the given input line frequency.
+
+    Assumes an empirical aberration model for the overall
+    RMS Wavefront Error.
+
+    Returns the MTF value (usually between 0 and 1, though can be negative).
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in lp/mm)
+    spatial_cutoff_freq: Quantity
+        Spatial cutoff frequency (in lp/mm)
+    w_rms : float | ArrayLike[float]
+        RMS of the total wavefront error (in wavelengths)
+
+    Returns
+    -------
+    Quantity
+        MTF value (usually between 0 and 1, though can be negative).
+    """
+
+    # ideal mtf
+    mtf_ideal = _ideal_optical_mtf(input_line_freq, spatial_cutoff_freq)
+
+    # aberration transfer factor
+    atf = _aberration_transfer_factor(input_line_freq, spatial_cutoff_freq, w_rms)
+
+    return mtf_ideal * atf
+
+
+def _aberration_transfer_factor(
+    input_line_freq: Quantity | np.ndarray[Quantity],
+    spatial_cutoff_freq: Quantity,
+    w_rms: float | NDArray[np.float64],
+) -> float | NDArray[np.float64]:
+    """
+    Aberration Transfer Factor (ATF) for the given input line frequency.
+
+    Computes an empirical model for the optical aberrations, such that:
+    MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
+    Design for more information.
+
+    The w_rms value corresponds to the RMS of the total wavefront error,
+    or how much the actual wavefront deviates from the ideal wavefront.
+    The unit of this deviation is the multiple wavelengths (such as 0.15 x lambda).
+
+    Returns the ATF value (usually between 0 and 1, though can be negative).
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in lp/mm)
+    spatial_cutoff_freq: Quantity
+        Spatial cutoff frequency (in lp/mm)
+    w_rms : float | ArrayLike[float]
+        RMS of the total wavefront error (in wavelengths)
+
+    Returns
+    -------
+    Quantity
+        ATF value (<1)
+    """
+
+    # normalised optical frequency
+    nu = input_line_freq / spatial_cutoff_freq
+
+    # return ATF
+    return (1 - (w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2)).m
