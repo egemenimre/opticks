@@ -302,3 +302,39 @@ def _aberration_transfer_factor(
 
     # return ATF
     return (1 - (w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2)).m
+
+
+def set_mtf_plot_style(
+    fig,
+    ax,
+    x_max=None,
+    y_min=0,
+    title=None,
+    xlabel="input line freq (lp/mm)",
+    ylabel="MTF",
+    height=4,
+    width=6,
+    style="seaborn-v0_8-deep",
+):
+
+    # set decorators
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if title:
+        ax.set_title(title)
+
+    fig.legend()
+
+    # set plot formatting
+    ax.xaxis.grid(True)
+    ax.yaxis.grid(True)
+    if x_max:
+        ax.set_xlim(0, x_max)
+    ax.set_ylim(y_min, 1)
+
+    fig.tight_layout()
+
+    fig.set_figheight(height)
+    fig.set_figwidth(width)
+
+    return fig, ax
