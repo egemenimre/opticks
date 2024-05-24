@@ -5,10 +5,9 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
-from typing import Any
+import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-import numpy as np
 from numpy.typing import NDArray
 from pint import Quantity
 
@@ -316,7 +315,7 @@ def set_mtf_plot_style(
     xlabel="input line freq (lp/mm)",
     ylabel="MTF",
     height=4,
-    width=6,
+    width=8,
 ) -> None:
     """
     Sets some default style parameters for MTF plots.
