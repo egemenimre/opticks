@@ -5,6 +5,9 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
+from typing import Any
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import numpy as np
 from numpy.typing import NDArray
 from pint import Quantity
@@ -305,8 +308,8 @@ def _aberration_transfer_factor(
 
 
 def set_mtf_plot_style(
-    fig,
-    ax,
+    fig: Figure,
+    ax: Axes,
     x_max=None,
     y_min=0,
     title=None,
@@ -314,8 +317,32 @@ def set_mtf_plot_style(
     ylabel="MTF",
     height=4,
     width=6,
-    style="seaborn-v0_8-deep",
-):
+) -> None:
+    """
+    Sets some default style parameters for MTF plots.
+
+    Parameters
+    ----------
+    fig : Figure
+        Figure object
+    ax : Axes
+        Axes object
+    x_max : float, optional
+        max value of x axis, by default None
+    y_min : float, optional
+        minimum value of y axis, by default 0
+    title : str, optional
+        title of the plot, by default None
+    xlabel : str, optional
+        x-axis label, by default "input line freq (lp/mm)"
+    ylabel : str, optional
+        y-axis label, by default "MTF"
+    height : int, optional
+        height of the figure (in inches), by default 4
+    width : int, optional
+        width of the figure (in inches), by default 6
+
+    """
 
     # set decorators
     ax.set_xlabel(xlabel)
@@ -336,5 +363,3 @@ def set_mtf_plot_style(
 
     fig.set_figheight(height)
     fig.set_figwidth(width)
-
-    return fig, ax
