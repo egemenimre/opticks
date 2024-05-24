@@ -32,8 +32,9 @@ def __(mo):
 
 @app.cell
 def __():
-    from opticks import u
     import numpy as np
+
+    from opticks import u
 
     # constants
     # ---------
@@ -176,6 +177,7 @@ def __(detector_file, mo, optics_file, rw_electronics_file):
 @app.cell
 def __(detector_file, optics_file, rw_electronics_file):
     from pathlib import Path
+
     from opticks.imager_model.imager import Imager
 
 
