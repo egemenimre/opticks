@@ -140,6 +140,9 @@ class MTF_Model:
         """
         Detector sampling MTF model (for the given input line frequency).
 
+        MTF value is usually between 0 and 1, though contrast reversal
+        may result in negative values.
+
         Parameters
         ----------
         pixel_pitch : Quantity
@@ -148,7 +151,7 @@ class MTF_Model:
         Returns
         -------
         Quantity
-            MTF value between 0 and 1
+            MTF value (usually between 0 and 1, though can be negative)
         """
 
         # set the id
@@ -168,7 +171,8 @@ def _detector_sampling_mtf(
     """
     Detector sampling MTF for the given input line frequency.
 
-    Returns the MTF value between 0 and 1.
+    MTF value is usually between 0 and 1, though contrast reversal
+    may result in negative values.
 
     Parameters
     ----------
@@ -180,7 +184,7 @@ def _detector_sampling_mtf(
     Returns
     -------
     Quantity
-        MTF value between 0 and 1
+        MTF value (usually between 0 and 1, though can be negative)
     """
 
     # pixel pitch (um) x input line freq (lp/mm)
@@ -189,8 +193,8 @@ def _detector_sampling_mtf(
     # This is the alternative formulation
     # a_fx = (input_line_freq / self.nyquist_freq).to_reduced_units()/2
 
-    # This is the alternative formulation
-    # mtf_det_sampling = np.abs(np.sin(np.pi*a_fx)/(np.pi*a_fx))
+    # This is the alternative formulation (negative values possible)
+    # return np.sin(np.pi * a_fx) / (np.pi * a_fx)
 
     # sinc does not receive Quantity input.
     return np.sinc(a_fx.m)
