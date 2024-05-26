@@ -32,9 +32,9 @@ As can be imagined, the ratio of the optics limits to the resolution compared to
 
 $$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
 
-It is desirable to have the Q value between 1 and 2. Below 1, the images are undersampled. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
+It is desirable to have the Q value between 1 and 2. Below 1, the images are undersampled. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing or surface imperfections. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
 
-## Contributors to the Modulation Transfer Function (MTF)
+## Static Contributors to the MTF
 
 ### Optical MTF
 
@@ -85,6 +85,30 @@ Each detector (or a single pixel of the detector) performs spatial averaging of 
 $$\text{MTF}(f) = \frac{\sin(\pi f p)}{\pi f p} = \text{sinc}(\pi f p)$$
 
 where $p$ is equal to pixel pitch. As the frequency increases, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
+
+## Dynamic Contributors to the MTF
+
+Dynamic MTF is the broad name given to multiple sources of image sharpness loss, commonly due to a "shaking" of the imager or a relative motion between the imager and the platform. This results in the loss of sharpness; sometimes manifesting itself as blurring roughly equal in all directions and sometimes as a directional smear in the image.
+
+Depending on the imaging setting, one or more of the following sources can be present:
+
+- Motion blur: Relative motion between the imager and the scene *during the exposure duration*, causing a smear on the image.
+- Jitter: High frequency random imager shake *during the exposure duration*, causing a blur on the image.
+- Drift/smear: Directional imager drift *during the exposure duration*, causing a smear on the image.
+
+Motion blur is prominent in satellite imagers at Low Earth Orbit (as opposed to Geosynchronous Orbit) and aircraft, both of which fly over the target. Jitter is prominent in all imagers attached to equipment that generates high frequency vibration sources, such as engines in aircraft or reaction wheels in satellites. Cryocoolers with pistons also introduce vibrations close to the detector. Drift/smear is prominent in imagers that are not physically fixed to a stable platform and/or with relatively long exposures where the slow shaking of the imaging platform becomes visible.
+
+The common theme in all these sources is the exposure duration. Generally speaking, vibration sources with a period much shorter than (or a frequency higher than) the exposure duration are called jitter and they cause random artefacts such as blurring. The detector pixel captures information from around neighbouring areas in all directions, rather than the area corresponding to what the pixel would normally "see". Vibration sources with a frequency close to exposure duration cannot complete multiple cycles (or even a single cycle) during the exposure duration, therefore they cause a drift/smear in the direction they apply. The vibration sources with periods much longer than the exposure duration have no significant impact on the sharpness (or MTF).
+
+It follows that the same vibration sources may cause different type of artefacts for different exposure durations. As the exposure duration becomes longer, even low frequency vibration sources start causing blur (rather than smear), and very slow motion sources start causing smear. For a 10 ms exposure (or "1/100" s in photography terms and 100 Hz in frequency terms), a 1000 Hz (1 ms) vibration source would cause jitter. A 50 Hz (20 ms) vibration source would cause a drift. A 1 Hz (1 s) vibration source would be too slow to impact the imaging quality (though the image shake would be visible in a video). If the exposure is increased to 100 ms (10 Hz), both 1000 Hz and 50 Hz vibration sources would cause jitter and the 1 Hz vibration source could cause drift/smear.
+
+While it may then sound tempting to reduce the exposure duration to maximise the sharpness, it also controls the number of photons received, and therefore a lot of critical parameters, chiefly Signal-to-Noise Ratio (SNR): the longer is the exposure, usually the better is the SNR (up to saturation level). Therefore, the exposure duration needs to be optimised between the image sharpness and SNR needs.
+
+The discussion above is valid for most usecases, where single images are generated that are independent from each other. However, if the images of the same location need to be combined to create another image (e.g., Time Delay Integration (TDI) applications), then the images should match exactly and the same pixel in the consecutive images should "see" the same area on the ground. In reality, this is not possible, and the jitter as well as drift/smear within the *total combined imaging duration* (e.g., the total TDI column duration) will also impact the total imaging sharpness.
+
+Continuing from the example above with the 10 ms exposure duration, if we introduce a 5 stage TDI, then the imager should stay stable not only for just the 10 ms exposure duration, but also within the 50 ms total TDI column duration. The jitter and drift/smear within this total TDI column duration will also introduce a loss in sharpness.
+
+When computing the *total* MTF for the system, all the relevant contributors should be combined and must be then multiplied with the Static or Imager MTF. In practice, this means that using an excellent imager on an unstabilised platform may result in mediocre image quality. Or using a detector with better Quantum Efficiency may result in shorter exposure durations and/or TDI stages, resulting in better image sharpness. As the jitter and drift is measured in the percentage of the detector pixel size, binning the pixels will increase the effective pixel size and reduce the relative error, yielding sharper images, albeit at reduced image resolution.  
 
 [^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
 
