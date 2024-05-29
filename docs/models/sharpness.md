@@ -22,7 +22,7 @@ Modulation Transfer Function (MTF) is a measure of how well the input "resolutio
 
 While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. All MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
 
-While MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution. The following plot shows the Optics, Detector and the resulting Imager MTF decrease with the increasing input line frequency, as well as the Nyquist limit.
+Even though MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution. The following plot shows the Optics, Detector and the resulting Imager MTF decrease with the increasing input line frequency, as well as the Nyquist limit.
 
 ![Static MTF](images/static_mtf.png "Sample MTF plot")
 
@@ -33,6 +33,8 @@ As can be imagined, the ratio of the optics limits to the resolution compared to
 $$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
 
 It is desirable to have the Q value between 1 and 2. Below 1, the images are undersampled. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing or surface imperfections. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
+
+It should also be noted that, MTF can be defined in different directions. For example, optical imperfections may vary in tangential and sagittal directions (e.g., focus fall towards the edges of a lens) or motion blur will result in lower MTF in the direction of the motion.
 
 ## Static Contributors to the MTF
 
@@ -82,7 +84,7 @@ Some sample fabrication tolerances are given [here](https://www.telescope-optics
 
 Each detector (or a single pixel of the detector) performs spatial averaging of the irradiance, or more precisely, we integrate the irradiance with the detector responsivity, over the detector area (See [here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf) for more information). In the frequency domain this corresponds to:
 
-$$\text{MTF}(f) = \frac{\sin(\pi f p)}{\pi f p} = \text{sinc}(\pi f p)$$
+$$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
 where $p$ is equal to pixel pitch. As the frequency increases, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
 
@@ -108,7 +110,47 @@ The discussion above is valid for most usecases, where single images are generat
 
 Continuing from the example above with the 10 ms exposure duration, if we introduce a 5 stage TDI, then the imager should stay stable not only for just the 10 ms exposure duration, but also within the 50 ms total TDI column duration. The jitter and drift/smear within this total TDI column duration will also introduce a loss in sharpness.
 
-When computing the *total* MTF for the system, all the relevant contributors should be combined and must be then multiplied with the Static or Imager MTF. In practice, this means that using an excellent imager on an unstabilised platform may result in mediocre image quality. Or using a detector with better Quantum Efficiency may result in shorter exposure durations and/or TDI stages, resulting in better image sharpness. As the jitter and drift is measured in the percentage of the detector pixel size, binning the pixels will increase the effective pixel size and reduce the relative error, yielding sharper images, albeit at reduced image resolution.  
+When computing the *total* MTF for the system, all the relevant contributors should be combined and must be then multiplied with the Static or Imager MTF. Therefore all the contributors should be thought together and trade-offs will have to be considered for the overall Imaging System, including the Imager and the Platform that the Imager is mounted on. As an example, the following are some practical considerations when designing an Imaging System:
+
+- Using an excellent imager on an unstabilised platform may result in mediocre image quality.
+- Using a detector with better Quantum Efficiency (or optics with better transmission) may result in shorter exposure durations and/or TDI stages, resulting in better image sharpness.
+- As the jitter and drift is measured in the percentage of the detector pixel size, binning the pixels will increase the effective pixel size and reduce the relative error, yielding sharper images, albeit at reduced image resolution.  
+
+### Motion Blur
+
+Motion blur is caused by the relative motion between the scene and the imager during the exposure time. It is in the direction of relative motion.
+
+In some cases, the imager is looking at a static scene (no relative motion), but a target within the scene may be moving with respect to the imager. If the target is moving appreaciably during the exposure time (for example 0.1 pixels) then the target has a motion blur. In other cases, the imager may move with respect to the scene *by design*, usually in a scanning scheme. Examples could be aircraft or low altitude satellites flying over a scene. In this case, the motion blur is strictly in the scanning direction - usually in the alongtrack direction.
+
+Focussing on the latter case, where the entire scene is moving with respect to the imager, motion blur introduces its own MTF. However, as the resulting blurring is directional, so is the MTF.
+
+The MTF due to motion blur is given as:
+
+$$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
+
+only in ALT direction for sats?
+practical examples!!!
+
+--------------------------------------------------
+
+integ_time_ratio = timings.integration_duration /  (timings.frame_duration * channel.binning)
+
+a_fx = (pixel_pitch * input_line_freq / u.lp).to_reduced_units()
+
+sinc((integ_time_ratio*a_fx).m)
+
+--------------------------------------------------
+
+### Jitter
+
+practical examples!!!
+
+### Drift/Smear
+
+practical examples!!!
+
+- Yaw steering error (Single Image and TDI)
+- Frame rate error (TDI)
 
 [^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
 
