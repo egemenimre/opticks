@@ -120,24 +120,33 @@ When computing the *total* MTF for the system, all the relevant contributors sho
 
 Motion blur is caused by the relative motion between the scene and the imager during the exposure time. It is in the direction of relative motion.
 
-In some cases, the imager is looking at a static scene (no relative motion), but a target within the scene may be moving with respect to the imager. If the target is moving appreaciably during the exposure time (for example 0.1 pixels) then the target has a motion blur. In other cases, the imager may move with respect to the scene *by design*, usually in a scanning scheme. Examples could be aircraft or low altitude satellites flying over a scene. In this case, the motion blur is strictly in the scanning direction - usually in the alongtrack direction.
+In some cases, the imager is looking at a static scene (no relative motion), but a target within the scene may be moving with respect to the imager. If the target is moving appreciably during the exposure time (for example 0.1 pixels) then the target has a motion blur. In other cases, the imager may move with respect to the scene *by design*, usually in a scanning scheme. Examples could be aircraft or low altitude satellites flying over a scene. In this case, the motion blur is strictly in the scanning direction - usually in the alongtrack direction.
 
 Focussing on the latter case, where the entire scene is moving with respect to the imager, motion blur introduces its own MTF. However, as the resulting blurring is directional, so is the MTF.
 
 The MTF due to motion blur is given as:
 
-$$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
+$$\text{MTF}(f) = \frac{\sin(\pi d p f)}{\pi p f} = \text{sinc}(d p f)$$
+
+$d$ is the blur or drift, expressed in pixel ratio (e.g., 0.1 pixel drift/blur)
 
 only in ALT direction for sats?
 practical examples!!!
 
 --------------------------------------------------
 
+for the satellite pushbroom case
 integ_time_ratio = timings.integration_duration /  (timings.frame_duration * channel.binning)
+This means
 
 a_fx = (pixel_pitch * input_line_freq / u.lp).to_reduced_units()
 
-sinc((integ_time_ratio*a_fx).m)
+blur_in_pixels = integ_time_ratio
+This means that the longest blur can be one pixel (x binning) long.
+
+Another way could be angular velocity on the image = ang_vel x integ_time / ifov
+
+sinc((blur_in_pixels*a_fx).m)
 
 --------------------------------------------------
 
