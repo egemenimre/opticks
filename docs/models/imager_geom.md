@@ -26,9 +26,9 @@ Computed as:
 
 $$\frac{\pi}{4} \frac{\text{aperture diameter}^2}{\text{focal length}^2}$$
 
-## Spatial Cutoff Frequency
+## Spatial Cut-off Frequency
 
-Spatial cutoff frequency, assumes perfect incoherent optics.
+Spatial cut-off frequency, assumes perfect incoherent optics.
 
 Determines the theoretical limit of the optical resolution, or the smallest object resolvable by the optical system.
 
@@ -36,7 +36,7 @@ Computed as:
 
 $$ 1 \over {\lambda F_\#} $$
 
-in line pairs per mm.
+in cycles per mm.
 
 ## IFOV
 
