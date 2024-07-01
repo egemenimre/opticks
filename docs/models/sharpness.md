@@ -6,21 +6,21 @@ An imager "sees" a scene and reproduces it in an image. How faithfully contrast 
 
 For example, for a (theoretical) high contrast scene with a sharp "black to white" transition, the imager will likely generate an image that takes a few or several pixels to transition from pure black to a progressively lighter grey to pure white. A good imager will need less pixels for this transition, reproducing the sharp contrast more correctly.
 
-As a minimum, both the optics and the detector will play a role in determining the sharpness performance of the imager (though there are also other concerns like aliasing). The theoretical limit of the resolution is given by the [spatial cutoff frequency](imager_geom#spatial-cutoff-frequency) for the optics and [Nyquist Frequency / Limit](imager_geom#nyquist-frequency-Limit) for the detector. In reality, the quality of the optics as well as defocus (due to design, manufacturing, deformations under mechanical loads or thermo-elastic distortions) will result in a degraded MTF for the optics.
+As a minimum, both the optics and the detector will play a role in determining the sharpness performance of the imager (though there are also other concerns like aliasing). The theoretical limit of the resolution is given by the [spatial cut-off frequency](imager_geom#spatial-cutoff-frequency) for the optics and [Nyquist Frequency / Limit](imager_geom#nyquist-frequency-Limit) for the detector. In reality, the quality of the optics as well as defocus (due to design, manufacturing, deformations under mechanical loads or thermo-elastic distortions) will result in a degraded sharpness for the optics.
 
-Furthermore, the "shaking" of the imager (for example the moving platform that the imager is mounted on, cryocoolers or other vibration sources) will degrade the sharpness. The imaging duration (or integration time) may cause motion blur if there is a relative motion between the scene and the imager. Therefore, all characteristics of the entire imaging system should be considered when modelling the overall image sharpness.
+Furthermore, the "shaking" of the imager (for example the moving platform that the imager is mounted on, cryocoolers or other vibration sources) will degrade the sharpness. The imaging duration (or integration time) may cause motion blur if there is a relative motion between the scene and the imager. If the "end-to-end" sharpness needs to be estimated (for example for target identification or recognition tasks), atmospheric effects need to be considered as well. Therefore, all characteristics of the entire imaging system as well as the complete path of the light should be considered when modelling the overall image sharpness.
 
-The concept of *frequency* in this context means how "quickly" consecutive pixels/regions change in contrast. For example, for a scene with black and white strips, "low frequency" means large black and white strips, whereas "high frequency" means thin black and white strips.
+The concept of *frequency* in this context means how "quickly" consecutive pixels/regions change in contrast. For example, for a scene with black and white strips, "low frequency" means large black and white strips, whereas "high frequency" means thin black and white strips. Similar to this "square wave", the frequency can also be used for a "sine wave" change of the scene brightness in the spatial domain.
 
 This is related to the concept of resolution, as the system may resolve lower frequencies, but as the frequency gets higher (and as the strips get thinner), the system will not be able to reproduce white and black - only light grey and dark grey, and for even higher frequencies, only a constant middle grey.
 
 In practical terms, this means that a good optical system will resolve most of the detail it can theoretically resolve, whereas a bad one (low quality optics or too much vibration) will fall well short of its theoretical limits and will generate a more "muddy" image.
 
-## Modulation Transfer Function (MTF)
+## Modulation Transfer Function (MTF) and Resolution
 
-Modulation Transfer Function (MTF) is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded. Note that, MTF is defined for sine-wave targets and Contrast Transfer Function (CTF) is defined for square-wave targets. CTF is usually higher than MTF.
+Modulation Transfer Function (MTF) is defined as the response of an optical system to an "impulse". In practice, it is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded. Note that, MTF is defined for sine wave targets and Contrast Transfer Function (CTF) or Modulation Contrast Transfer (MCF) is defined for square wave targets. CTF is usually higher than MTF. From a Fourier analysis perspective, a square wave comprises an infinite number of frequencies and a sine wave is just a first order approximation with a single frequency.
 
-While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. All MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
+While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. If considering the "end-to-end MTF performance", the drop in MTF due to atmosphere should be taken into account as well. In the end, all MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
 
 Even though MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution. The following plot shows the Optics, Detector and the resulting Imager MTF decrease with the increasing input line frequency, as well as the Nyquist limit.
 
@@ -46,7 +46,7 @@ The *ideal* optical MTF for a clear circular diffraction-limited aperture with m
 
 $$\text{MTF}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
-where $f$ is the input line frequency and $f_c$ is the spatial cutoff frequency.
+where $f$ is the input line frequency and $f_c$ is the spatial cut-off frequency.
 
 This can also be written as:
 
@@ -86,7 +86,9 @@ Each detector (or a single pixel of the detector) performs spatial averaging of 
 
 $$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
-where $p$ is equal to pixel pitch. As the frequency increases, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
+where $p$ is equal to pixel pitch. Note the [normalised sinc function notation](https://en.wikipedia.org/wiki/Sinc_function) used.
+
+As the frequency increases, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
 
 ## Dynamic Contributors to the MTF
 
@@ -160,6 +162,16 @@ practical examples!!!
 
 - Yaw steering error (Single Image and TDI)
 - Frame rate error (TDI)
+
+## Atmospheric Contributors to the MTF
+
+### Atmospheric Turbulence
+
+TBW
+
+### Aeorosol
+
+TBW
 
 [^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
 
