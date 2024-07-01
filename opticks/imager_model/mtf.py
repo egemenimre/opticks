@@ -41,7 +41,7 @@ class MTF_Model:
         Parameters
         ----------
         input_line_freq : Quantity | ArrayLike[Quantity]
-            Input line frequency (in lp/mm)
+            Input line frequency (in cycles/mm)
 
         Returns
         -------
@@ -177,7 +177,7 @@ def _detector_sampling_mtf(
     Parameters
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in lp/mm)
+        Input line frequency (in cycles/mm)
     pixel_pitch : Quantity
         Pixel pitch (with or without binning)
 
@@ -187,7 +187,7 @@ def _detector_sampling_mtf(
         MTF value (usually between 0 and 1, though can be negative)
     """
 
-    # pixel pitch (um) x input line freq (lp/mm)
+    # pixel pitch (um) x input line freq (cycles/mm)
     a_fx = (pixel_pitch * input_line_freq / u.lp).to_reduced_units()
 
     # This is the alternative formulation
@@ -213,9 +213,9 @@ def _ideal_optical_mtf(
     Parameters
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in lp/mm)
+        Input line frequency (in cycles/mm)
     spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in lp/mm)
+        Spatial cutoff frequency (in cycles/mm)
 
     Returns
     -------
@@ -249,9 +249,9 @@ def _aberrated_optical_mtf(
     Parameters
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in lp/mm)
+        Input line frequency (in cycles/mm)
     spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in lp/mm)
+        Spatial cutoff frequency (in cycles/mm)
     w_rms : float | ArrayLike[float]
         RMS of the total wavefront error (in wavelengths)
 
@@ -291,9 +291,9 @@ def _aberration_transfer_factor(
     Parameters
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in lp/mm)
+        Input line frequency (in cycles/mm)
     spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in lp/mm)
+        Spatial cutoff frequency (in cycles/mm)
     w_rms : float | ArrayLike[float]
         RMS of the total wavefront error (in wavelengths)
 
@@ -316,7 +316,7 @@ def set_mtf_plot_style(
     x_max=None,
     y_min=0,
     title=None,
-    xlabel="input line freq (lp/mm)",
+    xlabel="input line freq (cycles/mm)",
     ylabel="MTF",
     height=4,
     width=8,
@@ -337,7 +337,7 @@ def set_mtf_plot_style(
     title : str, optional
         title of the plot, by default None
     xlabel : str, optional
-        x-axis label, by default "input line freq (lp/mm)"
+        x-axis label, by default "input line freq (cycles/mm)"
     ylabel : str, optional
         y-axis label, by default "MTF"
     height : int, optional

@@ -90,7 +90,7 @@ class Optics(ImagerComponent):
         Determines the theoretical limit of the optical resolution, or the smallest
         object resolvable by the optical system.
 
-        Computed as: `1/(wavelength F_nr)` in line pairs per mm
+        Computed as: `1/(wavelength F_nr)` in cycles per mm
 
         Parameters
         ----------
@@ -100,8 +100,8 @@ class Optics(ImagerComponent):
         Returns
         -------
         Quantity
-            Spatial cutoff frequency (in lp/mm)
+            Spatial cutoff frequency (in cycles/mm)
         """
-        u.define("line_pair = 1 * cycle = lp = lp")
+        u.define("cycle = 1 * cycle = cy = cy")
         # perfect incoherent optics
-        return (1.0 * u.lp) / (ref_wavelength * self.f_number).to(u.mm)
+        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm)
