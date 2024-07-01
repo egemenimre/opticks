@@ -1,14 +1,20 @@
 # Models Index
 
-ATBD-like doc
-
 ## Imager Models
 
-```{toctree} 
+```{toctree}
 ---
 maxdepth: 1
 ---
 imager_geom
 data_chain
+```
+
+## Imaging Performance Models
+
+```{toctree}
+---
+maxdepth: 1
+---
 sharpness
 ```
