@@ -13,6 +13,9 @@ from pint import UnitRegistry
 u = UnitRegistry()
 Q_ = u.Quantity
 
+# define cycles in the MTF context
+u.define("cycle = 1 * turn = cy")
+
 
 def process_paths(filepath: Path, *search_dirs: Path):
     """
