@@ -143,12 +143,10 @@ class Channel:
         Returns
         -------
         nyquist_limit: Quantity
-            Nyquist limit in lp/mm
+            Nyquist limit in cycles/mm
         """
 
-        u.define("lp = 1 * dimensionless = lp")
-
-        return 1 * u.lp / (2 * self.pixel_pitch(with_binning).to(u.mm))
+        return 1 * u.cy / (2 * self.pixel_pitch(with_binning).to(u.mm))
 
     def pixel_count_frame(self, with_binning: bool = True) -> Quantity:
         """
