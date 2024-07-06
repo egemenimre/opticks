@@ -16,7 +16,7 @@ from opticks.utils.testing_utils import assert_allclose
 class TestOptics:
 
     @pytest.fixture(scope="class")
-    def init_optics(self) -> Optics:
+    def optics(self) -> Optics:
 
         file_directory = Path("sat_pushbroom_data")
         alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
@@ -27,27 +27,24 @@ class TestOptics:
 
         return Optics.from_yaml_file(file_path)
 
-    def test_fov(self, init_optics):
+    def test_fov(self, optics):
         """Tests the full optical FoV."""
-        optics = init_optics
 
         truth = 1.7757828128191897 * u.deg
         fov = optics.full_optical_fov
 
         assert_allclose(fov, truth, atol=0.001 * u.mdeg)
 
-    def test_spatial_cutoff(self, init_optics):
+    def test_spatial_cutoff(self, optics):
         """Tests the spatial cutoff frequency."""
-        optics = init_optics
 
         # set up
-        freq = 640 * u.nm
+        ref_wavelength = 640 * u.nm
 
-        u.define("line_pair = 1 * cycle = lp = lp")
-        truth = 78.70011623401781 * u.lp / u.mm
+        truth = 78.70011623401781 * u.cy / u.mm
 
         # computation
-        cutoff_freq = optics.spatial_cutoff_freq(freq)
+        cutoff_freq = optics.spatial_cutoff_freq(ref_wavelength)
 
         # verification
-        assert_allclose(cutoff_freq, truth, atol=0.00001 * u.lp / u.mm)
+        assert_allclose(cutoff_freq, truth, atol=0.00001 * u.cy / u.mm)
