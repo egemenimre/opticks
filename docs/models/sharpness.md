@@ -10,17 +10,25 @@ As a minimum, both the optics and the detector will play a role in determining t
 
 Furthermore, the "shaking" of the imager (for example the moving platform that the imager is mounted on, cryocoolers or other vibration sources) will degrade the sharpness. The imaging duration (or integration time) may cause motion blur if there is a relative motion between the scene and the imager. If the "end-to-end" sharpness needs to be estimated (for example for target identification or recognition tasks), atmospheric effects need to be considered as well. Therefore, all characteristics of the entire imaging system as well as the complete path of the light should be considered when modelling the overall image sharpness.
 
-The concept of *frequency* in this context means how "quickly" consecutive pixels/regions change in contrast. For example, for a scene with black and white strips, "low frequency" means large black and white strips, whereas "high frequency" means thin black and white strips. Similar to this "square wave", the frequency can also be used for a "sine wave" change of the scene brightness in the spatial domain.
+The concept of *frequency* in this context means how "quickly" consecutive pixels/regions change in contrast. For example, for a scene with black and white strips, "low frequency" means large black and white strips, whereas "high frequency" means thin black and white strips. Similar to this sharp "square wave", the frequency can also be used for a smooth and continuous "sine wave" change of the scene brightness in the spatial domain. Note that, sine wave frequencies are measured in "cycles per unit width on the image plane", usually "cycles/mm". Square wave frequencies are measured in "lines or line pairs per unit width on the image plane", usually "line pairs/mm", where each line pair consists one black and one white line.
 
-This is related to the concept of resolution, as the system may resolve lower frequencies, but as the frequency gets higher (and as the strips get thinner), the system will not be able to reproduce white and black - only light grey and dark grey, and for even higher frequencies, only a constant middle grey.
+The discussion above is related to the concept of resolution - the system may resolve lower frequencies, but as the frequency gets higher (and as the strips get thinner), the system will not be able to reproduce white and black - only light grey and dark grey, and for even higher frequencies, only a constant middle grey.
 
-In practical terms, this means that a good optical system will resolve most of the detail it can theoretically resolve, whereas a bad one (low quality optics or too much vibration) will fall well short of its theoretical limits and will generate a more "muddy" image.
+In practical terms, this means that a good optical system will resolve most of the detail it can theoretically resolve, whereas a bad one (for example with low quality optics or too much vibration) will fall well short of its theoretical limits and will generate a more "muddy" image.
 
-## Modulation Transfer Function (MTF) and Resolution
+## Modulation Transfer Function (MTF) and Modulation Contrast Function (MCF)
 
-Modulation Transfer Function (MTF) is defined as the response of an optical system to an "impulse". In practice, it is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded. Note that, MTF is defined for sine wave targets and Contrast Transfer Function (CTF) or Modulation Contrast Transfer (MCF) is defined for square wave targets. CTF is usually higher than MTF. From a Fourier analysis perspective, a square wave comprises an infinite number of frequencies and a sine wave is just a first order approximation with a single frequency.
+Modulation Transfer Function (MTF) is essentially how well the optical system converts the spatial modulation of the target object into the spatial modulation of the "image object". In practice, it is a measure of how well the input "resolution" or spatial detail information is transferred through an element of the imager system. In other words, it is a measure of how much an input data of a given frequency (or level of detail) is degraded.
 
-While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. If considering the "end-to-end MTF performance", the drop in MTF due to atmosphere should be taken into account as well. In the end, all MTF contributors are combined to generate the system MTF, representing how well the input frequency be reproduced in the final image. 100% MTF would mean that the scene would be perfectly reproduced in the image.
+Modulation Contrast Function (MCF) is similar, as it is essentially how well the optical system converts the target object contrast into image object contrast.
+
+Both can be measured with sine wave or square wave targets. For a sine wave target (or sine wave response), MCF is equal to MTF. However, for a square wave target (or square wave response), MTF is close to, but not equal to MCF. For square wave response, the MCF is usually higher than MTF. From a Fourier analysis perspective, a square wave comprises an infinite number of frequencies and a sine wave is just a first order approximation with a single frequency.[^3]
+
+This means that, for a sine wave input, the image contrast can be easily computed multiplying the MTF and the object contrast in the scene, or rather the Modulation Contrast of the Object (MCO). MCO depends on the object irradiance with respect to the background. Depending on the wavelength, the primary source of object irradiance can be reflectance or emittance.
+
+While the equations will be given in the following sections, a couple of general remarks regarding the MTF of an optical system are due here. First and foremost, for an ideal optical system, a larger aperture will result in a better MTF. A smaller aperture will diffract the light more and will result in a lower image quality. This also means that, for an optical system with larger aperture, the PSF will be narrower. The second point is that, the optical MTF depends on the wavelength. As wavelength increases, the MTF for the same (ideal) optical system decreases and usually a larger aperture area is needed to compensate. For example, an ideal optical system for SWIR or LWIR will require a larger aperture (and overall a larger optical system) than an equivalent visible range optical system to get a similar level of resolution.
+
+While MTF can be defined for just the optics and the detector of an imager in a narrow sense, other factors such as vibrations (usually called jitter) can be modelled as an MTF contributor. If considering the "end-to-end MTF performance", the drop in MTF due to atmosphere should be taken into account as well. In the end, depending on the definition or scope of the "system MTF", all MTF contributors are (as long as they are independent) simply multiplied to generate the system MTF, representing how well the input frequency be reproduced in the final image.
 
 Even though MTF can be evaluated as a single value for a single input line frequency, it is more useful to evaluate it as the plot of possible line frequencies, starting from low frequencies (usually corresponding to high MTF values) to higher frequencies (usually with decreasing MTF values), all the way to the Nyquist limit of the detector, which sets the practical limit of the resolution. The following plot shows the Optics, Detector and the resulting Imager MTF decrease with the increasing input line frequency, as well as the Nyquist limit.
 
@@ -46,7 +54,7 @@ The *ideal* optical MTF for a clear circular diffraction-limited aperture with m
 
 $$\text{MTF}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
-where $f$ is the input line frequency and $f_c$ is the spatial cut-off frequency.
+where $f$ is the input line frequency and $f_c$ is the [spatial cut-off frequency](imager_geom/#spatial-cut-off-frequency), which is a inversely proportional to the wavelength.
 
 This can also be written as:
 
@@ -62,6 +70,8 @@ where $\psi$ is equal to $\arccos(\nu)$.
 
 The MTF value (or the curve) is wavelength dependent. The optical MTF is usually expressed either as multiple curves for each wavelength within the limits of the imager (for example red, green and blue for a colour imager) or as a single curve with the weighted average of multiple curves.
 
+If there is an obstruction in front of the aperture (such as the secondary mirrors in most reflecting telescopes), the MTF curve is affected. It lowers the MTF in lower frequencies and increases it in the higher frequencies.
+
 The real optical MTF will be lower than this value, due to real world design limitations, materials, manufacturing, integration as well as mechanical and thermal loads. This is usually simulated in a software like Zemax and eventually measured in the lab.
 
 #### Aberration Transfer Factor (ATF) and Aberrated Optical MTF
@@ -76,7 +86,7 @@ All aberration sources are (RMS) summed and then the resulting wavelength error 
 
 $$\text{MTF}_{true}(f) = \text{MTF}_{ideal}(f) \times \text{ATF}(f) $$  
 
-Multiplying the ATF value with the ideal optical MTF, we can reach the more realistic MTF with the aberrations. As the $W_{RMS}$ value increases, the ATF value decreases and the resulting MTF also decreases, corresponding to a degradation in image quality.
+Multiplying the ATF value with the ideal optical MTF, we can reach a more realistic MTF with the aberrations. As the $W_{RMS}$ value increases, the ATF value decreases and the resulting MTF also decreases, corresponding to a degradation in image quality.
 
 Some sample fabrication tolerances are given [here](https://www.telescope-optics.net/fabrication.htm). For example, surface roughness for Commercial Optics can be a single wavelength (Peak-to-Valley), whereas for Precision Optics it could be about quarter of a wavelength and for High Precision Optics it could be as low as 5% of a wavelength. Satellite imagers would also be as high as 5% of a wavelength.
 
@@ -88,7 +98,7 @@ $$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
 where $p$ is equal to pixel pitch. Note the [normalised sinc function notation](https://en.wikipedia.org/wiki/Sinc_function) used.
 
-As the frequency increases, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
+As the frequency increases, and the wave periods become comparable to the detector pixel size, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
 
 ## Dynamic Contributors to the MTF
 
