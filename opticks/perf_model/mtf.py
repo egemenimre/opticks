@@ -172,8 +172,8 @@ class MTF_Model:
         """
         Jitter MTF model (for the given input line frequency).
 
-        The `jitter_stdev` valıe is defined as the 1 sigma value of the jitter amplitude,
-        defined in pixels (e.g. 10% of the pixel).
+        The `jitter_stdev` valıe is defined as the 1 sigma value of the jitter
+        amplitude, defined in pixels (e.g. 10% of the pixel).
 
         Jitter is defined with respect to the relevant frequency of the imaging problem.
         For example an imaging system with a 10 msec integration time will have the
