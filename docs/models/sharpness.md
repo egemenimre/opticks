@@ -52,19 +52,19 @@ It should also be noted that, MTF can be defined in different directions. For ex
 
 The *ideal* optical MTF for a clear circular diffraction-limited aperture with monochromatic illumination is given as[^2]:
 
-$$\text{MTF}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
+$$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
 where $f$ is the input line frequency and $f_c$ is the [spatial cut-off frequency](imager_geom/#spatial-cut-off-frequency), which is a inversely proportional to the wavelength.
 
 This can also be written as:
 
-$$\text{MTF}(f) = \frac{2}{\pi} \left[ \arccos(\nu) - \nu \sqrt{1- (\nu)^2} \right]$$
+$$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos(\nu) - \nu \sqrt{1- (\nu)^2} \right]$$
 
 where $\nu =\left( \frac{f}{f_c} \right) $.
 
 An alternative formulation is:
 
-$$\text{MTF}(f) = \frac{2}{\pi} \left[ \psi - \cos(\psi) \sin(\psi) \right]$$
+$$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \psi - \cos(\psi) \sin(\psi) \right]$$
 
 where $\psi$ is equal to $\arccos(\nu)$.
 
@@ -84,7 +84,7 @@ where $W_{RMS}$ is the RMS of the total wavefront error, or how much the actual 
 
 All aberration sources are (RMS) summed and then the resulting wavelength error can be inserted in the ATF to compute the total ATF of the optical system.
 
-$$\text{MTF}_{true}(f) = \text{MTF}_{ideal}(f) \times \text{ATF}(f) $$  
+$$\text{MTF}_\text{aberr opt}(f) = \text{MTF}_\text{ideal opt}(f) \times \text{ATF}(f) $$  
 
 Multiplying the ATF value with the ideal optical MTF, we can reach a more realistic MTF with the aberrations. As the $W_{RMS}$ value increases, the ATF value decreases and the resulting MTF also decreases, corresponding to a degradation in image quality.
 
@@ -94,11 +94,15 @@ Some sample fabrication tolerances are given [here](https://www.telescope-optics
 
 Each detector (or a single pixel of the detector) performs spatial averaging of the irradiance, or more precisely, we integrate the irradiance with the detector responsivity, over the detector area (See [here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf) for more information). In the frequency domain this corresponds to:
 
-$$\text{MTF}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
+$$\text{MTF}_\text{detector}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
 where $p$ is equal to pixel pitch. Note the [normalised sinc function notation](https://en.wikipedia.org/wiki/Sinc_function) used.
 
 As the frequency increases, and the wave periods become comparable to the detector pixel size, the pixels cannot represent the sine wave properly and there is a reduction in modulation. At a line frequency corresponding to the inverse of the pixel pitch, modulation goes down to zero, as the input sine wave is completely inside the pixel pitch. Even higher input frequencies will then be completely undersampled. This results in contrast reversal and MTF values will be negative.
+
+### Diffusion MTF
+
+Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach
 
 ## Dynamic Contributors to the MTF
 
@@ -106,11 +110,11 @@ Dynamic MTF is the broad name given to multiple sources of image sharpness loss,
 
 Depending on the imaging setting, one or more of the following sources can be present:
 
-- Motion blur: Relative motion between the imager and the scene *during the exposure duration*, causing a smear on the image.
 - Jitter: High frequency random imager shake *during the exposure duration*, causing a blur on the image.
+- Motion blur: Relative motion between the imager and the scene *during the exposure duration*, causing a smear on the image.
 - Drift/smear: Directional imager drift *during the exposure duration*, causing a smear on the image.
 
-Motion blur is prominent in satellite imagers at Low Earth Orbit (as opposed to Geosynchronous Orbit) and aircraft, both of which fly over the target. Jitter is prominent in all imagers attached to equipment that generates high frequency vibration sources, such as engines in aircraft or reaction wheels in satellites. Cryocoolers with pistons also introduce vibrations close to the detector. Drift/smear is prominent in imagers that are not physically fixed to a stable platform and/or with relatively long exposures where the slow shaking of the imaging platform becomes visible.
+Jitter is prominent in all imagers attached to equipment that generates high frequency vibration sources, such as engines in aircraft or reaction wheels in satellites. Cryocoolers with pistons also introduce vibrations close to the detector. Motion blur is prominent in satellite imagers at Low Earth Orbit (as opposed to Geosynchronous Orbit) and aircraft, both of which fly over the target. Drift/smear is prominent in imagers that are not physically fixed to a stable platform and/or with relatively long exposures where the slow shaking of the imaging platform becomes visible.
 
 The common theme in all these sources is the exposure duration. Generally speaking, vibration sources with a period much shorter than (or a frequency higher than) the exposure duration are called jitter and they cause random artefacts such as blurring. The detector pixel captures information from around neighbouring areas in all directions, rather than the area corresponding to what the pixel would normally "see". Vibration sources with a frequency close to exposure duration cannot complete multiple cycles (or even a single cycle) during the exposure duration, therefore they cause a drift/smear in the direction they apply. The vibration sources with periods much longer than the exposure duration have no significant impact on the sharpness (or MTF).
 
@@ -128,6 +132,30 @@ When computing the *total* MTF for the system, all the relevant contributors sho
 - Using a detector with better Quantum Efficiency (or optics with better transmission) may result in shorter exposure durations and/or TDI stages, resulting in better image sharpness.
 - As the jitter and drift is measured in the percentage of the detector pixel size, binning the pixels will increase the effective pixel size and reduce the relative error, yielding sharper images, albeit at reduced image resolution.  
 
+### Jitter
+
+Jitter is due to the high frequency "shaking" of the imager (or more specifically, the line of sight (LoS) vectors), at a frequency that is higher than that of the imaging. It is usually caused by the shaking of the imaging platform (e.g. the aircraft or the ground vehicle that carries the imager) or the mechanical cooling system of the detector where present. The shaking usually involves multiple frequencies and multiple phases, therefore the combined effect can be modelled as a Gaussian variation of all LoS vectors at the same time, and in both horizontal and vertical directions. As this introduces irradiance into a pixel from neighbouring areas, this effect manifests itself as a blur (or a reduction in MTF) on the image. As mentioned above, the shorter the imaging or exposure duration, the higher the frequency that causes blurring and therefore the smaller the effects of jitter.
+
+The jitter MTF is computed as a Gaussian of the form (from [^2] Vol 4 pg 69 eqn 2.6):
+
+$$\text{MTF}_\text{jitter}(f) = exp(-2 (\pi  j_{LoS} f)^2)$$
+
+where $j_{LoS}$ is the standard deviation (or 1 sigma) of the jitter amplitude (in the angular sense)) and $f$ is the input line frequency.
+
+This equation can be written in terms of jitter as distance on the image plane (in pixels):
+
+$$\text{MTF}_\text{jitter}(f) = exp(-2 (\pi  (j_{pix} p) f)^2)$$
+
+where $j_{pix}$ is the standard deviation (or 1 sigma) of the jitter amplitude (as percentage of the pixel), $p$ is the pixel pitch and $f$ is the input line frequency.s
+
+When multiple images are combined (as in TDI), then not only the blurring in the individual images that make up the final image is important, but also the motion during the combination of multiple images. Even if we have extremely short duration (and therefore sharp) images of the same scene, if the images are taken over a duration where jitter effects are significant, then some blurring will be introduced when all the images are combined.
+
+*********************************
+
+???? Therefore, the jitter MTF of the individual images, as well as the total combined jitter MTF should be computed in this case. ????
+
+**********************************
+
 ### Motion Blur
 
 Motion blur is caused by the relative motion between the scene and the imager during the exposure time. It is in the direction of relative motion.
@@ -138,7 +166,7 @@ Focussing on the latter case, where the entire scene is moving with respect to t
 
 The MTF due to motion blur is given as:
 
-$$\text{MTF}(f) = \frac{\sin(\pi d p f)}{\pi p f} = \text{sinc}(d p f)$$
+$$\text{MTF}_\text{mot blur}(f) = \frac{\sin(\pi d p f)}{\pi p f} = \text{sinc}(d p f)$$
 
 $d$ is the blur or drift, expressed in pixel ratio (e.g., 0.1 pixel drift/blur)
 
@@ -162,16 +190,38 @@ sinc((blur_in_pixels*a_fx).m)
 
 --------------------------------------------------
 
-### Jitter
-
-practical examples!!!
-
 ### Drift/Smear
 
 practical examples!!!
 
-- Yaw steering error (Single Image and TDI)
-- Frame rate error (TDI)
+- Yaw steering error (Single Image)
+
+### Combining Multiple Images: The Effect of Time Delay and Integration (TDI)
+
+In imaging, multiple acquisitions (usually taken in quick succession) are often combined at the detector level to increase the Signal-to-Noise Ratio (SNR). Specifically, TDI is a common technique, where a line detector (with multiple lines) sweep over the target in the along-track direction and successive lines of the detector image the same area. If 8 lines are used to acquire 8 images, this is called an 8-stage TDI system. However, the combination of these images or acquisitions should be an exact geometric match, otherwise smearing will occur. This requires that:
+
+- for a multiple full frame or line scanning TDI, the relative image geometry should not change, therefore no relative rotation
+- for a line scanning TDI, the timing should be exactly matching the relative motion in the along-track direction, such that the successive lines image exactly the same location
+
+Clearly, neither is fully possible in a real system. For the former, any relative *rotation rate* in along-track and across-track direction will manifest itself as a drift/smear in the respective directions for all pixels in the detector line. However, a small fixed rotation in along-track or across-track directions act as biases and do not introduce any smear during the multiple image acquisitions. On the other hand, if there is a *fixed rotation* around the detector normal, then the smear will be a combination of the along-track and across-track components. The higher the number of acquisitions (or TDI stages) combined, the longer the smearing. For example, for an 8 stage TDI, the smearing may be limited to 10% of the pixel size, whereas for a 64 stage TDI the smearing will span an entire pixel and half of the data will have been acquired from the "neighbouring" area. For example, a common occurrence with the satellites is a fixed yaw-steering error, where the satellite yaws to compensate for the rotation of the Earth. In some cases this yaw angle is not precise enough, introducing a rotation with respect to the along-track direction. And in all cases the yaw angle can be optimised for a single pixel only (usually the centre pixel), resulting in a "residual yaw steering error", increasing for the pixels towards the edges.
+
+The latter can be called a "Speed Ratio" error, where the imaging Frame Rate or Line Rate does not match the relative motion exactly. For example, for a satellite or an aircraft with a line scanner overflying a target, the line rate should match the ground speed. If the ground speed is 7000 m/s for a satellite with a Ground Sampling Distance of 7 m, then the Line Rate should be exactly 1 ms. Any mismatch will manifest itself as an along-track smearing on the image. As with the rotation problem above, the larger the number of images acquired (or TDI stages), the longer is the smear.
+
+The equations are similar to the Drift/Smear above, but the time scale is the entire image acquisition (or the total TDI column duration), rather than the integration or exposure duration.
+
+epsilon = arctan(blur ypix / (N x pix))
+
+Speed ratio = 1 + blur xpix / (N x pix)
+
+To summarise, the following effects will introduce a smear for a multiple image acquisition case:
+
+- Relative rotation rate between the imager and the target
+- A fixed rotation between the along-track direction and the detector lines
+- A mismatch in the relative motion and the image acquisition rate
+
+It should be noted that, depending on the problem and the relative geometry, some pixels may experience more smear than others (for example "residual yaw steering error").
+
+Finally, if some of the images are more blurry than others (for example due to jitter varying between images), then the combined image will have the average blur of all images.
 
 ## Atmospheric Contributors to the MTF
 
