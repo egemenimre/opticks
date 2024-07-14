@@ -150,8 +150,8 @@ class MTF_Model:
 
         Returns
         -------
-        Quantity
-            MTF value (usually between 0 and 1, though can be negative)
+        MTF_Model
+            MTF model
         """
 
         # set the id
@@ -163,41 +163,44 @@ class MTF_Model:
 
         return MTF_Model(id, value_func)
 
+    @staticmethod
+    @u.check("[length]", None)
+    def jitter(
+        pixel_pitch: Quantity,
+        jitter_stdev: float,
+    ) -> "MTF_Model":
+        """
+        Jitter MTF model (for the given input line frequency).
 
-@u.check(None, "[length]")
-def _detector_sampling_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], pixel_pitch: Quantity
-) -> float | NDArray[np.float64]:
-    """
-    Detector sampling MTF for the given input line frequency.
+        The `jitter_stdev` valıe is defined as the 1 sigma value of the jitter amplitude,
+        defined in pixels (e.g. 10% of the pixel).
 
-    MTF value is usually between 0 and 1, though contrast reversal
-    may result in negative values.
+        Jitter is defined with respect to the relevant frequency of the imaging problem.
+        For example an imaging system with a 10 msec integration time will have the
+        disturbances at about 100 Hz or higher registered as jitter. Slower ones will be
+        classified as drift/smear.
 
-    Parameters
-    ----------
-    input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in cycles/mm)
-    pixel_pitch : Quantity
-        Pixel pitch (with or without binning)
+        Parameters
+        ----------
+        pixel_pitch : Quantity
+            Pixel pitch (with or without binning)
+        jitter_stdev : float
+            Standard deviation of the jitter value in pixels
 
-    Returns
-    -------
-    Quantity
-        MTF value (usually between 0 and 1, though can be negative)
-    """
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
 
-    # pixel pitch (um) x input line freq (cycles/mm)
-    a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
+        # set the id
+        id = f"Detector MTF with pixel pitch {pixel_pitch:~P}"
 
-    # This is the alternative formulation
-    # a_fx = (input_line_freq / self.nyquist_freq).to_reduced_units()/2
+        # set the value function (with the fixed pixel pitch)
+        def value_func(input_line_freq):
+            return _jitter_mtf(input_line_freq, pixel_pitch, jitter_stdev)
 
-    # This is the alternative formulation (negative values possible)
-    # return np.sin(np.pi * a_fx) / (np.pi * a_fx)
-
-    # sinc does not receive Quantity input.
-    return np.sinc(a_fx.m)
+        return MTF_Model(id, value_func)
 
 
 def _ideal_optical_mtf(
@@ -308,6 +311,81 @@ def _aberration_transfer_factor(
 
     # return ATF
     return (1 - (w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2)).m
+
+
+@u.check(None, "[length]")
+def _detector_sampling_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity], pixel_pitch: Quantity
+) -> float | NDArray[np.float64]:
+    """
+    Detector sampling MTF for the given input line frequency.
+
+    MTF value is usually between 0 and 1, though contrast reversal
+    may result in negative values.
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in cycles/mm)
+    pixel_pitch : Quantity
+        Pixel pitch (with or without binning)
+
+    Returns
+    -------
+    Quantity
+        MTF value (usually between 0 and 1, though can be negative)
+    """
+
+    # pixel pitch (um) x input line freq (cycles/mm)
+    a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
+
+    # This is the alternative formulation
+    # a_fx = (input_line_freq / self.nyquist_freq).to_reduced_units()/2
+
+    # This is the alternative formulation (negative values possible)
+    # return np.sin(np.pi * a_fx) / (np.pi * a_fx)
+
+    # sinc does not receive Quantity input.
+    return np.sinc(a_fx.m)
+
+
+def _jitter_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity],
+    pixel_pitch: Quantity,
+    jitter_stdev: float,
+) -> float | NDArray[np.float64]:
+    """
+    Jitter MTF for the given input line frequency.
+
+    The `jitter_stdev` value is defined as the 1 sigma value of the jitter amplitude,
+    defined in pixels (e.g. 10% of the pixel).
+
+    Jitter is defined with respect to the relevant frequency of the imaging problem.
+    For example an imaging system with a 10 msec integration time will have the
+    disturbances at about 100 Hz or higher registered as jitter. Slower ones will be
+    classified as drift/smear.
+
+    Returns the MTF value between 0 and 1.
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in cycles/mm)
+    pixel_pitch : Quantity
+        Pixel pitch (with or without binning)
+    jitter_stdev : float
+        Standard deviation of the jitter value in pixels
+
+    Returns
+    -------
+    Quantity
+        MTF value between 0 and 1
+    """
+
+    # pixel pitch (um) x input line freq (cycles/mm)
+    a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
+
+    return np.exp(-2 * ((np.pi * jitter_stdev * a_fx) ** 2))
 
 
 def set_mtf_plot_style(
