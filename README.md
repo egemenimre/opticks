@@ -1,4 +1,5 @@
 # opticks
+
 [![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
 Notes and models on optical sizing.
@@ -12,8 +13,6 @@ The documentation for opticks is here: <https://opticks.readthedocs.io/>
 - NumPy and SciPy are used for the underlying mathematical algorithms
 - [Pint](https://github.com/hgrecco/pint) provides units and quantity support.
 - [Strictyaml](https://github.com/crdoconnor/strictyaml) provides YAML read/write support.
-- [marimo](https://github.com/marimo-team/marimo) for notebooks and examples
-
 
 ## Licence
 
