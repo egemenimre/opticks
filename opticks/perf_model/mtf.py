@@ -310,7 +310,7 @@ def _aberration_transfer_factor(
     nu = input_line_freq / spatial_cutoff_freq
 
     # return ATF
-    return (1 - (w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2)).m
+    return (1 - ((w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2))).m
 
 
 @u.check(None, "[length]")
