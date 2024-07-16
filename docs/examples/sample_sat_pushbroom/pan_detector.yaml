@@ -18,6 +18,8 @@ channels:
     vertical_pixels: 1
     binning: 1
     tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+    cuton_freq: 480 nm
+    cutoff_freq: 820 nm
 
 #  full_well_capacity = XX * u.e
 

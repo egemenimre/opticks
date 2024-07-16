@@ -21,6 +21,8 @@ channel_schema = {
     Optional("binning", default=1): Int(),
     # TDI ignored for full frame detectors
     Optional("tdi_stages", default=1): Int(),
+    "cuton_freq": Qty(),
+    "cutoff_freq": Qty(),
 }
 """Schema containing per-channel parameters."""
 
@@ -290,6 +292,38 @@ class Channel:
             raise ValueError(f"Invalid detector type: {self._detector_type}")
 
         return pix_read_rate.to("Mpixel/s")
+
+    @property
+    def centre_freq(self) -> Quantity:
+        """
+        Computes the centre frequency of the channel.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Quantity
+            Centre frequency of the channel
+        """
+
+        return (self.cuton_freq + self.cutoff_freq) * 0.5
+
+    @property
+    def bandwidth(self) -> Quantity:
+        """
+        Computes the bandwidth of the channel.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Quantity
+            Bandwidth of the channel
+        """
+
+        return np.abs(self.cutoff_freq - self.cuton_freq)
 
 
 class Detector(ImagerComponent):
