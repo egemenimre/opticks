@@ -198,30 +198,43 @@ practical examples!!!
 
 ### Combining Multiple Images: The Effect of Time Delay and Integration (TDI)
 
-In imaging, multiple acquisitions (usually taken in quick succession) are often combined at the detector level to increase the Signal-to-Noise Ratio (SNR). Specifically, TDI is a common technique, where a line detector (with multiple lines) sweep over the target in the along-track direction and successive lines of the detector image the same area. If 8 lines are used to acquire 8 images, this is called an 8-stage TDI system. However, the combination of these images or acquisitions should be an exact geometric match, otherwise smearing will occur. This requires that:
+In imaging, multiple acquisitions (usually taken in quick succession) are often combined at the detector level to increase the Signal-to-Noise Ratio (SNR). Specifically, TDI is a common technique, where a line detector (with multiple lines) sweep over the target in the along-track direction and successive lines of the detector image the same area. If 8 lines are used to acquire 8 images of the same area, this is called an 8-stage TDI system. However, the combination of these images or acquisitions should be an exact geometric match, otherwise smearing will occur. This requires that:
 
-- for a multiple full frame or line scanning TDI, the relative image geometry should not change, therefore no relative rotation
+- for a multiple full frame, the relative image geometry should not change, therefore no relative velocity or rotation rate of the scene or target
+- for a line scanning TDI, the relative image geometry should not change, therefore no relative velocity, rotation rate or around boresight rotation of the scene or target
 - for a line scanning TDI, the timing should be exactly matching the relative motion in the along-track direction, such that the successive lines image exactly the same location
 
-Clearly, neither is fully possible in a real system. For the former, any relative *rotation rate* in along-track and across-track direction will manifest itself as a drift/smear in the respective directions for all pixels in the detector line. However, a small fixed rotation in along-track or across-track directions act as biases and do not introduce any smear during the multiple image acquisitions. On the other hand, if there is a *fixed rotation* around the detector normal, then the smear will be a combination of the along-track and across-track components. The higher the number of acquisitions (or TDI stages) combined, the longer the smearing. For example, for an 8 stage TDI, the smearing may be limited to 10% of the pixel size, whereas for a 64 stage TDI the smearing will span an entire pixel and half of the data will have been acquired from the "neighbouring" area. For example, a common occurrence with the satellites is a fixed yaw-steering error, where the satellite yaws to compensate for the rotation of the Earth. In some cases this yaw angle is not precise enough, introducing a rotation with respect to the along-track direction. And in all cases the yaw angle can be optimised for a single pixel only (usually the centre pixel), resulting in a "residual yaw steering error", increasing for the pixels towards the edges.
+Clearly, these are not fully possible in a real system. For the first and the second, any relative *rotation rate* in along-track and across-track direction will manifest itself as a drift/smear in the respective directions for all pixels in the detector line. However, a small fixed rotation in along-track or across-track directions act as biases and do not introduce any smear during the multiple image acquisitions. On the other hand, if there is a *fixed rotation* around the detector normal, then the smear will be a combination of the along-track and across-track components. The higher the number of acquisitions (or TDI stages) combined, the longer the smearing. For example, for an 8 stage TDI, the smearing may be limited to 10% of the pixel size, whereas for a 64 stage TDI the smearing will span an entire pixel, and half of the data will have been acquired from the "neighbouring" area. For example, a common occurrence with the satellites is a fixed yaw-steering error, where the satellite yaws to compensate for the rotation of the Earth. In some cases this yaw angle is not precise enough, introducing a rotation with respect to the along-track direction. And in all cases the yaw angle can be optimised for a single pixel only (usually the centre pixel), resulting in a "residual yaw steering error", increasing for the pixels towards the edges.
 
-The latter can be called a "Speed Ratio" error, where the imaging Frame Rate or Line Rate does not match the relative motion exactly. For example, for a satellite or an aircraft with a line scanner overflying a target, the line rate should match the ground speed. If the ground speed is 7000 m/s for a satellite with a Ground Sampling Distance of 7 m, then the Line Rate should be exactly 1 ms. Any mismatch will manifest itself as an along-track smearing on the image. As with the rotation problem above, the larger the number of images acquired (or TDI stages), the longer is the smear.
+The latter can be called a "Speed Mismatch" error, where the imaging Frame Rate or Line Rate does not match the relative along-track motion exactly. For example, for a satellite or an aircraft with a line scanner overflying a target, the line rate should match the ground speed. If the ground speed is 7000 m/s for a satellite with a Ground Sampling Distance of 7 m, then the Line Rate should be exactly 1 ms. Any mismatch will manifest itself as an along-track smearing on the image. As with the rotation problem above, the larger the number of images acquired (or TDI stages), the longer is the smear.
 
-The equations are similar to the Drift/Smear above, but the time scale is the entire image acquisition (or the total TDI column duration), rather than the integration or exposure duration.
+For this section we will assume that the x-axis on the detector is aligned with the along-track direction and y-axis aligned with the across-track direction. An $\epsilon$ rotation the boresight axis (or z-axis on the detector) results in a $\delta y$ pixel smear in the y-axis. $N$ is the number of TDI stages (or the number of x-axis pixels accumulated during TDI).
 
-epsilon = arctan(blur ypix / (N x pix))
+$$ \delta y = \tan(\epsilon) \times N $$
 
-Speed ratio = 1 + blur xpix / (N x pix)
+The smear due to Speed Mismatch Error is simply given as:
 
-To summarise, the following effects will introduce a smear for a multiple image acquisition case:
+$$ \delta x = \text{SME} \times N $$
 
-- Relative rotation rate between the imager and the target
-- A fixed rotation between the along-track direction and the detector lines
-- A mismatch in the relative motion and the image acquisition rate
+where $\delta x$ is the blur in the along-track direction due to Speed Mismatch. If the line rate is 10% higher or lower than what it should be, then at each line the target area moves 10% of a spatial sampling distance, eventually advancing by the equivalent of half a pixel ($\delta x$) at 5 stages ($N$).
 
 It should be noted that, depending on the problem and the relative geometry, some pixels may experience more smear than others (for example "residual yaw steering error").
 
-Finally, if some of the images are more blurry than others (for example due to jitter varying between images), then the combined image will have the average blur of all images.
+The drift/smear is more due to more systematic (and slower) errors and manifests itself as a linear smear on the image. However, any vibration that has a higher frequency than the total frequency of the TDI column will result in random "jumps" of the target area in successive images, introducing a blurring in the combined images.
+
+Once the drift/smear due to TDI is quantified, the MTF equations are similar to the Drift/Smear previous sections. The jitter MTF due to TDI also uses an equation similar to the Jitter in the previous sections.  
+
+Another important point to note is that, the time scale is the entire image acquisition (or the total TDI column duration), rather than the integration or exposure duration. Therefore, jitter and drift/smear disturbances for the TDI column are different than those for a single image acquisition. For example, consider a satellite pushbroom imager that uses a 0.5 ms exposure time, 1 ms line rate and 10 TDI stages. A 100 pix/s rotation rate that drifts the image in the across-track direction can introduce a 0.05 pixel smear in a single image, but over the entire 10 ms TDI duration, the overall smear is equal to 1 pixel. Similarly, the jitter over 0.5 ms will be much smaller than the jitter over 10 ms. Consequently, in addition to the blurriness of single acquisition images, the combined image will introduce another "layer" of blurriness.
+
+To summarise, the following effects will introduce a smear for a multiple image acquisition case:
+
+- Relative rotation rate between the imager and the target (such as an attitude rate control error)
+- A fixed rotation between the along-track direction and the detector lines (such as a yaw steering error or residual yaw steering error on a satellite)
+- A mismatch between the relative motion and the image acquisition rate
+
+Furthermore, "TDI jitter" will introduce a random blurring.
+
+Finally, if some of the images are more blurry than others (for example due to "single image jitter" varying between images), then the combined image will have the average blur of all images.
 
 ## Atmospheric Contributors to the MTF
 
