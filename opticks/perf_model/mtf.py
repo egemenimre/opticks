@@ -10,6 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 from pint import Quantity
+from scipy.interpolate import Akima1DInterpolator
 
 from opticks import u
 from opticks.imager_model.optics import Optics
@@ -54,12 +55,50 @@ class MTF_Model:
         return self.id
 
     @staticmethod
+    def external_data(
+        freq_values: np.ndarray[Quantity], mtf_values: np.ndarray[np.float64]
+    ) -> "MTF_Model":
+        """
+        MTF Model from an external data.
+
+        This model is mainly to ingest actual measurements or the results
+        from complex simulations (such as Zemax).
+
+        Uses the scipy 'Akima1DInterpolator' (modified Akima) in the background.
+
+
+        Parameters
+        ----------
+        freq_data : ArrayLike[Quantity]
+            List of spatial frequencies (in cy/mm or lp/mm)
+        spatial_freqs : ArrayLike[np.float64]
+            List of corresponding MTF values (should be less than or equal to 1)
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+
+        # set the id
+        id = "External MTF Data"
+
+        # prepare interpolator
+        interpolator = Akima1DInterpolator(freq_values, mtf_values, method="makima")
+
+        # set the value function (with the interpolator)
+        def value_func(input_line_freq):
+            return _external_data_mtf(input_line_freq, interpolator)
+
+        return MTF_Model(id, value_func)
+
+    @staticmethod
     @u.check("[length]", None)
     def ideal_optics(
         wavelength: Quantity | np.ndarray[Quantity], optics: Optics
     ) -> "MTF_Model":
         """
-        Ideal optical MTF model (for the given input line frequency).
+        Ideal optical MTF model.
 
         Assumes uniformly illuminated circular aperture, no significant aberrations.
 
@@ -96,7 +135,7 @@ class MTF_Model:
         optics: Optics,
     ) -> "MTF_Model":
         """
-        Aberrated optical MTF model (for the given input line frequency).
+        Aberrated optical MTF model.
 
         Uses an empirical model for the optical aberrations, such that:
         MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
@@ -138,7 +177,7 @@ class MTF_Model:
     @u.check("[length]")
     def detector_sampling(pixel_pitch: Quantity) -> "MTF_Model":
         """
-        Detector sampling MTF model (for the given input line frequency).
+        Detector sampling MTF model.
 
         MTF value is usually between 0 and 1, though contrast reversal
         may result in negative values.
@@ -170,7 +209,7 @@ class MTF_Model:
         jitter_stdev: float,
     ) -> "MTF_Model":
         """
-        Jitter MTF model (for the given input line frequency).
+        Jitter MTF model.
 
         The `jitter_stdev` valıe is defined as the 1 sigma value of the jitter
         amplitude, defined in pixels (e.g. 10% of the pixel).
@@ -201,6 +240,29 @@ class MTF_Model:
             return _jitter_mtf(input_line_freq, pixel_pitch, jitter_stdev)
 
         return MTF_Model(id, value_func)
+
+
+def _external_data_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity], interpolator: Akima1DInterpolator
+) -> float | NDArray[np.float64]:
+    """
+    Interpolated MTF data for the given input line frequency.
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in cycles/mm)
+    interpolator: Akima1DInterpolator
+        Interpolator
+
+    Returns
+    -------
+    Quantity
+        MTF value between 0 and 1
+    """
+
+    # Return the interpolated value
+    return interpolator(input_line_freq)
 
 
 def _ideal_optical_mtf(
