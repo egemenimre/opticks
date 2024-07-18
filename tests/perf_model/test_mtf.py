@@ -109,11 +109,29 @@ class TestMTF:
         # check values
         truth = 0.7679273089188128
 
-        # select the first channel
-        channel: Channel = next(iter(detector.params.channels.all.values()))
+        # select the pan channel
+        channel: Channel = detector.params.channels.pan
 
         # Generate the MTF model and values
         mtf_model = MTF_Model.detector_sampling(channel.pixel_pitch())
+
+        mtf_value = mtf_model.mtf_value(self.input_line_freq)
+
+        # verification
+        assert mtf_value == pytest.approx(truth, 1e-9)
+
+    def test_mtf_jitter(self, detector: Detector):
+        """Tests the jitter MTF."""
+
+        # check values
+        truth = 0.9704228869250533
+
+        # select the pan channel
+        channel: Channel = detector.params.channels.pan
+
+        # Generate the MTF model and values
+        stdev_jitter = 0.1  # 10% of the pix
+        mtf_model = MTF_Model.jitter(channel.pixel_pitch(), stdev_jitter)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
