@@ -42,7 +42,7 @@ $$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
 
 It is desirable to have the Q value between 1 and 2. Below 1, the images are undersampled. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing or surface imperfections. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
 
-It should also be noted that, MTF can be defined in different directions. For example, optical imperfections may vary in tangential and sagittal directions (e.g., focus fall towards the edges of a lens) or motion blur will result in lower MTF in the direction of the motion.
+It should also be noted that, MTF is different for every single point on the image plane (for example focus is usually less towards the edges). Furthermore, its value can be different for different directions, particularly when the lens is not axially symmetric. For example, optical imperfections may vary in tangential and sagittal directions or motion blur will result in lower MTF in the direction of the motion. The methodology discussed here is valid for a single point on the image plane and takes into account "cuts" of this 3D MTF surface in the vertical and horizontal directions.
 
 ## Static Contributors to the MTF
 
@@ -106,6 +106,8 @@ Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng ap
 
 ## Dynamic Contributors to the MTF
 
+### Overview
+
 Dynamic MTF is the broad name given to multiple sources of image sharpness loss, commonly due to a "shaking" of the imager or a relative motion between the imager and the platform. This results in the loss of sharpness; sometimes manifesting itself as blurring roughly equal in all directions and sometimes as a directional smear in the image.
 
 Depending on the imaging setting, one or more of the following sources can be present:
@@ -119,6 +121,12 @@ Jitter is prominent in all imagers attached to equipment that generates high fre
 The common theme in all these sources is the exposure duration. Generally speaking, vibration sources with a period much shorter than (or a frequency higher than) the exposure duration are called jitter and they cause random artefacts such as blurring. The detector pixel captures information from around neighbouring areas in all directions, rather than the area corresponding to what the pixel would normally "see". Vibration sources with a frequency close to exposure duration cannot complete multiple cycles (or even a single cycle) during the exposure duration, therefore they cause a drift/smear in the direction they apply. The vibration sources with periods much longer than the exposure duration have no significant impact on the sharpness (or MTF).
 
 It follows that the same vibration sources may cause different type of artefacts for different exposure durations. As the exposure duration becomes longer, even low frequency vibration sources start causing blur (rather than smear), and very slow motion sources start causing smear. For a 10 ms exposure (or "1/100" s in photography terms and 100 Hz in frequency terms), a 1000 Hz (1 ms) vibration source would cause jitter. A 50 Hz (20 ms) vibration source would cause a drift. A 1 Hz (1 s) vibration source would be too slow to impact the imaging quality (though the image shake would be visible in a video). If the exposure is increased to 100 ms (10 Hz), both 1000 Hz and 50 Hz vibration sources would cause jitter and the 1 Hz vibration source could cause drift/smear.
+
+To summarise:
+
+- For the vibration frequencies much lower than the exposure frequency, they are treated as bias, as the vibration is too slow to cause any blurring in the image.
+- For the vibration frequencies higher than the exposure frequency, they are treated as random blurring, as the vibration completes at least one cycle and there are usually many more frequencies and phases.
+- For the vibration frequencies lower than the exposure frequency (but still in the same order), the sine wave is completed only partially but it is very difficult to know the actual phase. Therefore, assuming a linear drift/smear is actually a worst-case assumption, with the drift rate approximating the "climb" part of the sine wave.
 
 While it may then sound tempting to reduce the exposure duration to maximise the sharpness, it also controls the number of photons received, and therefore a lot of critical parameters, chiefly Signal-to-Noise Ratio (SNR): the longer is the exposure, usually the better is the SNR (up to saturation level). Therefore, the exposure duration needs to be optimised between the image sharpness and SNR needs.
 
@@ -134,7 +142,7 @@ When computing the *total* MTF for the system, all the relevant contributors sho
 
 ### Jitter
 
-Jitter is due to the high frequency "shaking" of the imager (or more specifically, the line of sight (LoS) vectors), at a frequency that is higher than that of the imaging. It is usually caused by the shaking of the imaging platform (e.g. the aircraft or the ground vehicle that carries the imager) or the mechanical cooling system of the detector where present. The shaking usually involves multiple frequencies and multiple phases, therefore the combined effect can be modelled as a Gaussian variation of all LoS vectors at the same time, and in both horizontal and vertical directions. As this introduces irradiance into a pixel from neighbouring areas, this effect manifests itself as a blur (or a reduction in MTF) on the image. As mentioned above, the shorter the imaging or exposure duration, the higher the frequency that causes blurring and therefore the smaller the effects of jitter.
+As explained above, jitter is due to the high frequency "shaking" of the imager (or more specifically, the line of sight (LoS) vectors), at a frequency that is higher than that of the imaging. It is usually caused by the shaking of the imaging platform (e.g. the aircraft or the ground vehicle that carries the imager) or the mechanical cooling system of the detector where present. The shaking usually involves multiple frequencies and multiple phases, therefore the combined effect can be modelled as a Gaussian variation of all LoS vectors at the same time, and in both horizontal and vertical directions - though the vibration profiles in the horizontal and vertical directions may differ. As this introduces irradiance into a pixel from neighbouring areas, this effect manifests itself as a blur (or a reduction in MTF) on the image. As mentioned above, the shorter the imaging or exposure duration, the higher the frequency that causes blurring and therefore the smaller the effects of jitter.
 
 The jitter MTF is computed as a Gaussian of the form (from [^2] Vol 4 pg 69 eqn 2.6):
 
@@ -142,19 +150,13 @@ $$\text{MTF}_\text{jitter}(f) = exp(-2 (\pi  j_{LoS} f)^2)$$
 
 where $j_{LoS}$ is the standard deviation (or 1 sigma) of the jitter amplitude (in the angular sense)) and $f$ is the input line frequency.
 
-This equation can be written in terms of jitter as distance on the image plane (in pixels):
+This equation can be written in terms of jitter defined as distance on the image plane (in pixels):
 
 $$\text{MTF}_\text{jitter}(f) = exp(-2 (\pi  (j_{pix} p) f)^2)$$
 
 where $j_{pix}$ is the standard deviation (or 1 sigma) of the jitter amplitude (as percentage of the pixel), $p$ is the pixel pitch and $f$ is the input line frequency.s
 
-When multiple images are combined (as in TDI), then not only the blurring in the individual images that make up the final image is important, but also the motion during the combination of multiple images. Even if we have extremely short duration (and therefore sharp) images of the same scene, if the images are taken over a duration where jitter effects are significant, then some blurring will be introduced when all the images are combined.
-
-*********************************
-
-???? Therefore, the jitter MTF of the individual images, as well as the total combined jitter MTF should be computed in this case. ????
-
-**********************************
+When multiple images are combined (as in TDI), then not only the blurring in the individual images that make up the final image is important, but also the motion during the combination of multiple images. Even if we have extremely short duration (and therefore sharp) images of the same scene, if the images are taken over a duration where jitter effects are significant, then some blurring will be introduced when all the images are combined. This is explained in greater detail in a [later section](#combining-multiple-images-the-effect-of-time-delay-and-integration-tdi).
 
 ### Motion Blur
 
@@ -226,7 +228,7 @@ Once the drift/smear due to TDI is quantified, the MTF equations are similar to 
 
 Another important point to note is that, the time scale is the entire image acquisition (or the total TDI column duration), rather than the integration or exposure duration. Therefore, jitter and drift/smear disturbances for the TDI column are different than those for a single image acquisition. For example, consider a satellite pushbroom imager that uses a 0.5 ms exposure time, 1 ms line rate and 10 TDI stages. A 100 pix/s rotation rate that drifts the image in the across-track direction can introduce a 0.05 pixel smear in a single image, but over the entire 10 ms TDI duration, the overall smear is equal to 1 pixel. Similarly, the jitter over 0.5 ms will be much smaller than the jitter over 10 ms. Consequently, in addition to the blurriness of single acquisition images, the combined image will introduce another "layer" of blurriness.
 
-To summarise, the following effects will introduce a smear for a multiple image acquisition case:
+To summarise, the following effects will introduce a drift/smear for a multiple image acquisition case:
 
 - Relative rotation rate between the imager and the target (such as an attitude rate control error)
 - A fixed rotation between the along-track direction and the detector lines (such as a yaw steering error or residual yaw steering error on a satellite)
