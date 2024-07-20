@@ -16,6 +16,8 @@ data_chain
 ---
 maxdepth: 1
 ---
-sharpness
+sharpness_pt1
+sharpness_pt2
+sharpness_pt3
 mtf_scenarios
 ```
