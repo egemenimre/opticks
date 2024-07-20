@@ -204,6 +204,71 @@ class MTF_Model:
 
     @staticmethod
     @u.check("[length]", None)
+    def motion_blur(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model":
+        """
+        Motion blur MTF model.
+
+        Parameters
+        ----------
+        pixel_pitch : Quantity
+            Pixel pitch (with or without binning)
+        blur_extent : float
+            Blur extent on the image, given in pixels (e.g. 0.1 or 10% pix)
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+
+        # set the id
+        id = (
+            f"Motion Blur MTF with pixel pitch {pixel_pitch:~P}"
+            f"and blur extent {blur_extent:~P}"
+        )
+
+        # set the value function (with the fixed pixel pitch)
+        def value_func(input_line_freq):
+            return _smear_mtf(input_line_freq, pixel_pitch, blur_extent)
+
+        return MTF_Model(id, value_func)
+
+    @staticmethod
+    @u.check("[length]", None)
+    def smear(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model":
+        """
+        Drift/Smear MTF model.
+
+        The drift/smear in the along-track and across-track dimensions
+        should be computed separately.
+
+        Parameters
+        ----------
+        pixel_pitch : Quantity
+            Pixel pitch (with or without binning)
+        blur_extent : float
+            Blur extent on the image, given in pixels (e.g. 0.1 or 10% pix)
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+
+        # set the id
+        id = (
+            f"Drift/Smear MTF with pixel pitch {pixel_pitch:~P}"
+            f"and blur extent {blur_extent:~P}"
+        )
+
+        # set the value function (with the fixed pixel pitch)
+        def value_func(input_line_freq):
+            return _smear_mtf(input_line_freq, pixel_pitch, blur_extent)
+
+        return MTF_Model(id, value_func)
+
+    @staticmethod
+    @u.check("[length]", None)
     def jitter(
         pixel_pitch: Quantity,
         jitter_stdev: float,
@@ -224,7 +289,7 @@ class MTF_Model:
         pixel_pitch : Quantity
             Pixel pitch (with or without binning)
         jitter_stdev : float
-            Standard deviation of the jitter value in pixels
+            Standard deviation of the jitter value in pixels (e.g. 0.1 or 10% pix)
 
         Returns
         -------
@@ -233,7 +298,10 @@ class MTF_Model:
         """
 
         # set the id
-        id = f"Detector MTF with pixel pitch {pixel_pitch:~P}"
+        id = (
+            f"Jitter MTF with pixel pitch {pixel_pitch:~P} and"
+            f"jitter standard deviation {jitter_stdev:~P}"
+        )
 
         # set the value function (with the fixed pixel pitch)
         def value_func(input_line_freq):
@@ -409,6 +477,40 @@ def _detector_sampling_mtf(
 
     # sinc does not receive Quantity input.
     return np.sinc(a_fx.m)
+
+
+@u.check(None, "[length]", None)
+def _smear_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity],
+    pixel_pitch: Quantity,
+    blur_extent: float,
+) -> float | NDArray[np.float64]:
+    """
+    Drift/Smear MTF for the given input line frequency.
+
+    MTF value is usually between 0 and 1, though contrast reversal
+    may result in negative values.
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in cycles/mm)
+    pixel_pitch : Quantity
+        Pixel pitch (with or without binning)
+    blur_extent : float
+        Blur extent on the image, given in pixels (e.g. 0.1 or 10% pix)
+
+    Returns
+    -------
+    Quantity
+        MTF value (usually between 0 and 1, though can be negative)
+    """
+
+    # pixel pitch (um) x input line freq (cycles/mm)
+    a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
+
+    # sinc does not receive Quantity input.
+    return np.sinc(blur_extent * a_fx.m)
 
 
 def _jitter_mtf(
