@@ -26,6 +26,8 @@ Platform MTF
 
 This is usually the requirement (or its breakdown) towards the Platform Supplier (for example a satellite or aircraft system integrator). It is usually not possible to measure each item separately -or even in combination- in the lab. However, they can be modelled and quantified to keep track of the performance. They can be measured once the platform is undergoing tests in the operational conditions (a satellite in space or an aircraft in the air), using dedicated MTF targets.
 
+While there are numerous sources for drift/smear and jitter, they are not necessarily handled with a large number of MTF models that are multiplied. Rather, their amplitude can be summed properly, taking into account the statistical properties and a single drift/smear magnitude (in along-track and across-track) as well as a single jitter magnitude (in along-track and across-track, though there usually the same) are computed. Then only two MTF contributions are needed per axis: one for the total drift/smear and one for the total jitter.
+
 End-to-End System MTF
 
 - Platform MTF (see above)
