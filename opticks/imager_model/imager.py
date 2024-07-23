@@ -6,8 +6,11 @@
 
 from pathlib import Path
 
+import numpy as np
+from pint import Quantity
 from strictyaml import YAML
 
+from opticks import u
 from opticks.imager_model.detector import Detector
 from opticks.imager_model.optics import Optics
 from opticks.imager_model.rw_electronics import RWElectronics
@@ -49,7 +52,7 @@ class Imager:
         cls, optics_data: YAML, detector_data: YAML, rw_electronics_data: YAML = None
     ) -> "Imager":
         """
-        Initialise an Imager from components defined in YAML data.
+        Initialises an Imager from components defined in YAML data.
 
         Parameters
         ----------
@@ -81,7 +84,7 @@ class Imager:
         cls, optics_data: Path, detector_data: Path, rw_electronics_data: Path = None
     ) -> "Imager":
         """
-        Initialise an Imager from components in YAML files.
+        Initialises an Imager from components in YAML files.
 
         Parameters
         ----------
@@ -111,7 +114,7 @@ class Imager:
         cls, optics_data: str, detector_data: str, rw_electronics_data: str = None
     ) -> "Imager":
         """
-        Initialise an Imager from components in YAML text.
+        Initialises an Imager from components in YAML text.
 
         Parameters
         ----------
@@ -137,3 +140,38 @@ class Imager:
         return cls(optics, detector, rw_electronics)
 
     # ---------- begin modelling functions ----------
+
+    @u.check(None, "[length]", None, None)
+    def q_factor(
+        self,
+        wavelength: Quantity | np.ndarray[Quantity],
+        band_id: str,
+        with_binning=True,
+    ):
+        """
+        Computes the Q Factor.
+
+        Q = wavelength x f_number / pixel pitch
+
+        Parameters
+        ----------
+        wavelength : Quantity | ArrayLike[Quantity]
+            Wavelength at which Q is computed
+        band_id : str
+            band ID (to select the correct band or channel)
+        with_binning : bool, optional
+            Return the value with binning or not
+
+        Returns
+        -------
+        float
+            Q factor value
+        """
+
+        channel = self.detector.params.channels.all[band_id]
+
+        pixel_pitch = channel.pixel_pitch(with_binning)
+
+        q = (wavelength * self.optics.f_number / pixel_pitch).to_reduced_units()
+
+        return q

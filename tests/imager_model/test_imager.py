@@ -6,7 +6,9 @@
 
 from pathlib import Path
 
-from opticks import process_paths
+import pytest
+
+from opticks import process_paths, u
 from opticks.imager_model.imager import Imager
 
 
@@ -18,8 +20,9 @@ class TestImager:
     detector_file_path = Path("ms_detector.yaml")
     rw_electronics_file_path = Path("rw_electronics.yaml")
 
-    def test_yaml_load(self):
-        """Tests the yaml file load."""
+    @pytest.fixture(scope="class")
+    def imager(self) -> Imager:
+        """Loads the yaml file and inits the Imager."""
 
         # different test environments work with different paths
         optics_file_path = process_paths(
@@ -33,8 +36,23 @@ class TestImager:
         )
 
         # checks only whether the file can be opened and whether it fits the schema
-        Imager.from_yaml_file(
+        return Imager.from_yaml_file(
             optics_file_path,
             detector_file_path,
             rw_electronics_file_path,
         )
+
+    def test_q_factor(self, imager: Imager):
+        """Tests the Q factor."""
+
+        # check values
+        truth = 0.19090236686390533
+
+        # select the B0 Blue channel
+        ref_wavelength = 500 * u.nm
+
+        # Generate the Q Factor
+        q_value = imager.q_factor(ref_wavelength, "b0_blue", with_binning=True)
+
+        # verification
+        assert q_value == pytest.approx(truth, 1e-9)
