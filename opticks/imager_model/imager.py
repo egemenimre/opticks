@@ -334,7 +334,7 @@ class Imager:
         # data rate after encoding
         enc_data_rate = (
             self.detector.pix_read_rate(band_id, with_binning, with_tdi)
-            * self.params.pixel_encoding
+            * self.rw_electronics.params.pixel_encoding
         )
 
         # data rate after compression and other processing
@@ -354,58 +354,58 @@ class Imager:
 
     # ****************** Check below ****************
 
-    # @u.check(None, "[length]", None, None, None)
-    # def spatial_sample_distance(
-    #     self,
-    #     distance: Quantity | np.ndarray[Quantity],
-    #     band_id: str,
-    #     with_binning=True,
-    #     location="centre",
-    # ) -> Quantity:
-    #     """
-    #     Computes the Spatial Sampling Distance (SSD) at some distance.
+    @u.check(None, "[length]", None, None, None)
+    def spatial_sample_distance(
+        self,
+        distance: Quantity | np.ndarray[Quantity],
+        band_id: str,
+        with_binning=True,
+        location="centre",
+    ) -> Quantity:
+        """
+        Computes the Spatial Sampling Distance (SSD) at some distance.
 
-    #     The SSD is computed on a "flat surface" at the 'distance'.
-    #     The location can be 'centre', 'centre left', 'centre right',
-    #     'centre top', 'centre bottom' or 'corner'.
+        The SSD is computed on a "flat surface" at the 'distance'.
+        The location can be 'centre', 'centre left', 'centre right',
+        'centre top', 'centre bottom' or 'corner'.
 
-    #     - 'centre' corresponds to the boresight LoS vector corresponding
-    #     to the channel pixels.
-    #     - 'centre left', 'centre right' are equivalent and they correspond
-    #     to the horizontal centre points or 3 o'clock and 9 o'clock
-    #     positions of the channel pixels.
-    #     - 'centre top', 'centre bottom' are equivalent and they correspond
-    #     to the vertical centre points or 12 o'clock and 6 o'clock
-    #     positions of the channel pixels
-    #     - 'corner' corresponds to any corner of the channel pixels.
+        - 'centre' corresponds to the boresight LoS vector corresponding
+        to the channel pixels.
+        - 'centre left', 'centre right' are equivalent and they correspond
+        to the horizontal centre points or 3 o'clock and 9 o'clock
+        positions of the channel pixels.
+        - 'centre top', 'centre bottom' are equivalent and they correspond
+        to the vertical centre points or 12 o'clock and 6 o'clock
+        positions of the channel pixels
+        - 'corner' corresponds to any corner of the channel pixels.
 
-    #     Parameters
-    #     ----------
-    #     distance : Quantity | np.ndarray[Quantity]
-    #         _description_
-    #     band_id : str
-    #         band ID (to select the correct band or channel)
-    #     with_binning : bool, optional
-    #         Return the value with binning or not
-    #     location : str, optional
-    #         Location on the detector
+        Parameters
+        ----------
+        distance : Quantity | np.ndarray[Quantity]
+            _description_
+        band_id : str
+            band ID (to select the correct band or channel)
+        with_binning : bool, optional
+            Return the value with binning or not
+        location : str, optional
+            Location on the detector
 
-    #     Returns
-    #     -------
-    #     Quantity
-    #         Spatial Sampling Distance with or without binning
-    #     """
+        Returns
+        -------
+        Quantity
+            Spatial Sampling Distance with or without binning
+        """
 
-    #     # select the correct channel
-    #     channel = self.detector.get_channel(band_id)
+        # select the correct channel
+        channel = self.detector.get_channel(band_id)
 
-    #     # select the binned/unbinned pixel pitch values
-    #     pixel_pitch = channel.pixel_pitch(with_binning)
+        # select the binned/unbinned pixel pitch values
+        pixel_pitch = channel.pixel_pitch(with_binning)
 
-    #     focal_length = self.optics.params.focal_length
+        focal_length = self.optics.params.focal_length
 
-    #     # compute the SSD, depending on the location
-    #     if location == "centre":
-    #         spatial_sample_distance = distance * pixel_pitch / focal_length
+        # compute the SSD, depending on the location
+        if location == "centre":
+            spatial_sample_distance = distance * pixel_pitch / focal_length
 
-    #     return spatial_sample_distance.to_reduced_units().to(u.m)
+        return spatial_sample_distance.to_reduced_units().to(u.m)
