@@ -5,17 +5,17 @@
 
 This chain is repeated (usually in parallel) for every channel or band.
 
-
 ## Pixel Read Rate
 
 Pixel read rate out of the detector. (in Mpixel/s) (per channel)
 
 Computed as:
- - Pushbroom type detector (with binning if applicable): 
+
+- Pushbroom type detector (with binning if applicable):
 
     $$\text{horizontal pixels (binned)} \times \text{TDI stages} \times \text{line rate}$$
 
- - Full frame type detector (with binning if applicable): 
+- Full frame type detector (with binning if applicable):
 
     $$\text{horizontal pixels (binned)} \times \text{vertical pixels (binned)} \times \text{frame rate}$$
 
