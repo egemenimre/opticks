@@ -5,6 +5,7 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 from pint import Quantity
