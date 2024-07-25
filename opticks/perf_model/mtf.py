@@ -10,7 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 from pint import Quantity
-from scipy.interpolate import Akima1DInterpolator
+from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
 
 from opticks import u
 from opticks.imager_model.optics import Optics
@@ -65,7 +65,6 @@ class MTF_Model:
         from complex simulations (such as Zemax).
 
         Uses the scipy 'Akima1DInterpolator' (modified Akima) in the background.
-
 
         Parameters
         ----------
@@ -131,7 +130,7 @@ class MTF_Model:
     @u.check("[length]", None, None)
     def aberrated_optics(
         wavelength: Quantity | np.ndarray[Quantity],
-        w_rms: float | NDArray[np.float64],
+        w_rms: float,
         optics: Optics,
     ) -> "MTF_Model":
         """
@@ -150,7 +149,7 @@ class MTF_Model:
         ----------
         wavelength : Quantity | ArrayLike[Quantity]
             Wavelength at which MTF is computed
-        w_rms : float | ArrayLike[float]
+        w_rms : float
             RMS of the total wavefront error (in wavelengths)
         optics: Optics
             Optics model (to compute the spatial cutoff frequency)
@@ -276,7 +275,7 @@ class MTF_Model:
         """
         Jitter MTF model.
 
-        The `jitter_stdev` valıe is defined as the 1 sigma value of the jitter
+        The `jitter_stdev` value is defined as the 1 sigma value of the jitter
         amplitude, defined in pixels (e.g. 10% of the pixel).
 
         Jitter is defined with respect to the relevant frequency of the imaging problem.
@@ -300,7 +299,7 @@ class MTF_Model:
         # set the id
         id = (
             f"Jitter MTF with pixel pitch {pixel_pitch:~P} and"
-            f"jitter standard deviation {jitter_stdev:~P}"
+            f"jitter standard deviation {jitter_stdev:.6f}"
         )
 
         # set the value function (with the fixed pixel pitch)
@@ -311,7 +310,7 @@ class MTF_Model:
 
 
 def _external_data_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], interpolator: Akima1DInterpolator
+    input_line_freq: Quantity | np.ndarray[Quantity], interpolator: CubicHermiteSpline
 ) -> float | NDArray[np.float64]:
     """
     Interpolated MTF data for the given input line frequency.
@@ -320,7 +319,7 @@ def _external_data_mtf(
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
         Input line frequency (in cycles/mm)
-    interpolator: Akima1DInterpolator
+    interpolator: CubicHermiteSpline
         Interpolator
 
     Returns
@@ -369,7 +368,7 @@ def _ideal_optical_mtf(
 def _aberrated_optical_mtf(
     input_line_freq: Quantity | np.ndarray[Quantity],
     spatial_cutoff_freq: Quantity,
-    w_rms: float | NDArray[np.float64],
+    w_rms: float,
 ) -> float | NDArray[np.float64]:
     """
     Aberrated optical MTF for the given input line frequency.
@@ -385,7 +384,7 @@ def _aberrated_optical_mtf(
         Input line frequency (in cycles/mm)
     spatial_cutoff_freq: Quantity
         Spatial cutoff frequency (in cycles/mm)
-    w_rms : float | ArrayLike[float]
+    w_rms : float
         RMS of the total wavefront error (in wavelengths)
 
     Returns
@@ -406,7 +405,7 @@ def _aberrated_optical_mtf(
 def _aberration_transfer_factor(
     input_line_freq: Quantity | np.ndarray[Quantity],
     spatial_cutoff_freq: Quantity,
-    w_rms: float | NDArray[np.float64],
+    w_rms: float,
 ) -> float | NDArray[np.float64]:
     """
     Aberration Transfer Factor (ATF) for the given input line frequency.
@@ -427,7 +426,7 @@ def _aberration_transfer_factor(
         Input line frequency (in cycles/mm)
     spatial_cutoff_freq: Quantity
         Spatial cutoff frequency (in cycles/mm)
-    w_rms : float | ArrayLike[float]
+    w_rms : float
         RMS of the total wavefront error (in wavelengths)
 
     Returns
@@ -505,7 +504,6 @@ def _smear_mtf(
     Quantity
         MTF value (usually between 0 and 1, though can be negative)
     """
-
     # pixel pitch (um) x input line freq (cycles/mm)
     a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
 
