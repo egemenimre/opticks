@@ -354,7 +354,7 @@ class Detector(ImagerComponent):
         if isinstance(band_id, str):
 
             # there is a single channel
-            channel = self.params.channels.all[band_id]
+            channel = self.get_channel(band_id)
 
             pix_read_rate = channel.pix_read_rate(
                 self.params.timings.frame_rate, with_binning, with_tdi
@@ -371,3 +371,21 @@ class Detector(ImagerComponent):
                 pix_read_rate += pix_read_rate_single_chan
 
         return pix_read_rate.to("Mpixel/s")
+
+    def get_channel(self, band_id) -> Channel:
+        """
+        Gets the channel with the 'band_id'.
+
+        Alias for 'self.params.channels.all[band_id]'.
+
+        Parameters
+        ----------
+        band_id : str
+            band ID to compute the readout
+
+        Returns
+        -------
+        Channel
+            Requested channel with the 'band_id'
+        """
+        return self.params.channels.all[band_id]
