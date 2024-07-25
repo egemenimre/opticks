@@ -4,6 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
+from collections import namedtuple
 from pathlib import Path
 from typing import Iterable
 
@@ -352,7 +353,57 @@ class Imager:
 
         return write_data_rate.to("Mbit/s")
 
-    # ****************** Check below ****************
+    @u.check(None, "[length]", None)
+    def projected_horiz_img_extent(
+        self,
+        distance: Quantity | np.ndarray[Quantity],
+        band_id: str,
+    ) -> Quantity:
+        """
+        Computes the projected horizontal image extent at some distance.
+
+        The image extent is computed on a "flat surface" at the 'distance'.
+
+        Parameters
+        ----------
+        distance : Quantity | np.ndarray[Quantity]
+            _description_
+        band_id : str
+            band ID (to select the correct band or channel)
+
+        Returns
+        -------
+        Quantity
+            Projected horizontal image extent
+        """
+
+        return 2 * distance * np.tan(self.horizontal_fov(band_id) / 2.0)
+
+    @u.check(None, "[length]", None)
+    def projected_vert_img_extent(
+        self,
+        distance: Quantity | np.ndarray[Quantity],
+        band_id: str,
+    ) -> Quantity:
+        """
+        Computes the projected vertical image extent at some distance.
+
+        The image extent is computed on a "flat surface" at the 'distance'.
+
+        Parameters
+        ----------
+        distance : Quantity | np.ndarray[Quantity]
+            _description_
+        band_id : str
+            band ID (to select the correct band or channel)
+
+        Returns
+        -------
+        Quantity
+            Projected horizontal image extent
+        """
+
+        return 2 * distance * np.tan(self.vertical_fov(band_id) / 2.0)
 
     @u.check(None, "[length]", None, None, None)
     def spatial_sample_distance(
@@ -361,7 +412,7 @@ class Imager:
         band_id: str,
         with_binning=True,
         location="centre",
-    ) -> Quantity:
+    ) -> tuple[Quantity, Quantity]:
         """
         Computes the Spatial Sampling Distance (SSD) at some distance.
 
@@ -379,6 +430,13 @@ class Imager:
         positions of the channel pixels
         - 'corner' corresponds to any corner of the channel pixels.
 
+        As the ifov is constant, the horizontal and vertical SSD are not
+        necessarily equal. This is particularly evident with large pixel
+        sizes and large FoVs.
+
+        The result is a 'namedtuple' and the horizontal and vertical
+        SSD values can be queried with 'horiz' and 'vert', respectively.
+
         Parameters
         ----------
         distance : Quantity | np.ndarray[Quantity]
@@ -392,20 +450,61 @@ class Imager:
 
         Returns
         -------
-        Quantity
-            Spatial Sampling Distance with or without binning
+        (Quantity, Quantity)
+            Spatial Sampling Distance with or without binning (horizontal and vertical)
         """
 
-        # select the correct channel
-        channel = self.detector.get_channel(band_id)
+        # select the binned/unbinned ifov values
+        ifov = self.ifov(band_id, with_binning)
 
-        # select the binned/unbinned pixel pitch values
-        pixel_pitch = channel.pixel_pitch(with_binning)
-
-        focal_length = self.optics.params.focal_length
+        d = distance
 
         # compute the SSD, depending on the location
         if location == "centre":
-            spatial_sample_distance = distance * pixel_pitch / focal_length
+            ssd_h = 2 * d * np.tan(ifov / 2.0)
+            ssd_v = ssd_h
 
-        return spatial_sample_distance.to_reduced_units().to(u.m)
+        elif location == "centre left" or location == "centre right":
+
+            s_h = self.projected_horiz_img_extent(distance, band_id)
+            fov_h = self.horizontal_fov(band_id)
+
+            ssd_h = s_h / 2.0 - d * np.tan(fov_h / 2.0 - ifov)
+
+            a_v = np.sqrt(d**2 + (s_h / 2) ** 2)
+            ssd_v = 2 * a_v * np.tan(ifov / 2)
+
+        elif location == "centre top" or location == "centre bottom":
+
+            s_v = self.projected_vert_img_extent(distance, band_id)
+            fov_v = self.vertical_fov(band_id)
+
+            ssd_v = s_v / 2.0 - d * np.tan(fov_v / 2.0 - ifov)
+
+            a_h = np.sqrt(d**2 + (s_v / 2) ** 2)
+            ssd_h = 2 * a_h * np.tan(ifov / 2)
+
+        elif location == "corner":
+
+            s_v = self.projected_vert_img_extent(distance, band_id)
+            fov_v = self.vertical_fov(band_id)
+
+            s_h = self.projected_horiz_img_extent(distance, band_id)
+            fov_h = self.horizontal_fov(band_id)
+
+            a_h = np.sqrt(d**2 + (s_v / 2) ** 2)
+            gamma_h = np.atan((s_h / 2) / a_h)
+            ssd_h = s_h / 2.0 - a_h * np.tan(gamma_h - ifov)
+
+            a_v = np.sqrt(d**2 + (s_h / 2) ** 2)
+            gamma_v = np.atan((s_v / 2) / a_v)
+            ssd_v = s_v / 2.0 - a_v * np.tan(gamma_v - ifov)
+
+        else:
+            raise ValueError(f"Invalid location flag: {location}")
+
+        SSD = namedtuple("SSD", "horiz, vert")
+
+        ssd = SSD(ssd_h.to_reduced_units().to(u.m), ssd_v.to_reduced_units().to(u.m))
+
+        return ssd
