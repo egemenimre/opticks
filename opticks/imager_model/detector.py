@@ -4,6 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from collections.abc import Iterable
+from typing import List
 
 import numpy as np
 from pint import Quantity
@@ -360,19 +361,18 @@ class Detector(ImagerComponent):
                 self.params.timings.frame_rate, with_binning, with_tdi
             )
         else:
-            # shorthand for channels
-            channels = self.params.channels
-
             # there are multiple channels, sum the values
-            for single_band_id in band_id:
-                pix_read_rate_single_chan = channels.all[single_band_id].pix_read_rate(
+            channels = self.get_channels(band_id)
+
+            for channel in channels:
+                pix_read_rate_single_chan = channel.pix_read_rate(
                     self.params.timings.frame_rate, with_binning, with_tdi
                 )
                 pix_read_rate += pix_read_rate_single_chan
 
         return pix_read_rate.to("Mpixel/s")
 
-    def get_channel(self, band_id) -> Channel:
+    def get_channel(self, band_id: str) -> Channel:
         """
         Gets the channel with the 'band_id'.
 
@@ -381,7 +381,7 @@ class Detector(ImagerComponent):
         Parameters
         ----------
         band_id : str
-            band ID to compute the readout
+            band ID corresponding to the requested channel
 
         Returns
         -------
@@ -389,3 +389,22 @@ class Detector(ImagerComponent):
             Requested channel with the 'band_id'
         """
         return self.params.channels.all[band_id]
+
+    def get_channels(self, band_ids: Iterable[str]) -> List[Channel]:
+        """
+        Gets the list channel with the 'band_id'.
+
+        Alias for 'self.params.channels.all[band_id]'.
+
+        Parameters
+        ----------
+        band_ids : Iterable[str]
+            band IDs corresponding to the requested channels
+
+        Returns
+        -------
+        Channel
+            Requested channels with the 'band_id'
+        """
+
+        return [self.params.channels.all[band_id] for band_id in band_ids]
