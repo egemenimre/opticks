@@ -11,7 +11,6 @@ from strictyaml import YAML, Enum, Int, Map, MapPattern, Optional, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
-from opticks.imager_model.optics import Optics
 from opticks.utils.yaml_helpers import Qty
 
 channel_schema = {
@@ -59,12 +58,12 @@ detector_schema = {
 class Channel:
 
     def __init__(self):
-        self.tdi_stages = None
+        self.tdi_stages: int = None
         self._detector_type = None
-        self.vertical_pixels = None
-        self.horizontal_pixels = None
-        self.binning = None
-        self._det_pixel_pitch = None
+        self.vertical_pixels: int = None
+        self.horizontal_pixels: int = None
+        self.binning: int = None
+        self._det_pixel_pitch: float = None
 
     def pixel_pitch(self, with_binning: bool = True) -> Quantity:
         """
@@ -106,31 +105,8 @@ class Channel:
 
         return self.pixel_pitch(with_binning) ** 2
 
-    def ifov(self, optics: Optics, with_binning: bool = True) -> Quantity:
-        """
-        Computes the Instantaneous field of view (works in vertical and horizontal).
-
-        Assumes constant IFOV per pixel.
-
-        Parameters
-        ----------
-        optics : Optics
-            Optics in front of the detector
-        with_binning : bool
-            Return the value with binning or not
-
-        Returns
-        -------
-        Quantity
-            IFOV angle
-
-        """
-        return 2 * np.arctan(
-            (self.pixel_pitch(with_binning) / 2.0) / optics.params.focal_length
-        ).to(u.mdeg)
-
     def nyquist_freq(self, with_binning: bool = True) -> Quantity:
-        r"""
+        """
         Returns Nyquist Frequency / Limit parameter with or without binning.
 
         Nyquist frequency is defined as: `1 / (2 x pix pitch)`,
@@ -182,81 +158,13 @@ class Channel:
         Returns
         -------
         Quantity
-            Total number of pixels for the requested configuration
+            Total number of pixels for the requested configuration (in Mpixels)
         """
 
         binning = self.binning if with_binning else 1
 
         # total number of pixels in the frame
         return (self.horizontal_pixels / binning * u.pixel).to("Mpixel")
-
-    def pix_solid_angle(self, optics: Optics, with_binning=True) -> Quantity:
-        """
-        Pixel solid angle (of a pyramid).
-
-        Parameters
-        ----------
-        optics : Optics
-            Optics in front of the detector
-        with_binning : bool
-            Return the value with binning or not
-
-        Returns
-        -------
-        Quantity
-            Pixel solid angle in steradians
-        """
-        #
-
-        pix_solid_angle = 4 * np.arcsin(
-            np.sin(self.ifov(optics, with_binning) / 2.0)
-            * np.sin(self.ifov(optics, with_binning) / 2.0)
-        )
-
-        # correct the unit from rad to sr (or rad**2)
-        return (pix_solid_angle * u.rad).to(u.steradian)
-
-    def horizontal_fov(self, optics: Optics) -> Quantity:
-        """
-        Computes the full field of view in the horizontal direction.
-
-        Assumes constant IFOV per pixel. Used pixels only.
-
-        Parameters
-        ----------
-        optics : Optics
-            Optics in front of the detector
-
-        Returns
-        -------
-        Quantity
-            Horizontal FOV angle
-
-        """
-        return 2 * np.tan(self.ifov(optics, False) * self.horizontal_pixels / 2.0).to(
-            u.deg
-        )
-
-    def vertical_fov(self, optics: Optics) -> Quantity:
-        """
-        Computes the full field of view in the vertical direction.
-
-        Assumes constant IFOV per pixel. Used pixels only.
-
-        Parameters
-        ----------
-        optics : Optics
-            Optics in front of the detector
-
-        Returns
-        -------
-        Quantity
-            Vertical FOV angle
-
-        """
-        return 2 * np.tan(self.ifov(optics, False) * self.vertical_pixels / 2.0).to(
-            u.deg
-        )
 
     def pix_read_rate(
         self, frame_rate: Quantity, with_binning: bool = True, with_tdi: bool = False
@@ -298,9 +206,6 @@ class Channel:
         """
         Computes the centre frequency of the channel.
 
-        Parameters
-        ----------
-
         Returns
         -------
         Quantity
@@ -312,10 +217,8 @@ class Channel:
     @property
     def bandwidth(self) -> Quantity:
         """
-        Computes the bandwidth of the channel.
-
-        Parameters
-        ----------
+        Computes the bandwidth of the channel
+        (the difference between the cut-off and cut-on frequencies).
 
         Returns
         -------
@@ -329,6 +232,8 @@ class Channel:
 class Detector(ImagerComponent):
     """
     Class containing generic Detector parameters.
+
+    A 'Detector' has one or more 'Channel's.
     """
 
     def __init__(self, yaml: YAML):
@@ -341,6 +246,9 @@ class Detector(ImagerComponent):
         self._init_useful_params()
 
     def _prepare_internal_classes(self):
+        """
+        Prepares the internal classes upon initialisation.
+        """
         # make the internal dict of the channels accessible as a dict
         self.params.channels.all = {
             key: value for key, value in self.params.channels.__dict__.items()
@@ -351,7 +259,9 @@ class Detector(ImagerComponent):
             channel.__class__ = Channel
 
     def _init_useful_params(self):
-        # init some useful parameters
+        """
+        Initialises some useful parameters.
+        """
 
         # shorthand for timings
         timings = self.params.timings
@@ -400,7 +310,7 @@ class Detector(ImagerComponent):
         Returns
         -------
         Quantity
-            Total number of pixels for the requested configuration
+            Total number of pixels for the requested configuration (in Mpixels)
         """
 
         # total number of pixels in the frame
@@ -410,11 +320,11 @@ class Detector(ImagerComponent):
 
     def pix_read_rate(
         self,
-        channel: Channel | Iterable[Channel],
+        band_id: str | Iterable[str],
         with_binning: bool = True,
         with_tdi: bool = True,
     ) -> Quantity:
-        r"""
+        """
         Pixel read rate.
 
         Computed as:
@@ -426,8 +336,8 @@ class Detector(ImagerComponent):
 
         Parameters
         ----------
-        channel : Channel or Iterable[Channel]
-            Channels to compute the readout
+        band_id : str or Iterable[str]
+            band ID to compute the readout
         with_binning : bool
             Return the value with binning or not
         with_tdi : bool
@@ -436,22 +346,28 @@ class Detector(ImagerComponent):
         Returns
         -------
         Quantity
-            Pixel read rate with or without binning (Mpixel/s)
+            Pixel read rate with or without binning (Mpixels)
         """
 
         pix_read_rate = 0 * u.Mpixel / u.s
 
-        if isinstance(channel, Iterable):
-            # there are multiple channels, sum the values
-            for single_channel in channel:
-                pix_read_rate_single_chan = single_channel.pix_read_rate(
-                    self.params.timings.frame_rate, with_binning, with_tdi
-                )
-                pix_read_rate += pix_read_rate_single_chan
-        else:
+        if isinstance(band_id, str):
+
             # there is a single channel
+            channel = self.params.channels.all[band_id]
+
             pix_read_rate = channel.pix_read_rate(
                 self.params.timings.frame_rate, with_binning, with_tdi
             )
+        else:
+            # shorthand for channels
+            channels = self.params.channels
+
+            # there are multiple channels, sum the values
+            for single_band_id in band_id:
+                pix_read_rate_single_chan = channels.all[single_band_id].pix_read_rate(
+                    self.params.timings.frame_rate, with_binning, with_tdi
+                )
+                pix_read_rate += pix_read_rate_single_chan
 
         return pix_read_rate.to("Mpixel/s")
