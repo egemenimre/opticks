@@ -168,6 +168,7 @@ class Imager:
             Q factor value
         """
 
+        # select the correct channel
         channel = self.detector.params.channels.all[band_id]
 
         pixel_pitch = channel.pixel_pitch(with_binning)
@@ -175,3 +176,235 @@ class Imager:
         q = (wavelength * self.optics.f_number / pixel_pitch).to_reduced_units()
 
         return q
+
+    def horizontal_fov(self, band_id: str) -> Quantity:
+        """
+        Computes the full field of view in the horizontal direction.
+
+        Used pixels only.
+
+        Parameters
+        ----------
+        band_id : str
+            band ID (to select the correct band or channel)
+
+        Returns
+        -------
+        Quantity
+            Horizontal FOV angle
+
+        """
+
+        # select the correct channel
+        channel = self.detector.get_channel(band_id)
+
+        return 2 * np.arctan(
+            (
+                (
+                    channel.pixel_pitch(with_binning=False)
+                    * channel.horizontal_pixels
+                    / 2.0
+                )
+                / self.optics.params.focal_length
+            )
+        ).to(u.deg)
+
+    def vertical_fov(self, band_id: str) -> Quantity:
+        """
+        Computes the full field of view in the vertical direction.
+
+         Used pixels only.
+
+        Parameters
+        ----------
+        band_id : str
+            band ID (to select the correct band or channel)
+
+        Returns
+        -------
+        Quantity
+            Vertical FOV angle
+
+        """
+        # select the correct channel
+        channel = self.detector.get_channel(band_id)
+
+        return 2 * np.arctan(
+            (
+                (
+                    channel.pixel_pitch(with_binning=False)
+                    * channel.vertical_pixels
+                    / 2.0
+                )
+                / self.optics.params.focal_length
+            )
+        ).to(u.deg)
+
+    def ifov(self, band_id: str, with_binning=True) -> Quantity:
+        """
+        Computes the average instantaneous field of view
+        (works in vertical and horizontal).
+
+        The IFoV is computed simply as the FoV divided by the number of
+        (binned or unbinned) pixels.
+
+        Parameters
+        ----------
+        band_id : str
+            band ID (to select the correct band or channel)
+        with_binning : bool, optional
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            IFOV angle
+
+        """
+
+        # select the correct channel
+        channel = self.detector.get_channel(band_id)
+
+        # horizontal pixels with binning included
+        horiz_pixels = channel.pixel_count_line(with_binning).to(u.pixel).m
+
+        return (self.horizontal_fov(band_id) / horiz_pixels).to(u.mdeg)
+
+    def pix_solid_angle(self, band_id: str, with_binning=True) -> Quantity:
+        """
+        Pixel solid angle (of a pyramid).
+
+        Parameters
+        ----------
+        band_id : str
+            band ID (to select the correct band or channel)
+        with_binning : bool, optional
+            Return the value with binning or not
+
+        Returns
+        -------
+        Quantity
+            Pixel solid angle in steradians
+        """
+
+        pix_solid_angle = 4 * np.arcsin(
+            np.sin(self.ifov(band_id, with_binning) / 2.0)
+            * np.sin(self.ifov(band_id, with_binning) / 2.0)
+        )
+
+        # correct the unit from rad to sr (or rad**2)
+        return (pix_solid_angle * u.rad).to(u.steradian)
+
+    def data_write_rate(
+        self,
+        band_id: str | Iterable[str],
+        with_binning: bool = True,
+        with_compression: bool = True,
+    ) -> Quantity:
+        """
+        Data write rate with or without compression.
+
+        For a pushbroom only a single line is computed. For a full-frame,
+        the entire frame is computed.
+
+        If a list of channels is given, then  the returned result is the sum of all
+        the requested channels.
+
+        Note that the unused pixels are also read, this assumes that the
+        detector does not have ROI functionality.
+
+        Parameters
+        ----------
+        band_id : str or Iterable[str]
+            band ID (to select the correct band or channel)
+        with_binning : bool, optional
+            Return the value with binning or not
+        with_compression : bool
+            Return the value with compression or not
+
+        Returns
+        -------
+        Quantity
+            Pixel read rate with or without binning (Mbit/s)
+        """
+        # TDI data is processed but not written unless raw data is needed
+        with_tdi = False
+
+        # data rate after encoding
+        enc_data_rate = (
+            self.detector.pix_read_rate(band_id, with_binning, with_tdi)
+            * self.params.pixel_encoding
+        )
+
+        # data rate after compression and other processing
+        if with_compression:
+            process_output_data_rate = (
+                enc_data_rate / self.rw_electronics.params.compression_ratio
+            )
+        else:
+            process_output_data_rate = enc_data_rate
+
+        # data rate after overheads
+        write_data_rate = process_output_data_rate * (
+            1 + self.rw_electronics.params.data_write_overhead
+        )
+
+        return write_data_rate.to("Mbit/s")
+
+    # ****************** Check below ****************
+
+    # @u.check(None, "[length]", None, None, None)
+    # def spatial_sample_distance(
+    #     self,
+    #     distance: Quantity | np.ndarray[Quantity],
+    #     band_id: str,
+    #     with_binning=True,
+    #     location="centre",
+    # ) -> Quantity:
+    #     """
+    #     Computes the Spatial Sampling Distance (SSD) at some distance.
+
+    #     The SSD is computed on a "flat surface" at the 'distance'.
+    #     The location can be 'centre', 'centre left', 'centre right',
+    #     'centre top', 'centre bottom' or 'corner'.
+
+    #     - 'centre' corresponds to the boresight LoS vector corresponding
+    #     to the channel pixels.
+    #     - 'centre left', 'centre right' are equivalent and they correspond
+    #     to the horizontal centre points or 3 o'clock and 9 o'clock
+    #     positions of the channel pixels.
+    #     - 'centre top', 'centre bottom' are equivalent and they correspond
+    #     to the vertical centre points or 12 o'clock and 6 o'clock
+    #     positions of the channel pixels
+    #     - 'corner' corresponds to any corner of the channel pixels.
+
+    #     Parameters
+    #     ----------
+    #     distance : Quantity | np.ndarray[Quantity]
+    #         _description_
+    #     band_id : str
+    #         band ID (to select the correct band or channel)
+    #     with_binning : bool, optional
+    #         Return the value with binning or not
+    #     location : str, optional
+    #         Location on the detector
+
+    #     Returns
+    #     -------
+    #     Quantity
+    #         Spatial Sampling Distance with or without binning
+    #     """
+
+    #     # select the correct channel
+    #     channel = self.detector.get_channel(band_id)
+
+    #     # select the binned/unbinned pixel pitch values
+    #     pixel_pitch = channel.pixel_pitch(with_binning)
+
+    #     focal_length = self.optics.params.focal_length
+
+    #     # compute the SSD, depending on the location
+    #     if location == "centre":
+    #         spatial_sample_distance = distance * pixel_pitch / focal_length
+
+    #     return spatial_sample_distance.to_reduced_units().to(u.m)
