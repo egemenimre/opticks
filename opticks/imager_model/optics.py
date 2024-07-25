@@ -38,10 +38,10 @@ class Optics(ImagerComponent):
 
     @property
     def f_number(self) -> float:
-        r"""
+        """
         F-number.
 
-        Computed as: $\frac{\text{focal length}}{\text{aperture diameter}}$
+        Computed as: focal length / aperture diameter
 
         """
         return (
@@ -52,7 +52,7 @@ class Optics(ImagerComponent):
 
     @property
     def full_optical_fov(self) -> Quantity:
-        r"""
+        """
         Full optical Field of View.
 
         Actual FoV depends on the detector size, but cannot be wider than this value.
@@ -64,10 +64,10 @@ class Optics(ImagerComponent):
 
     @property
     def aperture_area(self) -> Quantity:
-        r"""
+        """
         Aperture area.
 
-        Computed as: $\pi \times \left( \frac{ \text{aperture diameter}}{2} \right)^2$
+        Computed as: pi x (aperture diameter/2 )^2
         """
         return np.pi * (self.params.aperture_diameter / 2.0) ** 2
 
@@ -84,13 +84,13 @@ class Optics(ImagerComponent):
 
     @u.check(None, "[length]")
     def spatial_cutoff_freq(self, ref_wavelength: Quantity) -> Quantity:
-        r"""
+        """
         Spatial cutoff frequency, assumes perfect incoherent optics.
 
         Determines the theoretical limit of the optical resolution, or the smallest
         object resolvable by the optical system.
 
-        Computed as: `1/(wavelength F_nr)` in cycles per mm
+        Computed as: `1/(wavelength x F#)` in cycles per mm
 
         Parameters
         ----------
