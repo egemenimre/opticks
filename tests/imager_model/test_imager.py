@@ -117,3 +117,48 @@ class TestImager:
         # verification
         assert_allclose(ssd.horiz, truth_horiz, atol=0.00000001 * u.m)
         assert_allclose(ssd.vert, truth_vert, atol=0.00000001 * u.m)
+
+    def test_rw(self, imager: Imager):
+        """Tests the read/write rates."""
+
+        # set up
+        truth_pix_read_rate_no_tdi = 294.348 * u("megapixel / second")
+        truth_pix_read_rate_tdi = 2943.48 * u("megapixel / second")
+        truth_data_write_rate_uncomp = 3638.14128 * u("megabit / second")
+        truth_data_write_rate_comp = 909.53532 * u("megabit / second")
+
+        # computation
+
+        #  pixel read rate (without TDI)
+        pix_read_rate_no_tdi = imager.detector.pix_read_rate(self.band_id, False, False)
+
+        # pixel read rate (with TDI)
+        pix_read_rate_tdi = imager.detector.pix_read_rate(self.band_id, False, True)
+
+        # data write rate (uncompressed, incl. overheads)
+        data_write_rate_uncomp = imager.data_write_rate(self.band_id, False, False)
+
+        # data write rate (compressed, incl. overheads)
+        data_write_rate_comp = imager.data_write_rate(self.band_id, False, True)
+
+        # verification
+        assert_allclose(
+            pix_read_rate_no_tdi,
+            truth_pix_read_rate_no_tdi,
+            atol=0.00000001 * u("megapixel / second"),
+        )
+        assert_allclose(
+            pix_read_rate_tdi,
+            truth_pix_read_rate_tdi,
+            atol=0.00000001 * u("megapixel / second"),
+        )
+        assert_allclose(
+            data_write_rate_uncomp,
+            truth_data_write_rate_uncomp,
+            atol=0.00000001 * u("megabit / second"),
+        )
+        assert_allclose(
+            data_write_rate_comp,
+            truth_data_write_rate_comp,
+            atol=0.00000001 * u("megabit / second"),
+        )
