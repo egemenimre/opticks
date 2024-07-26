@@ -137,3 +137,21 @@ class TestMTF:
 
         # verification
         assert mtf_value == pytest.approx(truth, 1e-9)
+
+    def test_mtf_smear(self, detector: Detector):
+        """Tests the drift/smear MTF."""
+
+        # check values
+        truth = 0.9776341205410619
+
+        # select the pan channel
+        channel: Channel = detector.params.channels.pan
+
+        # Generate the MTF model and values
+        blur_extent = 0.3  # 30% of the pix
+        mtf_model = MTF_Model.smear(channel.pixel_pitch(), blur_extent)
+
+        mtf_value = mtf_model.mtf_value(self.input_line_freq)
+
+        # verification
+        assert mtf_value == pytest.approx(truth, 1e-9)
