@@ -308,6 +308,65 @@ class MTF_Model:
 
         return MTF_Model(id, value_func)
 
+    @staticmethod
+    def combined(*mtf_models: tuple["MTF_Model", ...]) -> "MTF_Model":
+        """
+        Combination MTF models.
+
+        The combined MTF is useful when describing a combination of
+        multiple MTF Models. For example, the Imager MTF is a combination
+        of Optical MTF, Detector Sampling MTF and Detector Diffusion MTF.
+
+        Parameters
+        ----------
+        mtf_models : tuple["MTF_Model", ...]
+            list of MTF Models to be combined
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+
+        # set the id
+        id = "A combination of multiple MTF Models."
+
+        # build list of value functions
+        value_funcs = [mtf_model._value_func for mtf_model in mtf_models]
+
+        # set the value function
+        def value_func(input_line_freq):
+            return _combined_mtf(input_line_freq, value_funcs)
+
+        return MTF_Model(id, value_func)
+
+
+def _combined_mtf(
+    input_line_freq: Quantity | np.ndarray[Quantity], value_funcs
+) -> float | NDArray[np.float64]:
+    """
+    Combination of multiple MTF Model MTF data for the given
+    input line frequency.
+
+    Parameters
+    ----------
+    input_line_freq: Quantity | ArrayLike[Quantity]
+        Input line frequency (in cycles/mm)
+    value_funcs
+        list of value functions for all the MTF Models
+
+    Returns
+    -------
+    float | NDArray[np.float64]
+        MTF value between 0 and 1
+    """
+
+    mtf_value = 1
+    for value_func in value_funcs:
+        mtf_value = mtf_value * value_func(input_line_freq)
+
+    return mtf_value
+
 
 def _external_data_mtf(
     input_line_freq: Quantity | np.ndarray[Quantity], interpolator: CubicHermiteSpline
@@ -324,7 +383,7 @@ def _external_data_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value between 0 and 1
     """
 
@@ -351,7 +410,7 @@ def _ideal_optical_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value between 0 and 1
     """
 
@@ -389,7 +448,7 @@ def _aberrated_optical_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value (usually between 0 and 1, though can be negative).
     """
 
@@ -431,7 +490,7 @@ def _aberration_transfer_factor(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         ATF value (<1)
     """
 
@@ -461,7 +520,7 @@ def _detector_sampling_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value (usually between 0 and 1, though can be negative)
     """
 
@@ -501,7 +560,7 @@ def _smear_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value (usually between 0 and 1, though can be negative)
     """
     # pixel pitch (um) x input line freq (cycles/mm)
@@ -540,7 +599,7 @@ def _jitter_mtf(
 
     Returns
     -------
-    Quantity
+    float | NDArray[np.float64]
         MTF value between 0 and 1
     """
 

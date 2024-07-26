@@ -88,7 +88,7 @@ class TestMTF:
         # verification
         assert mtf_value == pytest.approx(truth, 1e-9)
 
-    def test_mtf_aberrated_optics(self, optics):
+    def test_mtf_aberrated_optics(self, optics: Optics):
         """Tests the aberrated optics MTF."""
 
         # check values
@@ -150,6 +150,29 @@ class TestMTF:
         # Generate the MTF model and values
         blur_extent = 0.3  # 30% of the pix
         mtf_model = MTF_Model.smear(channel.pixel_pitch(), blur_extent)
+
+        mtf_value = mtf_model.mtf_value(self.input_line_freq)
+
+        # verification
+        assert mtf_value == pytest.approx(truth, 1e-9)
+
+    def test_mtf_combined(self, optics: Optics, detector: Detector):
+        """Tests the combined MTF."""
+
+        # check values
+        truth = 0.3990703920059105
+
+        # select the pan channel
+        channel: Channel = detector.params.channels.pan
+
+        # Generate the MTF model and values
+        mtf_model_1 = MTF_Model.ideal_optics(self.ref_wavelength, optics)
+        mtf_model_2 = MTF_Model.detector_sampling(channel.pixel_pitch())
+
+        mtf_model = MTF_Model.combined(mtf_model_1, mtf_model_2)
+
+        # mtf_value_1 = mtf_model_1.mtf_value(self.input_line_freq)
+        # mtf_value_2 = mtf_model_2.mtf_value(self.input_line_freq)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
