@@ -223,7 +223,7 @@ class MTF_Model:
         # set the id
         id = (
             f"Motion Blur MTF with pixel pitch {pixel_pitch:~P}"
-            f"and blur extent {blur_extent:~P}"
+            f"and blur extent {blur_extent:.6f}"
         )
 
         # set the value function (with the fixed pixel pitch)
@@ -257,7 +257,7 @@ class MTF_Model:
         # set the id
         id = (
             f"Drift/Smear MTF with pixel pitch {pixel_pitch:~P}"
-            f"and blur extent {blur_extent:~P}"
+            f"and blur extent {blur_extent:.6f}"
         )
 
         # set the value function (with the fixed pixel pitch)
