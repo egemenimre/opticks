@@ -340,6 +340,38 @@ class MTF_Model:
 
         return MTF_Model(id, value_func)
 
+    @staticmethod
+    def fixed(mtf_value: float) -> "MTF_Model":
+        """
+        Fixed value MTF model.
+
+        Used for disturbances and imperfections.
+
+        Parameters
+        ----------
+        mtf_value : float
+            MTF value over the spatial frequency domain (between 0 and 1, inclusive)
+
+        Returns
+        -------
+        MTF_Model
+            MTF model
+        """
+        # check mtf value
+        if mtf_value < 0 or mtf_value > 1:
+            raise ValueError(
+                f"Fixed value MTF model - input value should be between 0 and 1: {mtf_value}"
+            )
+
+        # set the id
+        id = f"Fixed MTF with value {mtf_value:.6f}"
+
+        # set the value function (with the fixed pixel pitch)
+        def value_func(input_line_freq):
+            return mtf_value
+
+        return MTF_Model(id, value_func)
+
 
 def _combined_mtf(
     input_line_freq: Quantity | np.ndarray[Quantity], value_funcs
@@ -619,7 +651,7 @@ def set_mtf_plot_style(
     ylabel="MTF",
     height=4,
     width=8,
-) -> None:
+) -> None:  # pragma: no cover
     """
     Sets some default style parameters for MTF plots.
 

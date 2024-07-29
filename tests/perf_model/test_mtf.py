@@ -76,6 +76,28 @@ class TestMTF:
         # verification
         assert mtf_value == pytest.approx(truth, 1e-9)
 
+    def test_mtf_fixed_value(self):
+        """Tests the fixed value MTF."""
+
+        # check values
+        truth = 0.85
+
+        mtf_value = 0.85
+        # Generate the MTF model and values
+        mtf_model = MTF_Model.fixed(mtf_value)
+
+        mtf_value = mtf_model.mtf_value(self.input_line_freq)
+
+        # verification
+        assert mtf_value == pytest.approx(truth, 1e-9)
+
+    def test_mtf_fixed_value_err_neg(self):
+        with pytest.raises(ValueError) as e_info:
+
+            mtf_value = -0.5
+            # Generate the MTF model and values
+            MTF_Model.fixed(mtf_value)
+
     def test_mtf_ideal_optics(self, optics):
         """Tests the ideal optics MTF."""
 
