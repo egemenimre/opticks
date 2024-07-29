@@ -60,16 +60,18 @@ class TestMTF:
             file_path, self.perf_model_file_dir, self.perf_model_alt_file_dir
         )
 
+        input_line_freq = 32.456 * u.cy / u.mm
+
         # load external data file
         freq_data, mtf_data = np.loadtxt(file_path, unpack=True)
 
         # check values
-        truth = 0.4816165803247456
+        truth = 0.4464741694117462
 
         # Generate the MTF model and values
         mtf_model = MTF_Model.external_data(freq_data, mtf_data)
 
-        mtf_value = mtf_model.mtf_value(self.input_line_freq)
+        mtf_value = mtf_model.mtf_value(input_line_freq)
 
         # verification
         assert mtf_value == pytest.approx(truth, 1e-9)
