@@ -5,10 +5,8 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
-from matplotlib import pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
+from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 from pint import Quantity
 from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
@@ -653,59 +651,119 @@ def _jitter_mtf(
         return np.exp(-2 * ((np.pi * jitter_stdev * a_fx) ** 2))
 
 
-def set_mtf_plot_style(
-    fig: Figure,
-    ax: Axes,
-    x_max=None,
-    y_min=0,
-    title=None,
-    xlabel="input line freq (cycles/mm)",
-    ylabel="MTF",
-    height=4,
-    width=8,
-) -> None:  # pragma: no cover
-    """
-    Sets some default style parameters for MTF plots.
+class MTF_Plot:  # pragma: no cover
 
-    Parameters
-    ----------
-    fig : Figure
-        Figure object
-    ax : Axes
-        Axes object
-    x_max : float, optional
-        max value of x axis, by default None
-    y_min : float, optional
-        minimum value of y axis, by default 0
-    title : str, optional
-        title of the plot, by default None
-    xlabel : str, optional
-        x-axis label, by default "input line freq (cycles/mm)"
-    ylabel : str, optional
-        y-axis label, by default "MTF"
-    height : int, optional
-        height of the figure (in inches), by default 4
-    width : int, optional
-        width of the figure (in inches), by default 6
+    def __init__(self) -> None:
+        self.fig, self.ax = plt.subplots()
 
-    """
+    def populate_plot(
+        self,
+        freq_list,
+        mtf_plot_list: list[dict[str, MTF_Model]],
+        acceptable_limit: float = 0.1,
+        nyq_limit=Quantity,
+    ) -> None:
+        """
+        Populates the MTF plot lines using the MTF Models.
 
-    # set decorators
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    if title:
-        ax.set_title(title)
+        Each MTF Model is used to generate the plot y values,
+        using the `freq_list` as the discrete x axis values.
 
-    fig.legend()
+        Parameters
+        ----------
+        freq_list : Arraylike
+            list of spatial frequency values
+        mtf_plot_list : list[dict[str, MTF_Model]]
+            list of MTF models and labels
+        acceptable_limit : float, optional
+            horizontal "accaptable limit" line value, by default 0.1
+        nyq_limit : Quantity, optional
+            spatial frequency corresponding to the Nyquist limit, by default None
+        """
 
-    # set plot formatting
-    ax.xaxis.grid(True)
-    ax.yaxis.grid(True)
-    if x_max:
-        ax.set_xlim(0, x_max)
-    ax.set_ylim(y_min, 1)
+        # generate MTF data lines
+        for plot_data in mtf_plot_list:
 
-    fig.tight_layout()
+            # unpack item
+            plot_label, mtf_model = plot_data.values()
 
-    fig.set_figheight(height)
-    fig.set_figwidth(width)
+            # generate values (y axis)
+            mtf_values = mtf_model.mtf_value(freq_list)
+
+            # generate plot line
+            self.ax.plot(freq_list, mtf_values, label=plot_label)
+
+        # -----------------
+
+        if acceptable_limit:
+            # acceptable limit
+            self.ax.plot(
+                [0.0, freq_list.max().m],
+                [acceptable_limit, acceptable_limit],
+                label="Acceptable Limit",
+                linestyle="--",
+            )
+
+        if nyq_limit:
+            # detector Nyquist limit
+            self.ax.plot(
+                [nyq_limit.m, nyq_limit.m],
+                [0.0, 1.0],
+                label="Detector Nyq Limit",
+                linestyle="--",
+            )
+
+    def set_plot_style(
+        self,
+        x_max=None,
+        y_min=0,
+        title=None,
+        xlabel="input line freq (cycles/mm)",
+        ylabel="MTF",
+        height=4,
+        width=8,
+    ) -> None:
+        """
+        Sets some default style parameters for MTF plots.
+
+        Parameters
+        ----------
+        x_max : float, optional
+            max value of x axis, by default None
+        y_min : float, optional
+            minimum value of y axis, by default 0
+        title : str, optional
+            title of the plot, by default None
+        xlabel : str, optional
+            x-axis label, by default "input line freq (cycles/mm)"
+        ylabel : str, optional
+            y-axis label, by default "MTF"
+        height : int, optional
+            height of the figure (in inches), by default 4
+        width : int, optional
+            width of the figure (in inches), by default 6
+
+        """
+
+        # set decorators
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
+        if title:
+            self.ax.set_title(title)
+
+        self.fig.legend()
+
+        # set plot formatting
+        self.ax.xaxis.grid(True)
+        self.ax.yaxis.grid(True)
+        if x_max:
+            self.ax.set_xlim(0, x_max)
+        self.ax.set_ylim(y_min, 1)
+
+        self.fig.tight_layout()
+
+        self.fig.set_figheight(height)
+        self.fig.set_figwidth(width)
+
+        def show_plot(self):
+            plt.show()
