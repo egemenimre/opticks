@@ -92,7 +92,7 @@ class TestMTF:
         assert mtf_value == pytest.approx(truth, 1e-9)
 
     def test_mtf_fixed_value_err_neg(self):
-        with pytest.raises(ValueError) as e_info:
+        with pytest.raises(ValueError):
 
             mtf_value = -0.5
             # Generate the MTF model and values
