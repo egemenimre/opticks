@@ -5,6 +5,7 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
+from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -573,7 +574,7 @@ def _detector_sampling_mtf(
 def _smear_mtf(
     input_line_freq: Quantity | np.ndarray[Quantity],
     pixel_pitch: Quantity,
-    blur_extent: float,
+    blur_extent: float | Quantity,
 ) -> float | NDArray[np.float64]:
     """
     Drift/Smear MTF for the given input line frequency.
@@ -587,7 +588,7 @@ def _smear_mtf(
         Input line frequency (in cycles/mm)
     pixel_pitch : Quantity
         Pixel pitch (with or without binning)
-    blur_extent : float
+    blur_extent : float | Quantity
         Blur extent on the image, given in pixels (e.g. 0.1 or 10% pix)
 
     Returns
@@ -599,13 +600,19 @@ def _smear_mtf(
     a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
 
     # sinc does not receive Quantity input.
-    return np.sinc(blur_extent * a_fx.m)
+    if isinstance(blur_extent, Quantity):
+        # blur extent is Quantity
+        return np.sinc(blur_extent.to_reduced_units().m * a_fx.m)
+    else:
+        # blur extent is float
+        return np.sinc(blur_extent * a_fx.m)
 
 
+@u.check(None, "[length]", None)
 def _jitter_mtf(
     input_line_freq: Quantity | np.ndarray[Quantity],
     pixel_pitch: Quantity,
-    jitter_stdev: float,
+    jitter_stdev: float | Quantity,
 ) -> float | NDArray[np.float64]:
     """
     Jitter MTF for the given input line frequency.
@@ -626,7 +633,7 @@ def _jitter_mtf(
         Input line frequency (in cycles/mm)
     pixel_pitch : Quantity
         Pixel pitch (with or without binning)
-    jitter_stdev : float
+    jitter_stdev : float | Quantity
         Standard deviation of the jitter value in pixels
 
     Returns
@@ -638,7 +645,12 @@ def _jitter_mtf(
     # pixel pitch (um) x input line freq (cycles/mm)
     a_fx = (pixel_pitch * input_line_freq / u.cy).to_reduced_units()
 
-    return np.exp(-2 * ((np.pi * jitter_stdev * a_fx) ** 2))
+    if isinstance(jitter_stdev, Quantity):
+        # jitter std dev is Quantity
+        return np.exp(-2 * ((np.pi * jitter_stdev.to_reduced_units() * a_fx) ** 2))
+    else:
+        # jitter std dev is float
+        return np.exp(-2 * ((np.pi * jitter_stdev * a_fx) ** 2))
 
 
 def set_mtf_plot_style(
