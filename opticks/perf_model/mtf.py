@@ -661,7 +661,7 @@ class MTF_Plot:  # pragma: no cover
         freq_list,
         mtf_plot_list: list[dict[str, MTF_Model]],
         acceptable_limit: float = 0.1,
-        nyq_limit=Quantity,
+        nyq_limit: Quantity = None,
     ) -> None:
         """
         Populates the MTF plot lines using the MTF Models.
