@@ -1,13 +1,13 @@
 # Sample Pushbroom Imager: Pléiades MS
 # ------------------------------------
 
-# Pléiades Detector
+# Pléiades Detector (CCD)
 name: Pléiades MS Detector
 
 detector_type: pushbroom
 pixel_pitch: 52 um
 horizontal_pixels: 7500
-vertical_pixels: 5
+vertical_pixels: 5 # this is incorrect
 
 
 # channels
@@ -15,7 +15,7 @@ channels:
     b0_blue:
       name: B0 blue
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 1
+      vertical_pixels: 4
       binning: 1
       tdi_stages: 1 # no TDI in MS
       cuton_freq: 450 nm
@@ -24,7 +24,7 @@ channels:
     b1_green:
       name: B1 green
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 1
+      vertical_pixels: 4
       binning: 1
       tdi_stages: 1 # no TDI in MS
       cuton_freq: 510 nm
@@ -33,7 +33,7 @@ channels:
     b2_red:
       name: B2 red
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 1
+      vertical_pixels: 4
       binning: 1
       tdi_stages: 1 # no TDI in MS
       cuton_freq: 620 nm
@@ -42,7 +42,7 @@ channels:
     b3_nir:
       name: B3 NIR
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 1
+      vertical_pixels: 4
       binning: 1
       tdi_stages: 1 # no TDI in MS
       cuton_freq: 775 nm

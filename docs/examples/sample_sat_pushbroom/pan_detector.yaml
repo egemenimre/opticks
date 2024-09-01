@@ -1,7 +1,7 @@
 # Sample Pushbroom Imager: Pléiades PAN
 # -------------------------------------
 
-# Pléiades Detector
+# Pléiades Detector (CCD)
 name: Pléiades PAN Detector
 
 detector_type: pushbroom
@@ -15,9 +15,9 @@ channels:
   pan:
     name: PAN
     horizontal_pixels: 30000 # exact value not known
-    vertical_pixels: 1
+    vertical_pixels: 20
     binning: 1
-    tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+    tdi_stages: 13 # default value; options: 7, 10, 13, 16 and 20 TDI lines 
     cuton_freq: 480 nm
     cutoff_freq: 820 nm
 
