@@ -284,10 +284,18 @@ class Detector(ImagerComponent):
             channel._det_pixel_pitch = self.params.pixel_pitch
             # is binned
             channel.is_binned = False if channel.binning == 1 else True
+            # line/frame duration (with binning)
+            channel.frame_duration = timings.frame_duration * channel.binning
+            # line/frame rate (with binning)
+            channel.frame_rate = timings.frame_rate / channel.binning
+            # total exposure duration (with binning)
+            channel.integration_duration = (
+                timings.integration_duration * channel.binning
+            )
             # total TDI column duration
-            # total tdi col duration = line/frame duration (w/o bin) x Nr of TDI stages
+            # total tdi col duration = line/frame duration (w/bin) x Nr of TDI stages
             channel.total_tdi_col_duration = (
-                timings.frame_duration * channel.tdi_stages
+                timings.frame_duration * channel.binning * channel.tdi_stages
             ).to(u.ms)
 
     @classmethod
