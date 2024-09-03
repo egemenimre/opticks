@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
-Notes and models on optical sizing.
+Notes and models on optics system engineering.
 
 See [examples](docs/examples) directory for a few sample notebooks.
 
