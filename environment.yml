@@ -22,6 +22,8 @@ dependencies:
   - sphinx_rtd_theme
   - pip
   - pip:
+      - prysm
+        # packages needed for document generation
       - myst_parser
       - sphinx_autodoc_typehints
       - sphinx_copybutton
