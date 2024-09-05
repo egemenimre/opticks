@@ -193,10 +193,16 @@ class Channel:
         """
         tdi = self.tdi_stages if with_tdi else 1
 
+        binning = self.binning if with_binning else 1
+
         if self._detector_type == "pushbroom":
-            pix_read_rate = self.pixel_count_line(with_binning) * tdi * frame_rate
+            pix_read_rate = (
+                self.pixel_count_line(with_binning) * tdi * (frame_rate / binning)
+            )
         elif self._detector_type == "full frame":
-            pix_read_rate = self.pixel_count_frame(with_binning) * frame_rate
+            pix_read_rate = self.pixel_count_frame(with_binning) * (
+                frame_rate / binning
+            )
         else:
             raise ValueError(f"Invalid detector type: {self._detector_type}")
 
@@ -360,13 +366,16 @@ class Detector(ImagerComponent):
 
         pix_read_rate = 0 * u.Mpixel / u.s
 
+        # shorthand
+        timings = self.params.timings
+
         if isinstance(band_id, str):
 
             # there is a single channel
             channel = self.get_channel(band_id)
 
             pix_read_rate = channel.pix_read_rate(
-                self.params.timings.frame_rate, with_binning, with_tdi
+                timings.frame_rate, with_binning, with_tdi
             )
         else:
             # there are multiple channels, sum the values
@@ -374,7 +383,7 @@ class Detector(ImagerComponent):
 
             for channel in channels:
                 pix_read_rate_single_chan = channel.pix_read_rate(
-                    self.params.timings.frame_rate, with_binning, with_tdi
+                    timings.frame_rate, with_binning, with_tdi
                 )
                 pix_read_rate += pix_read_rate_single_chan
 
