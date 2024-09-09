@@ -318,7 +318,7 @@ class MTF_Model:
 
         Parameters
         ----------
-        mtf_models : tuple["MTF_Model", ...]
+        mtf_models : tuple containing multiple "MTF_Model" objects
             list of MTF Models to be combined
 
         Returns
