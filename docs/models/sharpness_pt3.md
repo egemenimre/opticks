@@ -1,6 +1,6 @@
 # Dynamic Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt2).
+The topic of sharpness and contrast performance is continued from [here](sharpness_pt2.md).
 
 ## Overview
 
@@ -130,17 +130,9 @@ Furthermore, "TDI jitter" will introduce a random blurring.
 
 Finally, if some of the images are more blurry than others (for example due to "single image jitter" varying between images), then the combined image will have the average blur of all images.
 
-# Atmospheric Contributors to the MTF
-
-## Atmospheric Turbulence
-
-TBW
-
-## Aeorosol
-
-TBW
-
 ---
+
+The topic of sharpness and contrast performance is continued [here](sharpness_pt4.md).
 
 [^2]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 

@@ -19,5 +19,6 @@ maxdepth: 1
 sharpness_pt1
 sharpness_pt2
 sharpness_pt3
+sharpness_pt4
 mtf_scenarios
 ```
