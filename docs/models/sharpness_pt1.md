@@ -6,7 +6,7 @@ An imager "sees" a scene and reproduces it in an image. How faithfully contrast 
 
 For example, for a (theoretical) high contrast scene with a sharp "black to white" transition, the imager will likely generate an image that takes a few or several pixels to transition from pure black to a progressively lighter grey to pure white. A good imager will need less pixels for this transition, reproducing the sharp contrast more correctly.
 
-As a minimum, both the optics and the detector will play a role in determining the sharpness performance of the imager (though there are also other concerns like aliasing). The theoretical limit of the resolution is given by the [spatial cut-off frequency](imager_geom#spatial-cutoff-frequency) for the optics and [Nyquist Frequency / Limit](imager_geom#nyquist-frequency-Limit) for the detector. In reality, the quality of the optics as well as defocus (due to design, manufacturing, deformations under mechanical loads or thermo-elastic distortions) will result in a degraded sharpness for the optics.
+As a minimum, both the optics and the detector will play a role in determining the sharpness performance of the imager (though there are also other concerns like aliasing). The theoretical limit of the resolution is given by the [spatial cut-off frequency](imager_geom.md#spatial-cut-off-frequency) for the optics and [Nyquist Frequency or Limit](imager_geom.md#nyquist-frequency-or-nyquist-limit) for the detector. In reality, the quality of the optics as well as defocus (due to design, manufacturing, deformations under mechanical loads or thermo-elastic distortions) will result in a degraded sharpness for the optics.
 
 Furthermore, the "shaking" of the imager (for example the moving platform that the imager is mounted on, cryocoolers or other vibration sources) will degrade the sharpness. The imaging duration (or integration time) may cause motion blur if there is a relative motion between the scene and the imager. If the "end-to-end" sharpness needs to be estimated (for example for target identification or recognition tasks), atmospheric effects need to be considered as well. Therefore, all characteristics of the entire imaging system as well as the complete path of the light should be considered when modelling the overall image sharpness.
 
@@ -46,7 +46,7 @@ It should also be noted that, MTF is different for every single point on the ima
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt2).
+The topic of sharpness and contrast performance is continued [here](sharpness_pt2.md).
 
 [^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
 

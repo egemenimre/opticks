@@ -64,7 +64,7 @@ $$2 \times \tan \left( \frac{ifov \times pixels}{2} \right)$$
 
 where `pixels` are the horizontal or vertical pixels used.
 
-## Nyquist Frequency / Limit
+## Nyquist Frequency or Nyquist Limit
 
 Nyquist frequency is defined as:
 

@@ -1,6 +1,6 @@
 # Static Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt1).
+The topic of sharpness and contrast performance is continued from [here](sharpness_pt1.md).
 
 ## Optical MTF
 
@@ -10,7 +10,7 @@ The *ideal* optical MTF for a clear circular diffraction-limited aperture with m
 
 $$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
-where $f$ is the input line frequency and $f_c$ is the [spatial cut-off frequency](imager_geom/#spatial-cut-off-frequency), which is a inversely proportional to the wavelength.
+where $f$ is the input line frequency and $f_c$ is the [spatial cut-off frequency](imager_geom.md#spatial-cut-off-frequency), which is a inversely proportional to the wavelength.
 
 This can also be written as:
 
@@ -60,13 +60,11 @@ As the frequency increases, and the wave periods become comparable to the detect
 
 Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach [^4]
 
-***
 TBW
-***
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt3).
+The topic of sharpness and contrast performance is continued [here](sharpness_pt3.md).
 
 [^2]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
