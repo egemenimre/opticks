@@ -4,7 +4,7 @@ Notes and models on optics system engineering.
 
 Check the [source code on GitHub](https://github.com/egemenimre/opticks).
 
-See [examples and how-to guides page](how-to_guides) for a few sample notebooks.
+See [examples and how-to guides page](how_to_guides.md) for a few sample notebooks.
 
 The documentation for opticks is here: <https://opticks.readthedocs.io/>
 
@@ -40,7 +40,7 @@ tutorials/yaml_reader.ipynb
 maxdepth: 2
 caption: Examples
 ---
-how-to_guides
+how_to_guides
 ```
 
 ```{toctree}
