@@ -362,7 +362,7 @@ class Imager:
         """
         Computes the projected horizontal image extent at some distance.
 
-        The image extent is computed on a "flat surface" at the 'distance'.
+        The image extent is computed on a "flat surface" at the `distance`.
 
         Parameters
         ----------
@@ -388,7 +388,7 @@ class Imager:
         """
         Computes the projected vertical image extent at some distance.
 
-        The image extent is computed on a "flat surface" at the 'distance'.
+        The image extent is computed on a "flat surface" at the `distance`.
 
         Parameters
         ----------
@@ -416,31 +416,31 @@ class Imager:
         """
         Computes the Spatial Sampling Distance (SSD) at some distance.
 
-        The SSD is computed on a "flat surface" at the 'distance'.
-        The location can be 'centre', 'centre left', 'centre right',
-        'centre top', 'centre bottom' or 'corner'.
+        The SSD is computed on a "flat surface" at the `distance`.
+        The location can be `centre`, `centre left`, `centre right`,
+        `centre top`, `centre bottom` or `corner`.
 
-        - 'centre' corresponds to the boresight LoS vector corresponding
-        to the channel pixels.
-        - 'centre left', 'centre right' are equivalent and they correspond
-        to the horizontal centre points or 3 o'clock and 9 o'clock
-        positions of the channel pixels.
-        - 'centre top', 'centre bottom' are equivalent and they correspond
-        to the vertical centre points or 12 o'clock and 6 o'clock
-        positions of the channel pixels
-        - 'corner' corresponds to any corner of the channel pixels.
+        - `centre` corresponds to the boresight LoS vector corresponding
+          to the channel pixels.
+        - `centre left`, `centre right` are equivalent and they correspond
+          to the horizontal centre points or 3 o'clock and 9 o'clock
+          positions of the channel pixels.
+        - `centre top`, `centre bottom` are equivalent and they correspond
+          to the vertical centre points or 12 o'clock and 6 o'clock
+          positions of the channel pixels
+        - `corner` corresponds to any corner of the channel pixels.
 
         As the ifov is constant, the horizontal and vertical SSD are not
         necessarily equal. This is particularly evident with large pixel
         sizes and large FoVs.
 
-        The result is a 'namedtuple' and the horizontal and vertical
-        SSD values can be queried with 'horiz' and 'vert', respectively.
+        The result is a `namedtuple` and the horizontal and vertical
+        SSD values can be queried with `horiz` and `vert`, respectively.
 
         Parameters
         ----------
         distance : Quantity | np.ndarray[Quantity]
-            _description_
+            distance between the imager and the target
         band_id : str
             band ID (to select the correct band or channel)
         with_binning : bool, optional
