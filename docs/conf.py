@@ -178,11 +178,7 @@ myst_all_links_external = True
 # -- Options for hoverxref -------------------------------------------
 hoverxref_auto_ref = True
 hoverxref_mathjax = True
-hoverxref_intersphinx = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-]
+hoverxref_intersphinx = ["numpy", "scipy", "matplotlib", "prysm", "pint"]
 
 # -- Options for copybutton -------------------------------------------
 
