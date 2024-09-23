@@ -18,8 +18,8 @@ channels:
     vertical_pixels: 20
     binning: 1
     tdi_stages: 13 # default value; options: 7, 10, 13, 16 and 20 TDI lines 
-    cuton_freq: 480 nm
-    cutoff_freq: 820 nm
+    cuton_wvl: 480 nm
+    cutoff_wvl: 820 nm
 
 #  full_well_capacity = XX * u.e
 
