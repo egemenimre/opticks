@@ -55,7 +55,9 @@ class MTF_Model:
 
     @staticmethod
     def external_data(
-        freq_values: np.ndarray[Quantity], mtf_values: np.ndarray[np.float64]
+        freq_values: np.ndarray[Quantity],
+        mtf_values: np.ndarray[np.float64],
+        id: str = None,
     ) -> "MTF_Model":
         """
         MTF Model from an external data.
@@ -71,6 +73,8 @@ class MTF_Model:
             List of spatial frequencies (in cy/mm or lp/mm)
         spatial_freqs : ArrayLike[np.float64]
             List of corresponding MTF values (should be less than or equal to 1)
+        id : str
+            id text associated with the data. Default text if `None`.
 
         Returns
         -------
@@ -78,8 +82,9 @@ class MTF_Model:
             MTF model
         """
 
-        # set the id
-        id = "External MTF Data"
+        # set the id if None
+        if not id:
+            id = "External MTF Data"
 
         # prepare interpolator
         interpolator = Akima1DInterpolator(freq_values, mtf_values, method="makima")
@@ -98,7 +103,7 @@ class MTF_Model:
         """
         Ideal optical MTF model.
 
-        Assumes uniformly illuminated circular aperture, no significant aberrations.
+        Assumes uniformly illuminated circular aperture, no aberrations.
 
         Parameters
         ----------
@@ -504,7 +509,7 @@ def _aberration_transfer_factor(
     MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
     Design for more information.
 
-    The w_rms value corresponds to the RMS of the total wavefront error,
+    The `w_rms` value corresponds to the RMS of the total wavefront error,
     or how much the actual wavefront deviates from the ideal wavefront.
     The unit of this deviation is the multiple wavelengths (such as 0.15 x lambda).
 
