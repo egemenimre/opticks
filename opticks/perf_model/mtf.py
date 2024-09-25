@@ -664,7 +664,7 @@ class MTF_Plot:  # pragma: no cover
     def populate_plot(
         self,
         freq_list,
-        mtf_plot_list: list[dict[str, MTF_Model]],
+        mtf_data: dict[str, MTF_Model],
         acceptable_limit: float = 0.1,
         nyq_limit: Quantity = None,
     ) -> None:
@@ -672,31 +672,29 @@ class MTF_Plot:  # pragma: no cover
         Populates the MTF plot lines using the MTF Models.
 
         Each MTF Model is used to generate the plot y values,
-        using the `freq_list` as the discrete x axis values.
+        using the `freq_list` as the discrete x axis values
+        and the dict key as the label.
 
         Parameters
         ----------
         freq_list : Arraylike
             list of spatial frequency values
-        mtf_plot_list : list[dict[str, MTF_Model]]
+        mtf_data : dict[str, MTF_Model]
             list of MTF models and labels
         acceptable_limit : float, optional
-            horizontal "accaptable limit" line value, by default 0.1
+            horizontal "acceptable limit" line value, by default 0.1
         nyq_limit : Quantity, optional
             spatial frequency corresponding to the Nyquist limit, by default None
         """
 
         # generate MTF data lines
-        for plot_data in mtf_plot_list:
-
-            # unpack item
-            plot_label, mtf_model = plot_data.values()
+        for label, mtf_model in mtf_data.items():
 
             # generate values (y axis)
             mtf_values = mtf_model.mtf_value(freq_list)
 
             # generate plot line
-            self.ax.plot(freq_list, mtf_values, label=plot_label)
+            self.ax.plot(freq_list, mtf_values, label=label)
 
         # -----------------
 
