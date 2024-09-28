@@ -4,21 +4,20 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
-import copy
 
 import numpy as np
 from numpy import ndarray
-from pint import Quantity, Unit
+from pint import Quantity
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
-from prysm.otf import mtf_from_psf
 from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
 from prysm.propagation import Wavefront
 from strictyaml import Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
+from opticks.utils.prysm_utils import richdata_with_units
 from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
@@ -294,7 +293,7 @@ class Optics(ImagerComponent):
         # return PSF with or without units
         if with_units:
             # pupil to PSF plane means dx is switched from mm to um
-            return _add_units(psf, dx_units=u.um)
+            return richdata_with_units(psf, dx_units=u.um)
         else:
             return psf
 
@@ -366,54 +365,6 @@ class Optics(ImagerComponent):
         """
         # perfect incoherent optics
         return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm)
-
-
-def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
-    """
-    Computes the MTF.
-
-    This is the Modulation Transfer Function for the PSF.
-
-    `prysm` does not work with units, but MTF with units
-    can be generated when the method is called `with_units=True`.
-
-    Parameters
-    ----------
-    psf: RichData
-        PSF data
-    with_units : bool, optional
-        create the MTF with units
-
-    Returns
-    -------
-    RichData
-        Modulation Transfer Function (MTF) with spacing in cy/mm
-    """
-
-    if isinstance(psf.dx, Quantity):
-        # psf has units, create one without for safety
-        psf_copy = RichData(psf.data, psf.dx.m_as(u.um), None)
-
-        mtf = mtf_from_psf(psf_copy)
-
-        if psf.wavelength:
-            mtf.wavelength = psf.wavelength.m_as(u.um)
-    else:
-        # psf does not have units, create mtf directly
-        mtf = mtf_from_psf(psf)
-
-        if psf.wavelength:
-            mtf.wavelength = psf.wavelength
-
-    # the resulting mtf is guaranteed to be without units
-    # output dx in cy/mm
-
-    if with_units:
-        # add units to MTF
-        return _add_units(mtf, dx_units=u.cy / u.mm)
-    else:
-        # mtf returned without units
-        return mtf
 
 
 @u.wraps(u.nm, (u.nm, u.mm, u.mm, u.rad), False)
@@ -532,40 +483,6 @@ def _compute_psf(
     psf = RichData(psf_data, psf_dx, wvl)
 
     return psf
-
-
-def _add_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
-    """Generates a deepcopy of the input `RichData` object with units.
-
-    Adds units to `dx` and `wavelength` (if available).
-    The `data` structure is already without units by definition.
-
-    Parameters
-    ----------
-    rich_data : RichData
-        input object without units
-    dx_units: Unit
-        units to be used for `dx` spacing parameter
-
-    Returns
-    -------
-    RichData
-        output object with units
-    """
-
-    # data is a simple ndarray without units
-    data: RichData = copy.deepcopy(rich_data.data)
-
-    # inter-sample spacing, mm for PSF and cy/mm for MTF
-    dx = rich_data.dx * dx_units
-
-    # wavelength of light, um
-    if rich_data.wavelength:
-        wavelength = rich_data.wavelength * u.um
-    else:
-        wavelength = None
-
-    return RichData(data, dx, wavelength)
 
 
 def _generate_grid(diameter, samples) -> tuple[ndarray, ndarray]:
