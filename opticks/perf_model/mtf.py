@@ -699,19 +699,18 @@ class MTF_Plot:  # pragma: no cover
         # -----------------
 
         if acceptable_limit:
-            # acceptable limit
-            self.ax.plot(
-                [0.0, freq_list.max().m],
-                [acceptable_limit, acceptable_limit],
-                label="Acceptable Limit",
-                linestyle="--",
+            self.ax.axhline(
+                acceptable_limit,
+                label="Acceptable MTF Limit",
+                linestyle="-.",
             )
 
+        # ax.axhline(26400 *ureg.feet, color='tab:red')
+        # ax.axvline(120* ureg.minutes, color='tab:green')
+
         if nyq_limit:
-            # detector Nyquist limit
-            self.ax.plot(
-                [nyq_limit.m, nyq_limit.m],
-                [0.0, 1.0],
+            self.ax.axvline(
+                nyq_limit.m,
                 label="Detector Nyq Limit",
                 linestyle="--",
             )
@@ -768,5 +767,5 @@ class MTF_Plot:  # pragma: no cover
         self.fig.set_figheight(height)
         self.fig.set_figwidth(width)
 
-        def show_plot(self):
-            plt.show()
+    # def show_plot(self):
+    #     plt.show()
