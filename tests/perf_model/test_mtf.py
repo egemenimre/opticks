@@ -12,7 +12,7 @@ import pytest
 from opticks import process_paths, u
 from opticks.imager_model.detector import Channel, Detector
 from opticks.imager_model.optics import Optics
-from opticks.perf_model.mtf import MTF_Model
+from opticks.perf_model.mtf import MTF_Model_1D
 
 
 class TestMTF:
@@ -69,7 +69,7 @@ class TestMTF:
         truth = 0.4464741694117462
 
         # Generate the MTF model and values
-        mtf_model = MTF_Model.external_data(freq_data, mtf_data)
+        mtf_model = MTF_Model_1D.external_data(freq_data, mtf_data)
 
         mtf_value = mtf_model.mtf_value(input_line_freq)
 
@@ -84,7 +84,7 @@ class TestMTF:
 
         mtf_value = 0.85
         # Generate the MTF model and values
-        mtf_model = MTF_Model.fixed(mtf_value)
+        mtf_model = MTF_Model_1D.fixed(mtf_value)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -96,7 +96,7 @@ class TestMTF:
 
             mtf_value = -0.5
             # Generate the MTF model and values
-            MTF_Model.fixed(mtf_value)
+            MTF_Model_1D.fixed(mtf_value)
 
     def test_mtf_ideal_optics(self, optics):
         """Tests the ideal optics MTF."""
@@ -105,7 +105,7 @@ class TestMTF:
         truth = 0.5196720931409163
 
         # Generate the MTF model and values
-        mtf_model = MTF_Model.ideal_optics(self.ref_wavelength, optics)
+        mtf_model = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -120,7 +120,9 @@ class TestMTF:
 
         # Generate the MTF model and values
         w_rms = 0.05
-        mtf_model = MTF_Model.aberrated_optics(self.ref_wavelength, w_rms, optics)
+        mtf_model = MTF_Model_1D.emp_aberrated_optics(
+            self.ref_wavelength, w_rms, optics
+        )
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -137,7 +139,7 @@ class TestMTF:
         channel: Channel = detector.params.channels.pan
 
         # Generate the MTF model and values
-        mtf_model = MTF_Model.detector_sampling(channel.pixel_pitch())
+        mtf_model = MTF_Model_1D.detector_sampling(channel.pixel_pitch())
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -155,7 +157,7 @@ class TestMTF:
 
         # Generate the MTF model and values
         stdev_jitter = 0.1  # 10% of the pix
-        mtf_model = MTF_Model.jitter(channel.pixel_pitch(), stdev_jitter)
+        mtf_model = MTF_Model_1D.jitter(channel.pixel_pitch(), stdev_jitter)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -173,7 +175,7 @@ class TestMTF:
 
         # Generate the MTF model and values
         blur_extent = 0.3  # 30% of the pix
-        mtf_model = MTF_Model.smear(channel.pixel_pitch(), blur_extent)
+        mtf_model = MTF_Model_1D.smear(channel.pixel_pitch(), blur_extent)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -190,10 +192,10 @@ class TestMTF:
         channel: Channel = detector.params.channels.pan
 
         # Generate the MTF model and values
-        mtf_model_1 = MTF_Model.ideal_optics(self.ref_wavelength, optics)
-        mtf_model_2 = MTF_Model.detector_sampling(channel.pixel_pitch())
+        mtf_model_1 = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
+        mtf_model_2 = MTF_Model_1D.detector_sampling(channel.pixel_pitch())
 
-        mtf_model = MTF_Model.combined(mtf_model_1, mtf_model_2)
+        mtf_model = MTF_Model_1D.combined(mtf_model_1, mtf_model_2)
 
         # mtf_value_1 = mtf_model_1.mtf_value(self.input_line_freq)
         # mtf_value_2 = mtf_model_2.mtf_value(self.input_line_freq)

@@ -15,11 +15,11 @@ from opticks import u
 from opticks.imager_model.optics import Optics
 
 
-class MTF_Model:
+class MTF_Model_1D:
 
     def __init__(self, id: str, mtf_value_func) -> None:
         """
-        Modulation Transfer Function (MTF) Model.
+        Modulation Transfer Function (MTF) Model in 1D.
 
         Parameters
         ----------
@@ -58,7 +58,7 @@ class MTF_Model:
         freq_values: np.ndarray[Quantity],
         mtf_values: np.ndarray[np.float64],
         id: str = None,
-    ) -> "MTF_Model":
+    ) -> "MTF_Model_1D":
         """
         MTF Model from an external data.
 
@@ -93,13 +93,13 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _external_data_mtf(input_line_freq, interpolator)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]", None)
     def ideal_optics(
         wavelength: Quantity | np.ndarray[Quantity], optics: Optics
-    ) -> "MTF_Model":
+    ) -> "MTF_Model_1D":
         """
         Ideal optical MTF model.
 
@@ -128,17 +128,17 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _ideal_optical_mtf(input_line_freq, spatial_cutoff_freq)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]", None, None)
-    def aberrated_optics(
+    def emp_model_aberrated_optics(
         wavelength: Quantity | np.ndarray[Quantity],
         w_rms: float,
         optics: Optics,
-    ) -> "MTF_Model":
+    ) -> "MTF_Model_1D":
         """
-        Aberrated optical MTF model.
+        Aberrated optical MTF model with an empirical model.
 
         Uses an empirical model for the optical aberrations, such that:
         MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
@@ -174,11 +174,11 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _aberrated_optical_mtf(input_line_freq, spatial_cutoff_freq, w_rms)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]")
-    def detector_sampling(pixel_pitch: Quantity) -> "MTF_Model":
+    def detector_sampling(pixel_pitch: Quantity) -> "MTF_Model_1D":
         """
         Detector sampling MTF model.
 
@@ -203,11 +203,11 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _detector_sampling_mtf(input_line_freq, pixel_pitch)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]", None)
-    def motion_blur(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model":
+    def motion_blur(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model_1D":
         """
         Motion blur MTF model.
 
@@ -234,11 +234,11 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _smear_mtf(input_line_freq, pixel_pitch, blur_extent)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]", None)
-    def smear(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model":
+    def smear(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model_1D":
         """
         Drift/Smear MTF model.
 
@@ -268,14 +268,14 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _smear_mtf(input_line_freq, pixel_pitch, blur_extent)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
     @u.check("[length]", None)
     def jitter(
         pixel_pitch: Quantity,
         jitter_stdev: float,
-    ) -> "MTF_Model":
+    ) -> "MTF_Model_1D":
         """
         Jitter MTF model.
 
@@ -310,10 +310,10 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _jitter_mtf(input_line_freq, pixel_pitch, jitter_stdev)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    def combined(*mtf_models: tuple["MTF_Model", ...]) -> "MTF_Model":
+    def combined(*mtf_models: tuple["MTF_Model_1D", ...]) -> "MTF_Model_1D":
         """
         Combination MTF models.
 
@@ -342,10 +342,10 @@ class MTF_Model:
         def value_func(input_line_freq):
             return _combined_mtf(input_line_freq, value_funcs)
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    def fixed(mtf_value: float) -> "MTF_Model":
+    def fixed(mtf_value: float) -> "MTF_Model_1D":
         """
         Fixed value MTF model.
 
@@ -374,7 +374,7 @@ class MTF_Model:
         def value_func(input_line_freq):
             return mtf_value
 
-        return MTF_Model(id, value_func)
+        return MTF_Model_1D(id, value_func)
 
 
 def _combined_mtf(
@@ -664,7 +664,7 @@ class MTF_Plot:  # pragma: no cover
     def populate_plot(
         self,
         freq_list,
-        mtf_data: dict[str, MTF_Model],
+        mtf_data: dict[str, MTF_Model_1D],
         acceptable_limit: float = 0.1,
         nyq_limit: Quantity = None,
     ) -> None:
