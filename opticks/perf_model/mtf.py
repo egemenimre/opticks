@@ -10,9 +10,12 @@ from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 from pint import Quantity
 from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
+from prysm._richdata import RichData
+from prysm.otf import mtf_from_psf
 
 from opticks import u
 from opticks.imager_model.optics import Optics
+from opticks.utils.prysm_utils import richdata_with_units
 
 
 class MTF_Model_1D:
@@ -78,7 +81,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -114,7 +117,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -160,7 +163,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -175,6 +178,43 @@ class MTF_Model_1D:
             return _aberrated_optical_mtf(input_line_freq, spatial_cutoff_freq, w_rms)
 
         return MTF_Model_1D(id, value_func)
+
+    @staticmethod
+    def from_mtf_2d(mtf_2d: RichData, slice: str) -> "MTF_Model_1D":
+        """Converts the 2D MTF into a 1D MTF Model object.
+
+        The `prysm` MTF object produces the data in 2D,
+        as the contrast transfer may differ in different directions.
+        This method extracts a slice (usually in x or y directions)
+        and generates an `MTF_Model_1D` object.
+
+        Possible slice strings are `x`, `y`, `azavg`, `azavmedian`,
+        `azmin`, `azpv`, `azvar`, `azstd`. The first two are simply
+        slices in the x and y axes. The remaining are different
+        ways of sampling the data in the azimuthal direction.
+
+        Parameters
+        ----------
+        mtf_2d : RichData
+            2D MTF data (line freq should be in cy/mm)
+        slice : str
+            slice type (e.g., "x" or "y" direction)
+
+        Returns
+        -------
+        MTF_Model_1D
+            MTF model
+        """
+
+        # get the slice
+        fx, mtf_values = getattr(mtf_2d.slices(twosided=False), slice)
+
+        if not isinstance(mtf_2d.dx, Quantity):
+            # MTF 2D has no units, add units to fx
+            fx = fx * u.cy / u.mm
+
+        # generate the model
+        return MTF_Model_1D.external_data(fx, mtf_values, id=f"MTF in {slice}")
 
     @staticmethod
     @u.check("[length]")
@@ -192,7 +232,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -220,7 +260,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -254,7 +294,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -296,7 +336,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -323,12 +363,12 @@ class MTF_Model_1D:
 
         Parameters
         ----------
-        mtf_models : tuple containing multiple "MTF_Model" objects
+        mtf_models : tuple containing multiple "MTF_Model_1D" objects
             list of MTF Models to be combined
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
 
@@ -358,7 +398,7 @@ class MTF_Model_1D:
 
         Returns
         -------
-        MTF_Model
+        MTF_Model_1D
             MTF model
         """
         # check mtf value
@@ -656,6 +696,54 @@ def _jitter_mtf(
         return np.exp(-2 * ((np.pi * jitter_stdev * a_fx) ** 2))
 
 
+def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
+    """
+    Computes the MTF.
+
+    This is the Modulation Transfer Function for the PSF.
+
+    `prysm` does not work with units, but MTF with units
+    can be generated when the method is called `with_units=True`.
+
+    Parameters
+    ----------
+    psf: RichData
+        PSF data
+    with_units : bool, optional
+        create the MTF with units
+
+    Returns
+    -------
+    RichData
+        Modulation Transfer Function (MTF) with spacing in cy/mm
+    """
+
+    if isinstance(psf.dx, Quantity):
+        # psf has units, create one without for safety
+        psf_copy = RichData(psf.data, psf.dx.m_as(u.um), None)
+
+        mtf = mtf_from_psf(psf_copy)
+
+        if psf.wavelength:
+            mtf.wavelength = psf.wavelength.m_as(u.um)
+    else:
+        # psf does not have units, create mtf directly
+        mtf = mtf_from_psf(psf)
+
+        if psf.wavelength:
+            mtf.wavelength = psf.wavelength
+
+    # the resulting mtf is guaranteed to be without units
+    # output dx in cy/mm
+
+    if with_units:
+        # add units to MTF
+        return richdata_with_units(mtf, dx_units=u.cy / u.mm)
+    else:
+        # mtf returned without units
+        return mtf
+
+
 class MTF_Plot:  # pragma: no cover
 
     def __init__(self) -> None:
@@ -679,7 +767,7 @@ class MTF_Plot:  # pragma: no cover
         ----------
         freq_list : Arraylike
             list of spatial frequency values
-        mtf_data : dict[str, MTF_Model]
+        mtf_data : dict[str, MTF_Model_1D]
             list of MTF models and labels
         acceptable_limit : float, optional
             horizontal "acceptable limit" line value, by default 0.1
