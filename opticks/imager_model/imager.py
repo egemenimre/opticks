@@ -493,11 +493,11 @@ class Imager:
             fov_h = self.horizontal_fov(band_id)
 
             a_h = np.sqrt(d**2 + (s_v / 2) ** 2)
-            gamma_h = np.atan((s_h / 2) / a_h)
+            gamma_h = np.arctan((s_h / 2) / a_h)
             ssd_h = s_h / 2.0 - a_h * np.tan(gamma_h - ifov)
 
             a_v = np.sqrt(d**2 + (s_h / 2) ** 2)
-            gamma_v = np.atan((s_v / 2) / a_v)
+            gamma_v = np.arctan((s_v / 2) / a_v)
             ssd_v = s_v / 2.0 - a_v * np.tan(gamma_v - ifov)
 
         else:
