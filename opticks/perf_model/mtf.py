@@ -9,9 +9,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 from pint import Quantity
-from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
 from prysm._richdata import RichData
 from prysm.otf import mtf_from_psf
+from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
 
 from opticks import u
 from opticks.imager_model.optics import Optics
