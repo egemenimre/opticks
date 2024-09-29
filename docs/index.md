@@ -32,7 +32,7 @@ models/models_index
 maxdepth: 2
 caption: Tutorials
 ---
-tutorials/yaml_reader.ipynb
+tutorials
 ```
 
 ```{toctree}
