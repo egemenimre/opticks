@@ -4,14 +4,12 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
-from opticks import u
-
+import copy
 
 from pint import Unit
 from prysm._richdata import RichData
 
-
-import copy
+from opticks import u
 
 
 def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
