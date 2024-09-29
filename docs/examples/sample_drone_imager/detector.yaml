@@ -16,8 +16,8 @@ channels:
     horizontal_pixels: 1280
     vertical_pixels: 720
     binning: 1
-    cuton_freq: 3000 nm
-    cutoff_freq: 5000 nm
+    cuton_wvl: 3000 nm
+    cutoff_wvl: 5000 nm
 
 #  full_well_capacity = XX * u.e
 
