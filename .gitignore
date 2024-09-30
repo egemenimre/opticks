@@ -141,3 +141,6 @@ opticks/temp
 /test-results/
 /docs/_autosummary/
 /docs/_themes/
+
+# other project config
+opticks.code-workspace
