@@ -11,7 +11,7 @@ from pint import Quantity
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
-from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_seq
+from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
 from prysm.propagation import Wavefront
 from strictyaml import Map, Str
 
@@ -409,7 +409,7 @@ def zernike_opd(
     rho = r / ap_radius
 
     # compute the polynomials (dimensionless)
-    mode = list(zernike_nm_seq(nms, rho, t))
+    mode = list(zernike_nm_sequence(nms, rho, t))
 
     # monochromatic OPD with multiple aberrations
     # units are in nm as the wfe_rms is forced to be in nm (via wraps)
