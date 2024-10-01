@@ -6,7 +6,6 @@ Check the [source code on GitHub](https://github.com/egemenimre/opticks).
 
 [Tutorials](tutorials.md) provide information on setting up basic tasks.See also [examples and how-to guides page](how_to_guides.md) for a few sample notebooks to carry out complex tasks.
 
-The documentation for opticks is here: <https://opticks.readthedocs.io/>
 
 ## Requirements
 
