@@ -1,4 +1,4 @@
-# Explanation of the Inner Workings of opticks
+# The Inner Workings of opticks
 
 In depth explanation of the physical and mathematical models behind `opticks`.
 
