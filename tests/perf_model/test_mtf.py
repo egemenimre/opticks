@@ -120,7 +120,7 @@ class TestMTF:
 
         # Generate the MTF model and values
         w_rms = 0.05
-        mtf_model = MTF_Model_1D.emp_aberrated_optics(
+        mtf_model = MTF_Model_1D.emp_model_aberrated_optics(
             self.ref_wavelength, w_rms, optics
         )
 
