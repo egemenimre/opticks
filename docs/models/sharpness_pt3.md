@@ -73,7 +73,7 @@ The blur extent for a scanner can be computed by multiplying the exposure time w
 $$
 \begin{split}
 d &= \text{velocity on image plane} \times \text{integ time} \\
-&= \left( \frac{(\text{velocity on the target plane}) x (\text{focal length})} {\text{distance to target}} \right) \times \text{integ time}
+&= \left( \frac{(\text{velocity on the target plane}) \times (\text{focal length})} {\text{distance to target}} \right) \times \text{integ time}
 \end{split}
 $$
 
