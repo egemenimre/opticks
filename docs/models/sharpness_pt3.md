@@ -70,7 +70,12 @@ where $d$ is the blur or drift extent, expressed in pixel ratio (e.g., 0.1 pixel
 
 The blur extent for a scanner can be computed by multiplying the exposure time with the motion rate on the image plane. For the ideal case of a pushbroom imager with no oversampling and square pixels in the resulting image, line duration corresponds to one pixel. Therefore the ratio of the exposure duration to the line duration defines the blur extent as a percentage of a pixel. For the more general case, the ratio of the velocity on the target plane (for example ground velocity) to the distance of the imager to the scene (for example altitude) is equal to the ratio of the velocity on the image plane to the focal length. Using this, we can compute the blur extent:
 
-$$ d = \text{velocity on image plane} \times \text{integ time} = \left( \frac{(\text{velocity on the target plane}) x (\text{focal length})} {\text{distance to target}} \right) \times \text{integ time} $$
+$$
+\begin{split}
+d &= \text{velocity on image plane} \times \text{integ time} \\
+&= \left( \frac{(\text{velocity on the target plane}) x (\text{focal length})} {\text{distance to target}} \right) \times \text{integ time}
+\end{split}
+$$
 
 For a satellite with a ground velocity of 6700 m/s at an altitude of 670 km and an imager with an effective focal length of 500 mm, the scene moves in the image plane at a rate of 5 mm/s or 5 µm/ms.
 
