@@ -17,8 +17,8 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
-      cuton_freq: 450 nm
-      cutoff_freq: 530 nm
+      cuton_wvl: 450 nm
+      cutoff_wvl: 530 nm
 
     b1_green:
       name: B1 green
@@ -26,8 +26,8 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
-      cuton_freq: 510 nm
-      cutoff_freq: 590 nm
+      cuton_wvl: 510 nm
+      cutoff_wvl: 590 nm
 
     b2_red:
       name: B2 red
@@ -35,8 +35,8 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
-      cuton_freq: 620 nm
-      cutoff_freq: 700 nm
+      cuton_wvl: 620 nm
+      cutoff_wvl: 700 nm
 
     b3_nir:
       name: B3 NIR
@@ -44,8 +44,8 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
-      cuton_freq: 775 nm
-      cutoff_freq: 915 nm
+      cuton_wvl: 775 nm
+      cutoff_wvl: 915 nm
 
 #  full_well_capacity = XX * u.e
 
