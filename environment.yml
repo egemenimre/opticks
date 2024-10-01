@@ -16,7 +16,6 @@ dependencies:
   - matplotlib
   - sphinx
   - ipykernel
-  - nbsphinx
   - sphinx-notfound-page
   - sphinx-hoverxref
   - sphinx_rtd_theme
@@ -27,6 +26,7 @@ dependencies:
       - myst_parser
       - sphinx_autodoc_typehints
       - sphinx_copybutton
+      - nbsphinx
       # packages needed for testing and automation
       - tox
       - tox-conda
