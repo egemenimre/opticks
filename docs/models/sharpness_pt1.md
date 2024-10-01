@@ -22,7 +22,7 @@ Modulation Transfer Function (MTF) is essentially how well the optical system co
 
 Modulation Contrast Function (MCF) is similar, as it is essentially how well the optical system converts the target object contrast into image object contrast.
 
-Both can be measured with sine wave or square wave targets. For a sine wave target (or sine wave response), MCF is equal to MTF. However, for a square wave target (or square wave response), MTF is close to, but not equal to MCF. For square wave response, the MCF is usually higher than MTF. From a Fourier analysis perspective, a square wave comprises an infinite number of frequencies and a sine wave is just a first order approximation with a single frequency.[^3]
+Both can be measured with sine wave or square wave targets. For a sine wave target (or sine wave response), MCF is equal to MTF. However, for a square wave target (or square wave response), MTF is close to, but not equal to MCF. For square wave response, the MCF is usually higher than MTF. From a Fourier analysis perspective, a square wave comprises an infinite number of frequencies and a sine wave is just a first order approximation with a single frequency.[^1]
 
 This means that, for a sine wave input, the image contrast can be easily computed multiplying the MTF and the object contrast in the scene, or rather the Modulation Contrast of the Object (MCO). MCO depends on the object irradiance with respect to the background. Depending on the wavelength, the primary source of object irradiance can be reflectance or emittance.
 
@@ -34,7 +34,7 @@ Even though MTF can be evaluated as a single value for a single input line frequ
 
 ![Static MTF](images/static_mtf.png "Sample MTF plot")
 
-A rule of thumb is that the resolution limit of the system is at the frequency for which the MTF is equal to 0.1[^1].
+A rule of thumb is that the resolution limit of the system is at the frequency for which the MTF is equal to 0.1[^2].
 
 As can be imagined, the ratio of the optics limits to the resolution compared to the detector limits is a useful metric as to how good the output images will *theoretically* be. The equation is given simply as the ratio of the spatial cut-off frequency to the Nyquist limit, or for the given wavelength, the ratio of the F-number to the pixel pitch.
 
@@ -48,6 +48,6 @@ It should also be noted that, MTF is different for every single point on the ima
 
 The topic of sharpness and contrast performance is continued [here](sharpness_pt2.md).
 
-[^1]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.
+[^1]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
 
-[^3]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
+[^2]: A Tutorial on Electro-Optical/Infrared (EO/IR) Theory and Systems; G. M. Koretsky, J. F. Nicoll, M. S. Taylor; Institute for Defense Analyses, IDA Document D-4642, 2013.

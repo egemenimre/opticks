@@ -40,7 +40,7 @@ When computing the *total* MTF for the system, all the relevant contributors sho
 
 As explained above, jitter is due to the high frequency "shaking" of the imager (or more specifically, the line of sight (LoS) vectors), at a frequency that is higher than that of the imaging. It is usually caused by the shaking of the imaging platform (e.g. the aircraft or the ground vehicle that carries the imager) or the mechanical cooling system of the detector where present. The shaking usually involves multiple frequencies and multiple phases, therefore the combined effect can be modelled as a Gaussian variation of all LoS vectors at the same time, and in both horizontal and vertical directions - though the vibration profiles in the horizontal and vertical directions may differ. As this introduces irradiance into a pixel from neighbouring areas, this effect manifests itself as a blur (or a reduction in MTF) on the image. As mentioned above, the shorter the imaging or exposure duration, the higher the frequency that causes blurring and therefore the smaller the effects of jitter.
 
-The jitter MTF is computed as a Gaussian of the form (from [^2] Vol 4 pg 69 eqn 2.6):
+The jitter MTF is computed as a Gaussian of the form (from [^1] Vol 4 pg 69 eqn 2.6):
 
 $$\text{MTF}_\text{jitter}(f) = exp(-2 (\pi  j_{LoS} f)^2)$$
 
@@ -62,7 +62,7 @@ In some cases, the imager is looking at a static scene (no relative motion), but
 
 Focussing on the latter case, where the entire scene is moving with respect to the imager, motion blur introduces its own MTF contributor. As the resulting blurring is directional, so is the MTF.
 
-The MTF due to motion blur is given as ([^4] Equation 14.3.3):
+The MTF due to motion blur is given as ([^2] Equation 14.3.3):
 
 $$\text{MTF}_\text{mot blur}(f) = \frac{\sin(\pi d p f)}{\pi p f} = \text{sinc}(d p f)$$
 
@@ -134,6 +134,6 @@ Finally, if some of the images are more blurry than others (for example due to "
 
 The topic of sharpness and contrast performance is continued [here](sharpness_pt4.md).
 
-[^2]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
+[^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
-[^4]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
+[^2]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.

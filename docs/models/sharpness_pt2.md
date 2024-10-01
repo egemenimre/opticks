@@ -6,7 +6,7 @@ The topic of sharpness and contrast performance is continued from [here](sharpne
 
 ### Ideal Optical MTF
 
-The *ideal* optical MTF for a clear circular diffraction-limited aperture with monochromatic illumination is given as[^2]:
+The *ideal* optical MTF for a clear circular diffraction-limited aperture with monochromatic illumination is given as[^1]:
 
 $$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos \left( \frac{f}{f_c} \right) - \frac{f}{f_c}  \sqrt{1- \left( \frac{f}{f_c} \right)^2} \right]$$
 
@@ -14,7 +14,7 @@ where $f$ is the input line frequency and $f_c$ is the [spatial cut-off frequenc
 
 This can also be written as:
 
-$$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos(\nu) - \nu \sqrt{1- (\nu)^2} \right]$$
+$$\text{MTF}_\text{ideal opt}(f) = \frac{2}{\pi} \left[ \arccos(\nu) - \nu \sqrt{1- (\nu)^1} \right]$$
 
 where $\nu =\left( \frac{f}{f_c} \right) $.
 
@@ -32,7 +32,7 @@ The real optical MTF will be lower than this value, due to real world design lim
 
 ### Aberration Transfer Factor (ATF) and Aberrated Optical MTF
 
-The Aberration Transfer Factor[^3] (ATF) is an empirical model that combines all sources of optical aberrations into a single total wavefront error:
+The Aberration Transfer Factor[^2] (ATF) is an empirical model that combines all sources of optical aberrations into a single total wavefront error:
 
 $$\text{ATF}(f) = 1- \left( \frac{W_{RMS}}{0.18} \right)^2 \left[ 1 - 4 ( \nu -0.5 )^2 \right] $$
 
@@ -58,7 +58,7 @@ As the frequency increases, and the wave periods become comparable to the detect
 
 ## Diffusion MTF
 
-Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach [^4]
+Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach [^3]
 
 TBW
 
@@ -66,8 +66,8 @@ TBW
 
 The topic of sharpness and contrast performance is continued [here](sharpness_pt3.md).
 
-[^2]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
+[^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
-[^3]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
+[^2]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
 
-[^4]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
+[^3]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
