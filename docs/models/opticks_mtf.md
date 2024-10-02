@@ -80,7 +80,7 @@ input_line_freq = np.linspace(0.0, cutoff_freq.m, 100) * cutoff_freq.u
 
 # plot the MTF data
 # -----------------
-imager_mtf_plot = MTF_Plot()
+imager_mtf_plot = MTF_Plot_1D()
 
 mtf_plot_list = {
     "Detector": mtf_det_sampling_model,  # detector MTF
@@ -96,7 +96,7 @@ imager_mtf_plot.populate_plot(input_line_freq, mtf_plot_list, nyq_limit=nyq_freq
 imager_mtf_plot.set_plot_style(x_max=input_line_freq.max(), title="Imager MTF")
 ```
 
-We begin by initialising the {py:class}`.MTF_Plot`. We then add each item to a dict, where the key is the label of the MTF curve and the value is the {py:class}`.MTF_Model_1D` model. To populate the plot, we also need the discrete x axis values (`input_line_freq` here), limited by the spatial cut-off frequency. We can also plot a vertical "Nyquist Frequency" (`nyq_limit` key). The final step is to set the plot style with decorators like labels and titles, as well as limits and sizes. The keys are passed on to the underlying `matplotlib` implementation.
+We begin by initialising the {py:class}`.MTF_Plot_1D`. We then add each item to a dict, where the key is the label of the MTF curve and the value is the {py:class}`.MTF_Model_1D` model. To populate the plot, we also need the discrete x axis values (`input_line_freq` here), limited by the spatial cut-off frequency. We can also plot a vertical "Nyquist Frequency" (`nyq_limit` key). The final step is to set the plot style with decorators like labels and titles, as well as limits and sizes. The keys are passed on to the underlying `matplotlib` implementation.
 
 The end result looks like this:
 

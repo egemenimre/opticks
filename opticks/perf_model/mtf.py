@@ -3,7 +3,10 @@
 # Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
+"""
+Package for Modulation Transfer Function (MTF) related classes and functions.
 
+"""
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -113,7 +116,7 @@ class MTF_Model_1D:
         wavelength : Quantity | ArrayLike[Quantity]
             Wavelength at which MTF is computed
         optics: Optics
-            Optics model (to compute the spatial cutoff frequency)
+            Optics model (to compute the spatial cut-off frequency)
 
         Returns
         -------
@@ -744,7 +747,7 @@ def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
         return mtf
 
 
-class MTF_Plot:  # pragma: no cover
+class MTF_Plot_1D:  # pragma: no cover
 
     def __init__(self) -> None:
         self.fig, self.ax = plt.subplots()
