@@ -137,38 +137,41 @@ class Grid:
 
         return self._t
 
-    def with_units(self, units: Unit = Unit("mm")):
-        """Converts the Grid object to the requested units.
+    def strip_units(self, units: Unit = Unit("mm")) -> "Grid":
+        """Converts the Grid object to the default units.
 
-        Adds the requested units if no units exist.
-
-        The conversion is in place, no copy is generated.
+        Converts the internal parameters to float ndarrays
+        and returns a deepcopy of the `Grid` object.
 
         Azimuthal coordinates are in radians.
 
         Parameters
         ----------
         units : Unit, optional
-            requested unit, by default Unit("mm")
+            requested unit, by default "mm"
+
+        Returns
+        -------
+        Grid
+            Grid object with float ndarrays
         """
 
-        if isinstance(self.x, Quantity):
+        dx = self.dx
+
+        if self.has_units:
             # we already have units, convert them to the requested ones
-            self.x.ito(units)
-            self.y.ito(units)
+            dx = dx.m_as(units)
 
-            if self._r is not None:
-                self._r.ito(units)
-                self._t = self._t * u.rad
-            pass
+        return Grid(self.shape, dx)
+
+    @property
+    def has_units(self) -> bool:
+        """Checks whether the Grid internal data have units or
+        are plain float ndarrays."""
+        if isinstance(self.x, Quantity):
+            return True
         else:
-            # add units
-            self.x = self.x * units
-            self.y = self.y * units
-
-            if self._r is not None:
-                self._r = self._r * units
-                self._t = self._t * u.rad
+            return False
 
 
 def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
