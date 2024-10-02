@@ -407,11 +407,11 @@ class Detector(ImagerComponent):
         """
         return self.params.channels.all[band_id]
 
-    def get_channels(self, band_ids: Iterable[str]) -> List[Channel]:
+    def get_channels(self, band_ids: Iterable[str]) -> list[Channel]:
         """
-        Gets the list channel with the 'band_id'.
+        Gets the list of channels with the 'band_id'.
 
-        Alias for 'self.params.channels.all[band_id]'.
+        Alias for '[self.params.channels.all[band_id] for band_id in band_ids]'.
 
         Parameters
         ----------
@@ -420,7 +420,7 @@ class Detector(ImagerComponent):
 
         Returns
         -------
-        Channel
+        list[Channel]
             Requested channels with the 'band_id'
         """
 
