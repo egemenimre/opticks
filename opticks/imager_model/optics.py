@@ -9,7 +9,6 @@ import numpy as np
 from numpy import ndarray
 from pint import Quantity
 from prysm._richdata import RichData
-from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
 from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
 from prysm.propagation import Wavefront
@@ -17,7 +16,7 @@ from strictyaml import Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
-from opticks.utils.prysm_utils import richdata_with_units
+from opticks.utils.prysm_utils import Grid, richdata_with_units
 from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
@@ -60,24 +59,26 @@ class ApertureFactory:
         Returns
         -------
         aperture: numpy.ndarray
-            binary ndarray representation of the mask
-        rho : numpy.ndarray or number
-            radial coordinate
-        phi : numpy.ndarray or number
-            azimuthal coordinate
+            ndarray representation of the mask
+        grid : Grid
+            Grid object associated with the aperture
         """
 
         # aperture radius
         aperture_radius = aperture_diam / 2.0
 
         # generate the square grid in polar coords
-        r, t = _generate_polar_grid(aperture_diam, samples)
+        grid = Grid.from_size(samples, aperture_diam)
+        r, t = grid.polar()
 
         # generate aperture (circle mask applied to the square grid)
+        aperture = circle(aperture_radius, r)
+
+        # add units if needed
         if with_units:
-            return circle(aperture_radius, r), r * u.mm, t * u.rad
-        else:
-            return circle(aperture_radius, r), r, t
+            grid.with_units(u.mm)
+
+        return aperture, grid
 
     @classmethod
     @u.wraps(None, (None, u.mm, None, None, None), False)
@@ -111,18 +112,17 @@ class ApertureFactory:
         Returns
         -------
         aperture: numpy.ndarray of booleans
-            binary ndarray representation of the mask
-        rho : numpy.ndarray or number
-            radial coordinate
-        phi : numpy.ndarray or number
-            azimuthal coordinate
+            ndarray representation of the mask
+        grid : Grid
+            Grid object associated with the aperture
         """
 
         # aperture radius
         aperture_radius = aperture_diam / 2.0
 
         # generate the square grid in polar coords
-        r, t = _generate_polar_grid(aperture_diam, samples)
+        grid = Grid.from_size(samples, aperture_diam)
+        r, t = grid.polar()
 
         # generate full aperture (circle mask applied to the square grid)
         full_aperture = circle(aperture_radius, r)
@@ -137,10 +137,11 @@ class ApertureFactory:
         # this also enables varying the amount of light through the aperture
         # aperture = aperture.astype(float)
 
+        # add units if needed
         if with_units:
-            return aperture, r * u.mm, t * u.rad
-        else:
-            return aperture, r, t
+            grid.with_units(u.mm)
+
+        return aperture, grid
 
 
 class Optics(ImagerComponent):
@@ -367,9 +368,9 @@ class Optics(ImagerComponent):
         return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm)
 
 
-@u.wraps(u.nm, (u.nm, u.mm, u.mm, u.rad), False)
+@u.wraps(u.nm, (u.nm, u.mm, None), False)
 def zernike_opd(
-    wfe_rms: list, aperture_diameter: Quantity | float, r: ndarray, t: ndarray
+    wfe_rms: list, aperture_diameter: Quantity | float, grid: Grid
 ) -> ndarray:
     """Computes the Optical Path Difference via Zernike Polynomials.
 
@@ -386,10 +387,8 @@ def zernike_opd(
         ANSI list aberration coefficients (WFE RMS) (in nm)
     diameter : Quantity | float
         aperture diameter in mm
-    r : ndarray
-        radial coordinate of the aperture grid (in mm)
-    t : ndarray
-        azimuthal coordinate of the aperture grid (in rad)
+    grid : Grid
+        aperture grid (in mm and rad)
 
     Returns
     -------
@@ -406,6 +405,14 @@ def zernike_opd(
     # radial coords normalised by aperture radius
     # normalisation required by the polynomials
     ap_radius = aperture_diameter / 2.0
+
+    # check for units
+    if isinstance(grid.r, Quantity):
+        r = grid.r.m_as(u.mm)
+        t = grid.t.m_as(u.rad)
+    else:
+        r = grid.r
+        t = grid.t
     rho = r / ap_radius
 
     # compute the polynomials (dimensionless)
@@ -483,28 +490,3 @@ def _compute_psf(
     psf = RichData(psf_data, psf_dx, wvl)
 
     return psf
-
-
-def _generate_polar_grid(diameter, samples) -> tuple[ndarray, ndarray]:
-    """Generates a polar grid with the given internal sample points.
-
-    Parameters
-    ----------
-    diameter : Quantity | float
-        centre diameter
-    samples : int or tuple of int
-        number of samples per dimension.  If a scalar value, broadcast to
-        both dimensions.  Order is numpy axis convention, (row, col)
-
-    Returns
-    -------
-    rho, phi: (ndarray, ndarray)
-        radial coordinate and azimuthal coordinate
-    """
-
-    # Cartesian grid
-    x, y = make_xy_grid(samples, diameter=diameter)
-    # radial and azimuthal coords
-    r, t = cart_to_polar(x, y)
-
-    return r, t
