@@ -3,6 +3,10 @@
 # Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
+"""
+Package for prysm integration utilities and helpers.
+
+"""
 
 import copy
 
