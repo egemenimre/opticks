@@ -33,7 +33,7 @@ class Grid:
     _t: ndarray = None
     """Azimuthal coordinate"""
 
-    dx: Quantity | float
+    dx: Quantity
     """Inter-sample spacing."""
 
     shape = None
@@ -43,7 +43,7 @@ class Grid:
     Order is numpy axis convention, (row, col).
     Type is int or tuple of int."""
 
-    def __init__(self, shape, dx: Quantity | float) -> None:
+    def __init__(self, shape, dx: Quantity) -> None:
         """Create an x, y grid from -1, 1 with n number of samples.
 
         Parameters
@@ -51,7 +51,7 @@ class Grid:
         shape : int or tuple of int
             number of samples per dimension.  If a scalar value, broadcast to
             both dimensions.  Order is numpy axis convention, (row, col)
-        dx : Quantity | float
+        dx : Quantity
             inter-sample spacing
 
         """
@@ -65,7 +65,7 @@ class Grid:
         self.x, self.y = make_xy_grid(shape, dx=dx, grid=grid)
 
     @classmethod
-    def from_size(cls, shape, size: Quantity | float) -> "Grid":
+    def from_size(cls, shape, size: Quantity) -> "Grid":
         """Generates a `Grid` object from the size of one side.
 
         If sample sizes are not equal in the two dimensions,
@@ -77,7 +77,7 @@ class Grid:
         shape : int or tuple of int
             number of samples per dimension.  If a scalar value, broadcast to
             both dimensions. Order is numpy axis convention, (row, col)
-        size : Quantity | float
+        size : Quantity
             size of the grid on one side
 
         Returns
@@ -154,20 +154,21 @@ class Grid:
         Returns
         -------
         Grid
-            Grid object with float ndarrays
+            New Grid object with float ndarrays
         """
-
-        dx = self.dx
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            dx = dx.m_as(units)
+            dx = self.dx.m_as(units)
+        else:
+            # deep copy internal data
+            dx = copy.deepcopy(self.dx)
 
         return Grid(self.shape, dx)
 
     @property
     def has_units(self) -> bool:
-        """Checks whether the Grid internal data have units or
+        """Checks whether the internal data have units or
         are plain float ndarrays."""
         if isinstance(self.x, Quantity):
             return True
@@ -181,9 +182,8 @@ class OptPathDiff:
         """Init with Optical Path Difference.
 
         The input data should be in a format that can be used
-        in `prysm`. Therefore, it is recommended to
-        initialise this object with `from_zernike`
-        or similar methods.
+        in `prysm`. Therefore, it is recommended to initialise
+        this object with `from_zernike` or similar methods.
 
         Parameters
         ----------
