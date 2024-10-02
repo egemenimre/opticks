@@ -4,7 +4,6 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 from collections.abc import Iterable
-from typing import List
 
 import numpy as np
 from pint import Quantity
