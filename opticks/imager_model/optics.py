@@ -10,13 +10,13 @@ from numpy import ndarray
 from pint import Quantity
 from prysm._richdata import RichData
 from prysm.geometry import circle
-from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
+from prysm.polynomials import sum_of_2d_modes
 from prysm.propagation import Wavefront
 from strictyaml import Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
-from opticks.utils.prysm_utils import Grid, richdata_with_units
+from opticks.utils.prysm_utils import Grid, OptPathDiff, richdata_with_units
 from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
@@ -34,7 +34,7 @@ class ApertureFactory:
     @classmethod
     def circle_aperture(
         cls,
-        aperture_diam: Quantity | float,
+        aperture_diam: Quantity,
         samples,
         with_units=False,
     ) -> tuple[ndarray, Grid]:
@@ -47,13 +47,13 @@ class ApertureFactory:
 
         Parameters
         ----------
-        aperture_diam : Quantity | float
+        aperture_diam : Quantity
             aperture diameter in mm
         samples : int or tuple of int
             number of samples per dimension.  If a scalar value, broadcast to
             both dimensions.  Order is numpy axis convention, (row, col)
         with_units : bool, optional
-            `r` and `t` returned with units (in mm and radians, respectively)
+            Grid returned with units (in mm and radians)
 
         Returns
         -------
@@ -75,14 +75,14 @@ class ApertureFactory:
 
         # strip units if needed
         if not with_units:
-            grid.strip_units(u.mm)
+            grid = grid.strip_units(u.mm)
 
         return aperture, grid
 
     @classmethod
     def circle_aperture_with_obscuration(
         cls,
-        aperture_diam: Quantity | float,
+        aperture_diam: Quantity,
         obscuration_ratio: float,
         samples,
         with_units=False,
@@ -97,7 +97,7 @@ class ApertureFactory:
 
         Parameters
         ----------
-        aperture_diam : Quantity | float
+        aperture_diam : Quantity
             aperture diameter in mm
         obscuration_ratio: float
             obscuration ratio (between 0 and 1)
@@ -105,7 +105,7 @@ class ApertureFactory:
             number of samples per dimension.  If a scalar value, broadcast to
             both dimensions.  Order is numpy axis convention, (row, col)
         with_units : bool, optional
-            `r` and `t` returned with units (in mm and radians, respectively)
+            Grid returned with units (in mm and radians)
 
         Returns
         -------
@@ -137,7 +137,7 @@ class ApertureFactory:
 
         # strip units if needed
         if not with_units:
-            grid.strip_units(u.mm)
+            grid = grid.strip_units(u.mm)
 
         return aperture, grid
 
@@ -160,7 +160,7 @@ class Optics(ImagerComponent):
 
     # ---------- begin modelling functions ----------
 
-    aperture_dx = None
+    aperture_dx: Quantity = None
     """Aperture sample distance (in mm).
     """
 
@@ -184,13 +184,13 @@ class Optics(ImagerComponent):
             ignored if aperture is user defined
         """
 
-        # use units for the r and t values
+        # use units for the grid (currently not used)
         with_units = True
 
         if aperture is None:
             # aperture function not defined, use circular aperture
-            # r and t (with units) currently ignored
-            self.aperture, r, t = ApertureFactory.circle_aperture(
+            # grid currently ignored
+            self.aperture, grid = ApertureFactory.circle_aperture(
                 self.params.aperture_diameter, samples, with_units
             )
         else:
@@ -203,8 +203,7 @@ class Optics(ImagerComponent):
         # compute aperture sample distance
         self.aperture_dx = (self.params.aperture_diameter / samples).to(u.mm)
 
-    @u.wraps(None, (None, u.um, u.nm), False)
-    def add_pupil_func(self, wavelength, opd=None):
+    def add_pupil_func(self, wavelength, opd: OptPathDiff = None):
         """Adds a pupil function.
 
         A pupil function combines amplitude with phase information
@@ -217,18 +216,21 @@ class Optics(ImagerComponent):
 
         Parameters
         ----------
-        wavelength : float | Quantity
+        wavelength : Quantity
             wavelength of light with units of microns
-        opd : numpy.ndarray | Quantity, optional
+        opd : OptPathDiff, optional
             array containing the optical path error in nm
             if None, assumed zero
         """
 
-        # Generate the pupil function
+        # strip units for the Wavefront as it cannot handle units well
+        opd_data = opd.strip_units(u.nm).opd_data
+
+        # Generate the pupil function (no units)
         pupil = Wavefront.from_amp_and_phase(
             self.aperture,  # amplitudes
-            phase=opd,  # float ndarray in nm with u.wraps
-            wavelength=wavelength,  # float in um with u.wraps
+            phase=opd_data,  # float ndarray in nm
+            wavelength=wavelength.m_as(u.um),
             dx=self.aperture_dx.m_as(u.mm),
         )
 
@@ -237,8 +239,8 @@ class Optics(ImagerComponent):
 
     def psf(
         self,
-        wvl_ref: float | Quantity,
-        psf_dx: float | Quantity,
+        wvl_ref: Quantity,
+        psf_dx: Quantity,
         psf_samples: int = 512,
         spectral_weights: np.ndarray = None,
         with_units=True,
@@ -258,9 +260,9 @@ class Optics(ImagerComponent):
 
         Parameters
         ----------
-        wvl_ref : float | Quantity
+        wvl_ref : Quantity
             reference wavelength (in microns)
-        psf_dx : float | Quantity
+        psf_dx : Quantity
             sample distance of the output PSF Plane grid (in microns)
         psf_samples : int, optional
             number of samples in the output plane.
@@ -284,12 +286,12 @@ class Optics(ImagerComponent):
             # set uniform weights if no weights defined
             spectral_weights = np.ones_like(self.pupils)
 
-        # compute the PSF
+        # compute the PSF (no units)
         psf = _compute_psf(
             self.pupils, focal_length, wvl_ref, psf_dx, psf_samples, spectral_weights
         )
 
-        # return PSF with or without units
+        # return the PSF with or without units
         if with_units:
             # pupil to PSF plane means dx is switched from mm to um
             return richdata_with_units(psf, dx_units=u.um)
