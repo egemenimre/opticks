@@ -6,10 +6,13 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
+from prysm.coordinates import cart_to_polar, make_xy_grid
+from prysm.geometry import circle
 
 from opticks import process_paths, u
-from opticks.imager_model.optics import Optics
+from opticks.imager_model.optics import ApertureFactory, Optics
 from opticks.utils.testing_utils import assert_allclose
 
 
@@ -48,3 +51,46 @@ class TestOptics:
 
         # verification
         assert_allclose(cutoff_freq, truth, atol=0.00001 * u.cy / u.mm)
+
+    def test_circle_aperture(self, optics):
+        """Tests the circle aperture."""
+        diameter = optics.params.aperture_diameter.m_as(u.mm)
+
+        samples = 256
+
+        # prysm definition
+        xi, eta = make_xy_grid(samples, diameter=diameter)
+        r, t = cart_to_polar(xi, eta)
+
+        aperture_prysm = circle(diameter / 2, r)
+
+        # computation
+        aperture, grid = ApertureFactory.circle_aperture(
+            optics.params.aperture_diameter, samples, with_units=True
+        )
+
+        # verification
+        np.testing.assert_array_equal(aperture, aperture_prysm, strict=True)
+
+    def test_circle_aperture_with_obscuration(self, optics):
+        """Tests the circle aperture."""
+        diameter = optics.params.aperture_diameter.m_as(u.mm)
+
+        samples = 256
+        obscuration_ratio = 0.3
+
+        # prysm definition
+        xi, eta = make_xy_grid(samples, diameter=diameter)
+        r, t = cart_to_polar(xi, eta)
+
+        pm_od = circle(diameter / 2, r)
+        pm_id = circle(diameter / 2 * obscuration_ratio, r)
+        aperture_prysm = pm_od ^ pm_id  # or pm_od & ~pm_id
+
+        # computation
+        aperture, grid = ApertureFactory.circle_aperture_with_obscuration(
+            optics.params.aperture_diameter, obscuration_ratio, samples, with_units=True
+        )
+
+        # verification
+        np.testing.assert_array_equal(aperture, aperture_prysm, strict=True)
