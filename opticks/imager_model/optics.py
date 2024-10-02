@@ -32,13 +32,12 @@ class ApertureFactory:
     """Generates oft used aperture models for `prysm`."""
 
     @classmethod
-    @u.wraps(None, (None, u.mm, None, None), False)
     def circle_aperture(
         cls,
         aperture_diam: Quantity | float,
         samples,
         with_units=False,
-    ) -> tuple[ndarray, ndarray, ndarray]:
+    ) -> tuple[ndarray, Grid]:
         """Circle aperture model for `prysm`.
 
         This is valid for many if not most refractive optics.
@@ -74,21 +73,20 @@ class ApertureFactory:
         # generate aperture (circle mask applied to the square grid)
         aperture = circle(aperture_radius, r)
 
-        # add units if needed
-        if with_units:
-            grid.with_units(u.mm)
+        # strip units if needed
+        if not with_units:
+            grid.strip_units(u.mm)
 
         return aperture, grid
 
     @classmethod
-    @u.wraps(None, (None, u.mm, None, None, None), False)
     def circle_aperture_with_obscuration(
         cls,
         aperture_diam: Quantity | float,
         obscuration_ratio: float,
         samples,
         with_units=False,
-    ) -> tuple[ndarray, ndarray, ndarray]:
+    ) -> tuple[ndarray, Grid]:
         """Circle aperture model for `prysm` with circular centre obscuration.
 
         This is valid for many reflective telescopes. The obscuration
@@ -137,9 +135,9 @@ class ApertureFactory:
         # this also enables varying the amount of light through the aperture
         # aperture = aperture.astype(float)
 
-        # add units if needed
-        if with_units:
-            grid.with_units(u.mm)
+        # strip units if needed
+        if not with_units:
+            grid.strip_units(u.mm)
 
         return aperture, grid
 
