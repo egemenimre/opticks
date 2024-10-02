@@ -71,7 +71,7 @@ class ApertureFactory:
         aperture_radius = aperture_diam / 2.0
 
         # generate the square grid in polar coords
-        r, t = _generate_grid(aperture_diam, samples)
+        r, t = _generate_polar_grid(aperture_diam, samples)
 
         # generate aperture (circle mask applied to the square grid)
         if with_units:
@@ -122,7 +122,7 @@ class ApertureFactory:
         aperture_radius = aperture_diam / 2.0
 
         # generate the square grid in polar coords
-        r, t = _generate_grid(aperture_diam, samples)
+        r, t = _generate_polar_grid(aperture_diam, samples)
 
         # generate full aperture (circle mask applied to the square grid)
         full_aperture = circle(aperture_radius, r)
@@ -485,7 +485,7 @@ def _compute_psf(
     return psf
 
 
-def _generate_grid(diameter, samples) -> tuple[ndarray, ndarray]:
+def _generate_polar_grid(diameter, samples) -> tuple[ndarray, ndarray]:
     """Generates a polar grid with the given internal sample points.
 
     Parameters
