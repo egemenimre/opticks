@@ -14,6 +14,7 @@ from numpy import ndarray
 from pint import Quantity, Unit
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
+from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
 
 from opticks import u
 
@@ -169,6 +170,110 @@ class Grid:
         """Checks whether the Grid internal data have units or
         are plain float ndarrays."""
         if isinstance(self.x, Quantity):
+            return True
+        else:
+            return False
+
+
+class OptPathDiff:
+
+    def __init__(self, opd: ndarray):
+        """Init with Optical Path Difference.
+
+        The input data should be in a format that can be used
+        in `prysm`. Therefore, it is recommended to
+        initialise this object with `from_zernike`
+        or similar methods.
+
+        Parameters
+        ----------
+        opd : ndarray
+            Optical Path Difference data (in nm)
+        """
+        self.opd_data = opd
+
+    @classmethod
+    def from_zernike(
+        cls, wfe_rms: list[Quantity], aperture_diameter: Quantity, grid: Grid
+    ) -> "OptPathDiff":
+        """Computes the Optical Path Difference via Zernike Polynomials.
+
+        Generates the Zernike Polynomials to the order corresponding
+        to the number of coefficients (e.g., 9 coefficients = mode 8)
+        sums them properly, adding the WFE RMS Zernike coefficients.
+
+        The result is the monochromatic OPD for a single location
+        on the PSF plane.
+
+        Parameters
+        ----------
+        wfe_rms : list[Quantity]
+            ANSI list of aberration coefficients (WFE RMS) (in nm)
+        diameter : Quantity
+            aperture diameter in mm
+        grid : Grid
+            aperture grid (in mm and rad)
+
+        Returns
+        -------
+        OptPathDiff
+            Optical Path Difference (OPD)
+        """
+
+        # mode n = (n+1) elements
+        elems = len(wfe_rms)
+
+        # Generate the (n,m) tuples in ANSI order
+        nms = [ansi_j_to_nm(i) for i in range(0, elems)]
+
+        # radial coords normalised by aperture radius
+        # normalisation required by the polynomials
+        ap_radius = aperture_diameter / 2.0
+
+        r, t = grid.polar()
+
+        rho = r / ap_radius
+
+        # compute the polynomials (dimensionless)
+        mode = list(zernike_nm_sequence(nms, rho, t))
+
+        # monochromatic OPD with multiple aberrations
+        # wfe_rms and opd units are should be in nm
+        opd = sum_of_2d_modes(mode, wfe_rms)
+
+        return OptPathDiff(opd)
+
+    def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":
+        """Converts the OptPhaseDiff object to the default units.
+
+        Converts the internal parameters to float ndarrays
+        and returns a deepcopy of the `OptPhaseDiff` object.
+
+        Parameters
+        ----------
+        units : Unit, optional
+            requested unit, by default "nm"
+
+        Returns
+        -------
+        OptPathDiff
+            New OptPathDiff object with float ndarrays
+        """
+
+        if self.has_units:
+            # we already have units, convert them to the requested ones
+            opd = self.opd_data.m_as(units)
+        else:
+            # deep copy internal data without units
+            opd = copy.deepcopy(self.opd_data)
+
+        return OptPathDiff(opd)
+
+    @property
+    def has_units(self) -> bool:
+        """Checks whether the internal data have units or
+        are plain float ndarrays."""
+        if isinstance(self.opd_data, Quantity):
             return True
         else:
             return False

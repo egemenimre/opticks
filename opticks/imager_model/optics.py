@@ -366,63 +366,6 @@ class Optics(ImagerComponent):
         return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm)
 
 
-@u.wraps(u.nm, (u.nm, u.mm, None), False)
-def zernike_opd(
-    wfe_rms: list, aperture_diameter: Quantity | float, grid: Grid
-) -> ndarray:
-    """Computes the Optical Path Difference via Zernike Polynomials.
-
-    Generates the Zernike Polynomials to the order corresponding
-    to the number of coefficients (e.g., 9 coefficients = mode 8)
-    sums them properly, adding the WFE RMS Zernike coefficients.
-
-    The result is the monochromatic OPD for a single location
-    on the PSF plane.
-
-    Parameters
-    ----------
-    wfe_rms : list
-        ANSI list aberration coefficients (WFE RMS) (in nm)
-    diameter : Quantity | float
-        aperture diameter in mm
-    grid : Grid
-        aperture grid (in mm and rad)
-
-    Returns
-    -------
-    ndarray
-        Optical Path Difference (OPD)
-    """
-
-    # mode n = (n+1) elements
-    elems = len(wfe_rms)
-
-    # Generate the (n,m) tuples in ANSI order
-    nms = [ansi_j_to_nm(i) for i in range(0, elems)]
-
-    # radial coords normalised by aperture radius
-    # normalisation required by the polynomials
-    ap_radius = aperture_diameter / 2.0
-
-    # check for units
-    if isinstance(grid.r, Quantity):
-        r = grid.r.m_as(u.mm)
-        t = grid.t.m_as(u.rad)
-    else:
-        r = grid.r
-        t = grid.t
-    rho = r / ap_radius
-
-    # compute the polynomials (dimensionless)
-    mode = list(zernike_nm_sequence(nms, rho, t))
-
-    # monochromatic OPD with multiple aberrations
-    # units are in nm as the wfe_rms is forced to be in nm (via wraps)
-    opd = sum_of_2d_modes(mode, wfe_rms) * u.nm
-
-    return opd
-
-
 @u.wraps(None, (None, u.mm, u.um, u.um, None, None), False)
 def _compute_psf(
     pupils: list[Wavefront],
