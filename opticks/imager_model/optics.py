@@ -36,7 +36,7 @@ class ApertureFactory:
         cls,
         aperture_diam: Quantity,
         samples,
-        with_units=False,
+        with_units=True,
     ) -> tuple[ndarray, Grid]:
         """Circle aperture model for `prysm`.
 
@@ -85,7 +85,7 @@ class ApertureFactory:
         aperture_diam: Quantity,
         obscuration_ratio: float,
         samples,
-        with_units=False,
+        with_units=True,
     ) -> tuple[ndarray, Grid]:
         """Circle aperture model for `prysm` with circular centre obscuration.
 
