@@ -10,6 +10,7 @@ Package for prysm integration utilities and helpers.
 
 import copy
 
+import numpy as np
 from numpy import ndarray
 from pint import Quantity, Unit
 from prysm._richdata import RichData
@@ -190,7 +191,7 @@ class OptPathDiff:
         opd : ndarray
             Optical Path Difference data (in nm)
         """
-        self.opd_data = opd
+        self.data = opd
 
     @classmethod
     def from_zernike(
@@ -262,10 +263,10 @@ class OptPathDiff:
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            opd = self.opd_data.m_as(units)
+            opd = self.data.m_as(units)
         else:
             # deep copy internal data without units
-            opd = copy.deepcopy(self.opd_data)
+            opd = copy.deepcopy(self.data)
 
         return OptPathDiff(opd)
 
@@ -273,7 +274,7 @@ class OptPathDiff:
     def has_units(self) -> bool:
         """Checks whether the internal data have units or
         are plain float ndarrays."""
-        if isinstance(self.opd_data, Quantity):
+        if isinstance(self.data, Quantity):
             return True
         else:
             return False
