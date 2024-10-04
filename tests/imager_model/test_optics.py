@@ -8,9 +8,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from prysm import _richdata, coordinates, geometry, polynomials, propagation
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
-from prysm import coordinates, geometry, propagation, polynomials, _richdata
 
 from opticks import process_paths, u
 from opticks.imager_model.optics import ApertureFactory, Optics
@@ -98,7 +98,11 @@ class TestOptics:
         np.testing.assert_array_equal(aperture, aperture_prysm, strict=True)
 
     def test_psf(self):
+        """Replicate the 'polychromatic propagation'
+        example in prysm docs (but with fixed sampling)."""
 
+        # prysm
+        # ------
         # prysm set up
         ap_samples = 256
         res = 512  # psf_samples
@@ -148,7 +152,8 @@ class TestOptics:
         # until we enrich it
         psf_poly_prysm = _richdata.RichData(psf_poly_prysm, res_el, wvl0)
 
-        # ---------
+        # opticks
+        # -------
         # opticks set up
         yaml_text = """
         name: Prysm Test data
@@ -190,4 +195,6 @@ class TestOptics:
 
         # verification
         np.testing.assert_allclose(psf_mono.data, psf_mono_prysm.data, rtol=1e-10)
+        assert_allclose(psf_mono.dx, psf_mono_prysm.dx * u.um, rtol=1e-10)
         np.testing.assert_allclose(psf_poly.data, psf_poly_prysm.data, rtol=1e-10)
+        assert_allclose(psf_poly.dx, psf_poly_prysm.dx * u.um, rtol=1e-10)
