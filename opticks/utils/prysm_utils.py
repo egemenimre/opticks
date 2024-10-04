@@ -233,16 +233,18 @@ class OptPathDiff:
 
         r, t = grid.polar()
 
-        rho = r / ap_radius
+        # reduce to dimensionless
+        rho = (r / ap_radius).to_reduced_units()
 
         # compute the polynomials (dimensionless)
-        mode = list(zernike_nm_sequence(nms, rho, t))
+        # t should be in radians
+        mode = list(zernike_nm_sequence(nms, rho.m, t.m))
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm
-        opd = sum_of_2d_modes(mode, wfe_rms)
+        opd = sum_of_2d_modes(mode, wfe_rms.m_as(u.nm))
 
-        return OptPathDiff(opd)
+        return OptPathDiff(opd * u.nm)
 
     def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":
         """Converts the OptPhaseDiff object to the default units.
@@ -294,6 +296,9 @@ def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> Ric
     Adds units to `dx` and `wavelength` (if available).
     The `data` structure is already without units by definition.
 
+    If the input `rich_data` has units, raises a `ValueError`
+    exception.
+
     Parameters
     ----------
     rich_data : RichData
@@ -306,6 +311,10 @@ def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> Ric
     RichData
         output object with units
     """
+
+    # first check for units
+    if richdata_has_units(rich_data):
+        raise ValueError("Input RichData object already has units.")
 
     # data is a simple ndarray without units
     data: RichData = copy.deepcopy(rich_data.data)
