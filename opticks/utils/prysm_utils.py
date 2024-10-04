@@ -280,6 +280,14 @@ class OptPathDiff:
             return False
 
 
+def richdata_has_units(rich_data: RichData) -> bool:
+    """Checks whether `RichData` object has units."""
+    if isinstance(rich_data.dx, Quantity):
+        return True
+    else:
+        return False
+
+
 def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
     """Generates a deepcopy of the input `RichData` object with units.
 
