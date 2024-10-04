@@ -16,7 +16,7 @@ from strictyaml import Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
-from opticks.utils.prysm_utils import Grid, OptPathDiff, richdata_with_units
+from opticks.utils.prysm_utils import Grid, OptPathDiff
 from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
@@ -224,7 +224,7 @@ class Optics(ImagerComponent):
         """
 
         # strip units for the Wavefront as it cannot handle units well
-        opd_data = opd.strip_units(u.nm).opd_data
+        opd_data = opd.strip_units(u.nm).data
 
         # Generate the pupil function (no units)
         pupil = Wavefront.from_amp_and_phase(
@@ -286,7 +286,7 @@ class Optics(ImagerComponent):
             # set uniform weights if no weights defined
             spectral_weights = np.ones_like(self.pupils)
 
-        # compute the PSF (no units)
+        # compute the PSF (no units via wraps)
         psf = _compute_psf(
             self.pupils, focal_length, wvl_ref, psf_dx, psf_samples, spectral_weights
         )
@@ -294,7 +294,7 @@ class Optics(ImagerComponent):
         # return the PSF with or without units
         if with_units:
             # pupil to PSF plane means dx is switched from mm to um
-            return richdata_with_units(psf, dx_units=u.um)
+            return RichData(psf.data, psf.dx * u.um, psf.wavelength * u.um)
         else:
             return psf
 
