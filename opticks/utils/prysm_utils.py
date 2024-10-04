@@ -10,7 +10,6 @@ Package for prysm integration utilities and helpers.
 
 import copy
 
-import numpy as np
 from numpy import ndarray
 from pint import Quantity, Unit
 from prysm._richdata import RichData
