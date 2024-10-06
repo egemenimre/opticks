@@ -12,7 +12,7 @@ from prysm._richdata import RichData
 from prysm.geometry import circle
 from prysm.polynomials import sum_of_2d_modes
 from prysm.propagation import Wavefront
-from strictyaml import Map, Str
+from strictyaml import YAML, Map, Str
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
@@ -147,9 +147,6 @@ class Optics(ImagerComponent):
     Class containing generic Optics parameters.
     """
 
-    # Empty list of pupil functions
-    pupils: list[Wavefront] = []
-
     @classmethod
     def schema(cls) -> Map:
         return Map(optics_schema)
@@ -163,6 +160,14 @@ class Optics(ImagerComponent):
     aperture_dx: Quantity = None
     """Aperture sample distance (in mm).
     """
+
+    def __init__(self, yaml: YAML):
+        super().__init__(yaml)
+
+        # Empty list of pupil functions
+        self.pupils: list[Wavefront] = []
+
+        self.aperture_dx: Quantity = None
 
     def set_aperture_model(self, aperture: ndarray = None, samples: int = 400) -> None:
         """Sets the aperture model for the optics.
@@ -350,7 +355,7 @@ class Optics(ImagerComponent):
     @u.check(None, "[length]")
     def spatial_cutoff_freq(self, ref_wavelength: Quantity) -> Quantity:
         """
-        Spatial cutoff frequency, assumes perfect incoherent optics.
+        Spatial cut-off frequency, assumes perfect incoherent optics.
 
         Determines the theoretical limit of the optical resolution, or the smallest
         object resolvable by the optical system.
