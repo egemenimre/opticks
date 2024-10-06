@@ -224,7 +224,10 @@ class Optics(ImagerComponent):
         """
 
         # strip units for the Wavefront as it cannot handle units well
-        opd_data = opd.strip_units(u.nm).data
+        if opd:
+            opd_data = opd.strip_units(u.nm).data
+        else:
+            opd_data = None
 
         # Generate the pupil function (no units)
         pupil = Wavefront.from_amp_and_phase(
