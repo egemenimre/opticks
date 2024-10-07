@@ -13,7 +13,7 @@ from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
 
 from opticks import process_paths, u
-from opticks.imager_model.optics import ApertureFactory, Optics
+from opticks.imager_model.optics import Aperture, Optics
 from opticks.utils.prysm_utils import OptPathDiff
 from opticks.utils.testing_utils import assert_allclose
 
@@ -67,12 +67,12 @@ class TestOptics:
         aperture_prysm = circle(diameter / 2, r)
 
         # computation
-        aperture, grid = ApertureFactory.circle_aperture(
+        aperture = Aperture.circle_aperture(
             optics.params.aperture_diameter, samples, with_units=True
         )
 
         # verification
-        np.testing.assert_array_equal(aperture, aperture_prysm, strict=True)
+        np.testing.assert_array_equal(aperture.data, aperture_prysm, strict=True)
 
     def test_circle_aperture_with_obscuration(self, optics):
         """Tests the circle aperture."""
@@ -90,12 +90,12 @@ class TestOptics:
         aperture_prysm = pm_od ^ pm_id  # or pm_od & ~pm_id
 
         # computation
-        aperture, grid = ApertureFactory.circle_aperture_with_obscuration(
+        aperture = Aperture.circle_aperture_with_obscuration(
             optics.params.aperture_diameter, obscuration_ratio, samples, with_units=True
         )
 
         # verification
-        np.testing.assert_array_equal(aperture, aperture_prysm, strict=True)
+        np.testing.assert_array_equal(aperture.data, aperture_prysm, strict=True)
 
     def test_psf(self):
         """Replicate the 'polychromatic propagation'
@@ -163,7 +163,7 @@ class TestOptics:
 
         optics = Optics.from_yaml_text(yaml_text)
 
-        aperture, grid = ApertureFactory.circle_aperture(
+        aperture = Aperture.circle_aperture(
             optics.params.aperture_diameter, ap_samples, with_units=True
         )
         optics.set_aperture_model(aperture)

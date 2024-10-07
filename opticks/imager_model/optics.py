@@ -9,6 +9,7 @@ import numpy as np
 from numpy import ndarray
 from pint import Quantity
 from prysm._richdata import RichData
+from prysm.fttools import pad2d
 from prysm.geometry import circle
 from prysm.polynomials import sum_of_2d_modes
 from prysm.propagation import Wavefront
@@ -28,8 +29,27 @@ optics_schema = {
 """Schema containing optical parameters."""
 
 
-class ApertureFactory:
-    """Generates oft used aperture models for `prysm`."""
+class Aperture:
+
+    grid: Grid = None
+    """Grid object associated with the aperture"""
+
+    def __init__(self, data: ndarray, grid: Grid = None) -> None:
+        """Aperture class.
+
+        Holds the Aperture data as defined by `prysm`.
+        The aperture data is an ndarray mask of `bool` or
+        0 and 1 (or anything in between).
+
+        Parameters
+        ----------
+        data : ndarray
+            aperture data
+        grid : Grid
+            Grid object associated with the aperture
+        """
+        self.data = data
+        self.grid = grid
 
     @classmethod
     def circle_aperture(
@@ -37,12 +57,16 @@ class ApertureFactory:
         aperture_diam: Quantity,
         samples,
         with_units=True,
-    ) -> tuple[ndarray, Grid]:
-        """Circle aperture model for `prysm`.
+    ) -> "Aperture":
+        """Circle aperture model.
 
         This is valid for many if not most refractive optics.
 
-        The output is an `ndarray` of bools, therefore the unit input
+        This is a thin wrapper around the aperture building
+        procedure from `prysm`.
+
+        The output is an Aperture object containing `ndarray`
+        of bools, therefore the unit input
         is not important for the aperture generation.
 
         Parameters
@@ -57,10 +81,8 @@ class ApertureFactory:
 
         Returns
         -------
-        aperture: numpy.ndarray
-            ndarray representation of the mask
-        grid : Grid
-            Grid object associated with the aperture
+        aperture: Aperture
+            Aperture mask object
         """
 
         # aperture radius
@@ -77,7 +99,7 @@ class ApertureFactory:
         if not with_units:
             grid = grid.strip_units(u.mm)
 
-        return aperture, grid
+        return Aperture(aperture, grid)
 
     @classmethod
     def circle_aperture_with_obscuration(
@@ -86,13 +108,17 @@ class ApertureFactory:
         obscuration_ratio: float,
         samples,
         with_units=True,
-    ) -> tuple[ndarray, Grid]:
-        """Circle aperture model for `prysm` with circular centre obscuration.
+    ) -> "Aperture":
+        """Circle aperture model with circular centre obscuration.
 
         This is valid for many reflective telescopes. The obscuration
         is usually the secondary mirror.
 
-        The output is an `ndarray` of bools, therefore the unit input
+        This is a thin wrapper around the aperture building
+        procedure from `prysm`.
+
+        The output is an Aperture object containing `ndarray`
+        of bools, therefore the unit input
         is not important for the aperture generation.
 
         Parameters
@@ -109,10 +135,8 @@ class ApertureFactory:
 
         Returns
         -------
-        aperture: numpy.ndarray of booleans
-            ndarray representation of the mask
-        grid : Grid
-            Grid object associated with the aperture
+        aperture: Aperture
+            Aperture mask object
         """
 
         # aperture radius
@@ -139,7 +163,56 @@ class ApertureFactory:
         if not with_units:
             grid = grid.strip_units(u.mm)
 
-        return aperture, grid
+        return Aperture(aperture, grid)
+
+    def scale_for_norm_sum_psf(self) -> "Aperture":
+        """Generates a new, scaled Aperture that results in a
+        Point Spread Function (PSF) that has a sum of 1.0.
+
+        The aperture data (`data`) is divided by
+        `sqrt(data.sum())`.
+
+        """
+
+        ap_data = self.data
+
+        # scale for PSF sum = 1.0
+        aperture_unity_sum = ap_data / np.sqrt(ap_data.sum())
+
+        return Aperture(aperture_unity_sum, self.grid)
+
+    def scale_for_norm_peak_psf(self, Q: float, Q_pad: float = 1) -> "Aperture":
+        """Generates a new, scaled Aperture that results in a
+        Point Spread Function (PSF) that has a peak of 1.0.
+
+        `Q_pad` is used to pad the aperture if needed.
+        It is passed on to the underlying `pad2d`.
+
+        The aperture data (`data`) is multiplied by
+        `Q x Q_pad x sqrt(data.size) / data.sum()`.
+
+        Parameters
+        ----------
+        Q : float
+            Q factor used in scaling pupil samples to psf samples
+        Q_pad : float, optional
+            padding factor, by default 1
+
+        Returns
+        -------
+        Aperture
+            New Aperture object with scaled data
+        """
+
+        ap_data = self.data
+
+        # scale for PSF sum = 1.0
+        aperture_padded = pad2d(ap_data, Q=Q_pad)
+        aperture_unity_peak = aperture_padded * (
+            Q_pad * Q * np.sqrt(ap_data.size) / ap_data.sum()
+        )
+
+        return Aperture(aperture_unity_peak, self.grid)
 
 
 class Optics(ImagerComponent):
@@ -169,10 +242,10 @@ class Optics(ImagerComponent):
 
         self.aperture_dx: Quantity = None
 
-    def set_aperture_model(self, aperture: ndarray = None, samples: int = 400) -> None:
+    def set_aperture_model(self, aperture: Aperture = None, samples: int = 400) -> None:
         """Sets the aperture model for the optics.
 
-        The aperture model is as defined by `prysm`, it is an `ndarray` grid of
+        The aperture model is as defined by `prysm`, it contains an `ndarray` grid of
         `True` and `False` data, where `True` allows light through. It can also be
         an `ndarray` grid of 0 and 1 (and possibly anything in between).
 
@@ -180,10 +253,12 @@ class Optics(ImagerComponent):
         of the optics and the `samples` parameter (for one side of the square grid).
         If an aperture is defined, `samples` is ignored.
 
+        Grid is optional and is added only when a new aperture is defined
+
         Parameters
         ----------
-        aperture : ndarray, optional
-            aperture grid
+        aperture : aperture
+            aperture object
         samples : int, optional
             sample size of the default circular aperture,
             ignored if aperture is user defined
@@ -195,7 +270,7 @@ class Optics(ImagerComponent):
         if aperture is None:
             # aperture function not defined, use circular aperture
             # grid currently ignored
-            self.aperture, grid = ApertureFactory.circle_aperture(
+            self.aperture = Aperture.circle_aperture(
                 self.params.aperture_diameter, samples, with_units
             )
         else:
@@ -203,7 +278,7 @@ class Optics(ImagerComponent):
             self.aperture = aperture
 
         # reset the sample size to the actual sample size
-        samples = len(self.aperture)
+        samples = len(self.aperture.data)
 
         # compute aperture sample distance
         self.aperture_dx = (self.params.aperture_diameter / samples).to(u.mm)
@@ -236,7 +311,7 @@ class Optics(ImagerComponent):
 
         # Generate the pupil function (no units)
         pupil = Wavefront.from_amp_and_phase(
-            self.aperture,  # amplitudes
+            self.aperture.data,  # amplitudes
             phase=opd_data,  # float ndarray in nm
             wavelength=wavelength.m_as(u.um),
             dx=self.aperture_dx.m_as(u.mm),
