@@ -1,22 +1,27 @@
 [project]
 name = "opticks"
-version = "0.0.1"
-dependencies = ["numpy",
-    "scipy",
-    "pint",
-    "strictyaml",
-]
+version = "0.1.0"
+dependencies = ["numpy", "scipy", "pint", "strictyaml", "prysm", "matplotlib"]
 
 requires-python = ">=3.11"
 
 authors = [{ name = "Egemen Imre" }]
 
-description = "Notes on the design of optical systems."
+description = "Optical System Analysis Tools and Models"
 readme = "README.md"
 license = { file = "LICENSE.md" }
 
-keywords = ["optics", "optical design", "drone", "robot vision", "satellite", "remote sensing", "earth observation"]
-classifiers = ["Intended Audience :: Science/Research",
+keywords = [
+    "optics",
+    "optical design",
+    "drone",
+    "robot vision",
+    "satellite",
+    "remote sensing",
+    "earth observation",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
@@ -32,9 +37,5 @@ Documentation = "https://opticks.readthedocs.io/en/latest/"
 Repository = "https://github.com/egemenimre/opticks/"
 
 [project.optional-dependencies]
-test = ["pytest",
-    "coverage",
-    "pytest-xdist",
-]
+test = ["pytest", "coverage", "pytest-xdist"]
 doc = ["sphinx"]
-
