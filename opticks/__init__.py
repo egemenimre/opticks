@@ -3,7 +3,7 @@
 # Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 from pathlib import Path
 
