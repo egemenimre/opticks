@@ -10,10 +10,9 @@ import numpy as np
 import pytest
 from prysm import _richdata, coordinates, geometry, polynomials, propagation
 from prysm.coordinates import cart_to_polar, make_xy_grid
+from prysm.fttools import pad2d
 from prysm.geometry import circle
-from prysm.fttools import pad2d, mdft
 from prysm.propagation import focus
-from prysm._richdata import RichData
 
 from opticks import process_paths, u
 from opticks.imager_model.optics import Aperture, Optics
