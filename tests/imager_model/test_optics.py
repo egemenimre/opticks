@@ -11,6 +11,9 @@ import pytest
 from prysm import _richdata, coordinates, geometry, polynomials, propagation
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import circle
+from prysm.fttools import pad2d, mdft
+from prysm.propagation import focus
+from prysm._richdata import RichData
 
 from opticks import process_paths, u
 from opticks.imager_model.optics import Aperture, Optics
@@ -96,6 +99,93 @@ class TestOptics:
 
         # verification
         np.testing.assert_array_equal(aperture.data, aperture_prysm, strict=True)
+
+    def test_aperture_scaling(self):
+        """Replicate the 'Radiometrically Correct Modeling' example
+        in prysm."""
+
+        # prysm definition
+        x, y = make_xy_grid(256, diameter=2)
+        r, t = cart_to_polar(x, y)
+        aperture = circle(1, r)
+        inc_psf = abs(focus(aperture, Q=2)) ** 2
+
+        # unity sum
+        aperture2 = aperture / np.sqrt(aperture.sum())
+        inc_psf_norm_sum = abs(focus(aperture2, Q=2)) ** 2
+
+        # unity peak
+        aperture3 = pad2d(aperture, Q=2)
+        aperture3 = aperture3 * (2 * np.sqrt(aperture.size) / aperture.sum())
+        inc_psf_norm_peak = abs(focus(aperture3, Q=1)) ** 2
+        inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()
+
+        # computation
+        yaml_text = """
+        name: PTest
+        focal_length: 2000 mm
+        aperture_diameter: 500 mm
+        image_diam_on_focal_plane: 50 mm   # not used"""
+
+        optics = Optics.from_yaml_text(yaml_text)
+
+        pup_samples = 256
+
+        aperture = Aperture.circle_aperture(
+            optics.params.aperture_diameter, pup_samples
+        )
+
+        optics.set_aperture_model(aperture)
+
+        ref_wvl = 500 * u.nm
+
+        optics.add_pupil_func(ref_wvl, None)
+
+        Q = 2
+        psf_dx = ref_wvl.to(u.um) * optics.f_number / Q
+
+        psf_samples = pup_samples * Q
+        psf = optics.psf(ref_wvl, psf_dx, psf_samples=psf_samples)
+
+        # unity sum
+        optics_psf_unity_sum = Optics.from_yaml_text(yaml_text)
+
+        aperture_unity_sum = aperture.scale_for_norm_sum_psf()
+        optics_psf_unity_sum.set_aperture_model(aperture_unity_sum)
+
+        optics_psf_unity_sum.add_pupil_func(ref_wvl, None)
+
+        psf_unity_sum = optics_psf_unity_sum.psf(
+            ref_wvl, psf_dx, psf_samples=psf_samples
+        )
+
+        # unity peak
+        optics_psf_unity_peak = Optics.from_yaml_text(yaml_text)
+
+        Q_pad = 1
+        aperture_unity_peak = aperture.scale_for_norm_peak_psf(Q, Q_pad)
+        optics_psf_unity_peak.set_aperture_model(aperture_unity_peak)
+
+        optics_psf_unity_peak.add_pupil_func(ref_wvl, None)
+
+        psf_unity_peak = optics_psf_unity_peak.psf(
+            ref_wvl, psf_dx, psf_samples=psf_samples
+        )
+
+        # verification
+        assert_allclose(
+            [psf.data.sum(), psf.data.max()], [inc_psf.sum(), inc_psf.max()], rtol=1e-9
+        )
+        assert_allclose(
+            [psf_unity_sum.data.sum(), psf_unity_sum.data.max()],
+            [inc_psf_norm_sum.sum(), inc_psf_norm_sum.max()],
+            rtol=1e-9,
+        )
+        assert_allclose(
+            [psf_unity_peak.data.sum(), psf_unity_peak.data.max()],
+            [inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()],
+            rtol=1e-9,
+        )
 
     def test_psf(self):
         """Replicate the 'polychromatic propagation'
