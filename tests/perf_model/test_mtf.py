@@ -8,6 +8,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from prysm.coordinates import cart_to_polar, make_xy_grid
+from prysm.geometry import regular_polygon
+from prysm.otf import mtf_from_psf
+from prysm.polynomials import zernike_nm
+from prysm.propagation import Wavefront
 
 from opticks import process_paths, u
 from opticks.imager_model.detector import Channel, Detector
@@ -204,3 +209,54 @@ class TestMTF:
 
         # verification
         assert mtf_value == pytest.approx(truth, 1e-9)
+
+    def test_mtf_from_2d(self):
+        """Tests the prysm based 2D MTF."""
+
+        # prysm mtf computation
+        efl = 50
+        fno = 8
+
+        ap_samples = 256
+
+        x, y = make_xy_grid(ap_samples, diameter=efl / fno)
+        dx = x[0, 1] - x[0, 0]
+        r, t = cart_to_polar(x, y)
+
+        radius = efl / fno / 2
+        rho = r / radius
+        n_sides = 14
+
+        poly_aperture = regular_polygon(n_sides, radius, x, y)
+
+        wvl = 0.55  # mid visible band, um
+
+        # spherical aberration
+        wfe_nm_rms = wvl / 14 * 1e3  # nm, 1/14 of a wave, 1e3 = um to nm
+        mode_1 = zernike_nm(4, 0, rho, t)
+        opd_1 = mode_1 * wfe_nm_rms
+        pup_1 = Wavefront.from_amp_and_phase(poly_aperture, opd_1, wvl, dx)
+        coherent_psf = pup_1.focus(efl, Q=2)
+
+        psf = coherent_psf.intensity
+        mtf_1 = mtf_from_psf(psf)
+
+        fx_1, mtf_2d_x_1 = mtf_1.slices(twosided=False).x
+
+        # coma
+        mode_2 = zernike_nm(3, 1, rho, t)  # only this line changed
+        opd_2 = mode_2 * wfe_nm_rms
+        pup_2 = Wavefront.from_amp_and_phase(poly_aperture, opd_2, wvl, dx)
+        coherent_psf = pup_2.focus(efl, Q=2)
+        psf = coherent_psf.intensity
+        mtf_2 = mtf_from_psf(psf, psf.dx)
+
+        fx_2, mtf_2d_x_2 = mtf_2.slices(twosided=False).x
+
+        # opticks computation
+        mtf_opt_1 = MTF_Model_1D.from_mtf_2d(mtf_1, "x")
+        mtf_opt_2 = MTF_Model_1D.from_mtf_2d(mtf_2, "x")
+
+        # verification
+        np.testing.assert_allclose(mtf_opt_1.mtf_value(fx_1), mtf_2d_x_1, rtol=1e-10)
+        np.testing.assert_allclose(mtf_opt_2.mtf_value(fx_1), mtf_2d_x_2, rtol=1e-10)
