@@ -8,9 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from opticks import process_paths, u
+from opticks import u
 from opticks.imager_model.imager import Imager
 from opticks.utils.testing_utils import assert_allclose
+from tests import process_paths
 
 
 class TestImager:

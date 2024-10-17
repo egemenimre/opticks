@@ -14,10 +14,11 @@ from prysm.otf import mtf_from_psf
 from prysm.polynomials import zernike_nm
 from prysm.propagation import Wavefront
 
-from opticks import process_paths, u
+from opticks import u
 from opticks.imager_model.detector import Channel, Detector
 from opticks.imager_model.optics import Optics
 from opticks.perf_model.mtf import MTF_Model_1D
+from tests import process_paths
 
 
 class TestMTF:

@@ -14,10 +14,11 @@ from prysm.fttools import pad2d
 from prysm.geometry import circle
 from prysm.propagation import focus
 
-from opticks import process_paths, u
+from opticks import u
 from opticks.imager_model.optics import Aperture, Optics
 from opticks.utils.prysm_utils import OptPathDiff
 from opticks.utils.testing_utils import assert_allclose
+from tests import process_paths
 
 
 class TestOptics:
