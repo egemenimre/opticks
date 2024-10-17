@@ -4,6 +4,7 @@ channels:
   - nodefaults
 dependencies:
   - pint
+  - portion
   - strictyaml
   - numpy
   - scipy >=1.13.0
@@ -30,3 +31,4 @@ dependencies:
       # packages needed for testing and automation
       - tox
       - tox-conda
+      - black[jupyter]
