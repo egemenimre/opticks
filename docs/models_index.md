@@ -25,3 +25,14 @@ models/sharpness_pt4
 models/mtf_scenarios
 models/opticks_mtf
 ```
+
+## Under the Hood: Miscellaneous Models
+
+```{toctree}
+---
+maxdepth: 1
+---
+models/misc/interpol_units.ipynb
+models/misc/portion_pint.ipynb
+
+```
