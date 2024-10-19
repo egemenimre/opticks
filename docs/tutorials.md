@@ -9,6 +9,7 @@ Tutorials define how to carry out basic tasks in `optics`, as building blocks fo
 ```{toctree}
 ---
 maxdepth: 2
+hidden: True
 ---
 tutorials/yaml_reader.ipynb
 tutorials/aperture.ipynb
