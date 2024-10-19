@@ -18,6 +18,7 @@ from opticks import u
 from opticks.imager_model.detector import Channel, Detector
 from opticks.imager_model.optics import Optics
 from opticks.perf_model.mtf import MTF_Model_1D
+from opticks.utils.testing_utils import assert_allclose
 from tests import process_paths
 
 
@@ -72,10 +73,10 @@ class TestMTF:
         freq_data, mtf_data = np.loadtxt(file_path, unpack=True)
 
         # check values
-        truth = 0.4464741694117462
+        truth = 0.4464741702660115
 
         # Generate the MTF model and values
-        mtf_model = MTF_Model_1D.external_data(freq_data, mtf_data)
+        mtf_model = MTF_Model_1D.external_data(freq_data * u.cy / u.mm, mtf_data)
 
         mtf_value = mtf_model.mtf_value(input_line_freq)
 
@@ -259,5 +260,5 @@ class TestMTF:
         mtf_opt_2 = MTF_Model_1D.from_mtf_2d(mtf_2, "x")
 
         # verification
-        np.testing.assert_allclose(mtf_opt_1.mtf_value(fx_1), mtf_2d_x_1, rtol=1e-10)
-        np.testing.assert_allclose(mtf_opt_2.mtf_value(fx_1), mtf_2d_x_2, rtol=1e-10)
+        assert_allclose(mtf_opt_1.mtf_value(fx_1 * u.cy / u.mm), mtf_2d_x_1, rtol=1e-10)
+        assert_allclose(mtf_opt_2.mtf_value(fx_2 * u.cy / u.mm), mtf_2d_x_2, rtol=1e-10)

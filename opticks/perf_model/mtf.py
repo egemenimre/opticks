@@ -14,10 +14,10 @@ from numpy.typing import NDArray
 from pint import Quantity
 from prysm._richdata import RichData
 from prysm.otf import mtf_from_psf
-from scipy.interpolate import Akima1DInterpolator, CubicHermiteSpline
 
 from opticks import u
 from opticks.imager_model.optics import Optics
+from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.prysm_utils import richdata_with_units
 
 
@@ -71,7 +71,10 @@ class MTF_Model_1D:
         This model is mainly to ingest actual measurements or the results
         from complex simulations (such as Zemax).
 
-        Uses the scipy 'Akima1DInterpolator' (modified Akima) in the background.
+        Uses the scipy 'Akima1DInterpolator' (default Akima method)
+        in the background, though withy unit support via the
+        `InterpolatorWithUnits` wrapper.
+
 
         Parameters
         ----------
@@ -93,7 +96,9 @@ class MTF_Model_1D:
             id = "External MTF Data"
 
         # prepare interpolator
-        interpolator = Akima1DInterpolator(freq_values, mtf_values, method="makima")
+        interpolator = InterpolatorWithUnits.from_ipol_method(
+            InterpolatorWithUnitTypes.AKIMA, freq_values, mtf_values
+        )
 
         # set the value function (with the interpolator)
         def value_func(input_line_freq):
@@ -448,16 +453,20 @@ def _combined_mtf(
 
 
 def _external_data_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], interpolator: CubicHermiteSpline
+    input_line_freq: Quantity | np.ndarray[Quantity],
+    interpolator: InterpolatorWithUnits,
 ) -> float | NDArray[np.float64]:
     """
     Interpolated MTF data for the given input line frequency.
+
+    Note that the interpolator deletes the units and
+    therefore has no units support.
 
     Parameters
     ----------
     input_line_freq: Quantity | ArrayLike[Quantity]
         Input line frequency (in cycles/mm)
-    interpolator: CubicHermiteSpline
+    interpolator: InterpolatorWithUnits
         Interpolator
 
     Returns
