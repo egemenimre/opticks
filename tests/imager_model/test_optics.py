@@ -172,16 +172,16 @@ class TestOptics:
             ref_wvl, psf_dx, psf_samples=psf_samples
         )
 
-        # verification
-        assert_allclose(
+        # # verification
+        np.testing.assert_allclose(
             [psf.data.sum(), psf.data.max()], [inc_psf.sum(), inc_psf.max()], rtol=1e-9
         )
-        assert_allclose(
+        np.testing.assert_allclose(
             [psf_unity_sum.data.sum(), psf_unity_sum.data.max()],
             [inc_psf_norm_sum.sum(), inc_psf_norm_sum.max()],
             rtol=1e-9,
         )
-        assert_allclose(
+        np.testing.assert_allclose(
             [psf_unity_peak.data.sum(), psf_unity_peak.data.max()],
             [inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()],
             rtol=1e-9,
