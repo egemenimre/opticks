@@ -131,49 +131,7 @@ class IntervalData(P.IntervalDict):
         # Retrieve all math functions at x
         functs = super().get(x, default=default)
 
-        return self._eval_functs(x, functs)
-
-    def _eval_functs(self, x, functs) -> Quantity | float:
-        """Evaluates `x` within a set of functions.
-
-        Computes and multiplies all the values of the mathematical functions
-        at `x`.
-
-        Note that `x` may be outside the domain of an interpolator,
-        therefore this method should be used cautiously.
-
-        Parameters
-        ----------
-        x : Quantity | float
-            Requested data point
-        functs : Any
-            functions to evaluate
-
-        Returns
-        -------
-        Quantity | float
-            Value at the requested data point
-        """
-
-        # upgrade functs to list if only single item is present
-        if not isinstance(functs, list):
-            functs = [functs]
-
-        result = 1.0
-
-        # loop through the functions to multiply the values
-        for funct in functs:
-
-            if not funct:
-                return None
-            elif isinstance(funct, numbers.Number):
-                # int or float
-                result *= funct
-            else:
-                # interpolator (or other callable)
-                result *= funct(x)
-
-        return result
+        return _eval_functs(x, functs)
 
     def combine(self, other: type[P.IntervalDict], *, missing=None) -> Self:
 
@@ -248,7 +206,7 @@ class IntervalData(P.IntervalDict):
                 )
 
                 # generate values
-                y_values = [self._eval_functs(x, functs) for x in x_values]
+                y_values = [_eval_functs(x, functs) for x in x_values]
 
                 # init interpolator
                 result = InterpolatorWithUnits.from_ipol_method(
@@ -262,6 +220,49 @@ class IntervalData(P.IntervalDict):
             new_intdict[interval] = result
 
         return new_intdict
+
+
+def _eval_functs(x, functs) -> Quantity | float:
+    """Evaluates `x` within a set of functions.
+
+    Computes and multiplies all the values of the mathematical functions
+    at `x`.
+
+    Note that `x` may be outside the domain of an interpolator,
+    therefore this method should be used cautiously.
+
+    Parameters
+    ----------
+    x : Quantity | float
+        Requested data point
+    functs : Any
+        functions to evaluate
+
+    Returns
+    -------
+    Quantity | float
+        Value at the requested data point
+    """
+
+    # upgrade functs to list if only single item is present
+    if not isinstance(functs, list):
+        functs = [functs]
+
+    result = 1.0
+
+    # loop through the functions to multiply the values
+    for funct in functs:
+
+        if not funct:
+            return None
+        elif isinstance(funct, numbers.Number):
+            # int or float
+            result *= funct
+        else:
+            # interpolator (or other callable)
+            result *= funct(x)
+
+    return result
 
 
 def _append_math_functions(fx, fy) -> list | None:
