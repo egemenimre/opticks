@@ -164,6 +164,14 @@ class PPolyWithUnits(PPoly):
         _, output_wrap = unwrap_and_wrap_consistent_units(self.x_unit)
         return output_wrap(super().solve(y, discontinuity, extrapolate))
 
+    def __str__(self) -> str:
+
+        out = f"Interpolator in range: [{self.x[0] * self.x_unit:P~}, {self.x[-1] * self.x_unit:P~}]"
+
+        out += f" (extrapolation: {self.extrapolate})."
+
+        return out
+
 
 class InterpolatorWithUnits(PPolyWithUnits):
     """Interpolator with units.
