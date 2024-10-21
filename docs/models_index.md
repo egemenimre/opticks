@@ -34,5 +34,5 @@ maxdepth: 1
 ---
 models/misc/interpol_units.ipynb
 models/misc/portion_pint.ipynb
-
+models/misc/interval_data.ipynb
 ```
