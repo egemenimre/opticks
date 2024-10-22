@@ -459,8 +459,8 @@ class IntervalDataPlot:  # pragma: no cover
         title: str = None,
         xlabel: str = None,
         ylabel: str = None,
-        height: Quantity | float = 4,
-        width: Quantity | float = 6,
+        height: Quantity | float = 4 * u.inch,
+        width: Quantity | float = 6 * u.inch,
     ) -> None:
         """
         Sets some basic style parameters for the plot.
@@ -474,9 +474,9 @@ class IntervalDataPlot:  # pragma: no cover
         ylabel : str, optional
             y-axis label, by default None
         height : Quantity | float, optional
-            height of the figure (in inches), by default 4
+            height of the figure (in inches), by default 4 in
         width : Quantity | float, optional
-            width of the figure (in inches), by default 6
+            width of the figure (in inches), by default 6 in
 
         """
 
