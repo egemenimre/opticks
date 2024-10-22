@@ -6,14 +6,14 @@
 
 
 import numbers
-from typing import Self
+from typing import Any, Self
 
 import numpy as np
 import portion as P
 from matplotlib import pyplot as plt
 from pint import Quantity
 
-from opticks import u
+from opticks import Q_, u
 from opticks.utils.math_utils import (
     InterpolatorWithUnits,
     InterpolatorWithUnitTypes,
@@ -22,6 +22,9 @@ from opticks.utils.math_utils import (
 
 
 class IntervalData(P.IntervalDict):
+
+    _MIN_SAMPLE_SIZE = 20
+    """Minimum sample size for interpolation and resampling."""
 
     @classmethod
     def from_math_funct(cls, math_funct, valid_interval: P.Interval) -> "IntervalData":
@@ -138,33 +141,43 @@ class IntervalData(P.IntervalDict):
         # overrides combine but the how function is fixed
         return super().combine(other, how=_append_math_functions, missing=missing)
 
+    def to_atomic(self) -> list[tuple[P.Interval, Any]]:
+        """Returns a list of tuples containing atomic intervals
+        and corresponding functions."""
+
+        return [(ival, functs) for ivals, functs in self.items() for ival in ivals]
+
     def resample(
         self,
-        samples: int | list[int],
+        approx_stepsize: float | Quantity,
         ipol_type=InterpolatorWithUnitTypes.AKIMA,
         **kwargs,
     ) -> "IntervalData":
         """Combines the stacked values and interpolators, via
         resampling and setting up a new interpolator.
 
-        Analyses each interval enclosure within the dictionary
-        and combines the functions / values. A `None` or zero
-        takes precedence, and all other functions (continuous or
-        interpolator) is resampled to create a new interpolator.
+        The process decomposes the intervals into atomic
+        intervals and therefore the interval structure is
+        changed.
+
+        This analyses each interval enclosure within
+        the dictionary and combines the functions / values.
+        A `None` or zero takes precedence, and all other functions
+        (continuous or interpolator) is resampled to create
+        a new interpolator.
+
+        The stepsize for this resampling is approximate,
+        in the sense that, each atomic interval is divided into
+        an integer number of steps between its respective bounds.
 
         The interpolator is defined by the user, with the
         `extrapolate` already set to `True`. The `kwargs`
         are passed on to the interpolator definition.
 
-        If `samples` is sent as a single value, each interval
-        is resampled with this value. Otherwise a list can be
-        sent with each item corresponding to the interval in
-        `self.keys()`.
-
         Parameters
         ----------
-        samples : int | list[int]
-            number of samples for resampling
+        approx_stepsize : float | Quantity
+            approximate stepsize
         ipol_type : InterpolatorWithUnitTypes
             Interpolator type, defaults to Akima
 
@@ -173,14 +186,12 @@ class IntervalData(P.IntervalDict):
         IntervalData
             The new `IntervalData` object
         """
-        # Check for the sample size and create a list nevertheless.
-        # Each item corresponds to an interval within the IntervalDict
-        if isinstance(samples, int):
-            samples = [samples] * len(self)
 
-        i = 0
+        # decompose to atomic intervals and corresponding functions
+        atomic_tuples = self.to_atomic()
+
         new_intdict = IntervalData()
-        for interval, functs in self.items():
+        for interval, functs in atomic_tuples:
 
             if not isinstance(functs, list):
                 functs = [functs]
@@ -197,11 +208,17 @@ class IntervalData(P.IntervalDict):
             else:
                 # create a new interpolator from the resampling
 
+                # generate sample size
+                samples = int((interval.upper - interval.lower) / approx_stepsize)
+
+                if samples < self._MIN_SAMPLE_SIZE:
+                    samples = self._MIN_SAMPLE_SIZE
+
                 # generate range samples (x axis)
                 x_values = np.linspace(
                     interval.enclosure.lower,
                     interval.enclosure.upper,
-                    num=samples[i],
+                    num=samples,
                     endpoint=True,
                 )
 
@@ -212,9 +229,6 @@ class IntervalData(P.IntervalDict):
                 result = InterpolatorWithUnits.from_ipol_method(
                     ipol_type, x_values, y_values, extrapolate=True, **kwargs
                 )
-
-            # finally, increment sample array i
-            i += 1
 
             # write result to the new IntervalData
             new_intdict[interval] = result
@@ -253,7 +267,7 @@ def _eval_functs(x, functs) -> Quantity | float:
     # loop through the functions to multiply the values
     for funct in functs:
 
-        if not funct:
+        if funct is None:
             return None
         elif isinstance(funct, numbers.Number):
             # int or float
@@ -293,21 +307,40 @@ def _append_math_functions(fx, fy) -> list | None:
 class IntervalDataPlot:  # pragma: no cover
     """Convenience class to plot `IntervalData` objects
 
-    This can be initialised with no `IntervalData` objects,
-    to be populated manually with more granular control
-    over styles and ranges.
+    Each `IntervalData` is used to generate the plot y values,
+    using the dict key as the label. The optional `plot_interval`
+    constrains the plot interval.
+
+    The plot samples each `IntervalData` object separately,
+    therefore the sample points may not exactly match.
+    If the points are required to match, then a `plot_interval`
+    should be specified.
+
+    The stepsize for this resampling is approximate,
+    in the sense that, each atomic interval is divided into
+    an integer number of steps between its respective bounds.
 
     Parameters
     ----------
     interval_data_dict : dict[str, IntervalData]
         dict of label and IntervalData objects
+        plot_interval : Interval, optional
+    plot interval, `None` means the entire domain is plotted
+        for each `IntervalData` object
+    approx_stepsize : float | Quantity
+        approximate stepsize, if None the minimum value is used
     """
 
-    def __init__(self, interval_data_dict: dict[str, IntervalData]) -> None:
+    def __init__(
+        self,
+        interval_data_dict: dict[str, IntervalData],
+        plot_interval: P.Interval = None,
+        approx_stepsize: float | Quantity = None,
+    ) -> None:
 
         self.fig, self.ax = plt.subplots()
 
-        self._populate_plot(interval_data_dict)
+        self._populate_plot(interval_data_dict, plot_interval, approx_stepsize)
 
         # set a sensible default plot style
         self.set_plot_style()
@@ -316,10 +349,10 @@ class IntervalDataPlot:  # pragma: no cover
         self,
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
-        samples: int = 100,
+        approx_stepsize: float | Quantity = None,
     ) -> None:
         """
-        Populates the plot lines using the `IntervalData`.
+        Populates the plot lines using the `IntervalData` objects.
 
         Each `IntervalData` is used to generate the plot y values,
         using the dict key as the label. The optional `plot_interval`
@@ -330,6 +363,10 @@ class IntervalDataPlot:  # pragma: no cover
         If the points are required to match, then a `plot_interval`
         should be specified.
 
+        The stepsize for this resampling is approximate,
+        in the sense that, each atomic interval is divided into
+        an integer number of steps between its respective bounds.
+
         Parameters
         ----------
         interval_data_dict : dict[str, IntervalData]
@@ -337,35 +374,82 @@ class IntervalDataPlot:  # pragma: no cover
         plot_interval : Interval, optional
             plot interval, `None` means the entire domain is plotted
             for each `IntervalData` object
-        samples: int, optional
-            Number of samples in the plot
+        approx_stepsize : float | Quantity
+            approximate stepsize, if None the minimum value is used
         """
-
-        # generate x values once if required
-        if plot_interval:
-            x_values_fixed = np.linspace(
-                plot_interval.enclosure.lower,
-                plot_interval.enclosure.upper,
-                num=samples,
-                endpoint=True,
-            )
 
         # generate IntervalData lines
         for label, interval_data in interval_data_dict.items():
 
-            # generate x values
-            if plot_interval:
-                x_values = x_values_fixed
-            else:
-                x_values = np.linspace(
-                    interval_data.domain().lower,
-                    interval_data.domain().upper,
-                    num=samples,
-                    endpoint=True,
-                )
+            # If plot interval is defined, intersect here
+            # and get the new IntervalData
+            if plot_interval is not None:
+                interval_data = interval_data.get(plot_interval, default=None)
 
-            # generate values (y axis)
-            y_values = np.asarray([interval_data.get_value(x) for x in x_values])
+            x_values = []
+            y_values = []
+
+            atomic_tuples = interval_data.to_atomic()
+            # this is to order the intervals
+            atomic_tuples.sort(key=lambda tup: tup[0].upper)
+
+            for interval, functs in atomic_tuples:
+
+                if not isinstance(functs, list):
+                    functs = [functs]
+
+                if any(funct is None for funct in functs):
+                    # at least one funct is None
+                    x_list = [interval.lower, interval.upper]
+                    y_list = [None, None]
+                elif any(funct == 0 for funct in functs):
+                    # at least one funct is zero
+                    x_list = [interval.lower, interval.upper]
+                    y_list = [0, 0]
+                elif all(isinstance(funct, numbers.Number) for funct in functs):
+                    # all functs are numbers
+                    result = np.prod(functs)
+                    x_list = [interval.lower, interval.upper]
+                    y_list = [result, result]
+                else:
+                    # create a new interpolator from the resampling
+
+                    # create sample size
+                    if approx_stepsize is None:
+                        samples = IntervalData._MIN_SAMPLE_SIZE
+                    else:
+                        # generate sample size
+                        samples = int(
+                            (interval.upper - interval.lower) / approx_stepsize
+                        )
+
+                        if samples < IntervalData._MIN_SAMPLE_SIZE:
+                            samples = IntervalData._MIN_SAMPLE_SIZE
+
+                    # generate range samples (x axis)
+                    x_list = np.linspace(
+                        interval.lower,
+                        interval.upper,
+                        num=samples,
+                        endpoint=True,
+                    )
+
+                    # generate values
+                    y_list = [_eval_functs(x, functs) for x in x_list]
+
+                x_values.extend(x_list)
+                y_values.extend(y_list)
+
+            # print(label)
+            # for x, y in zip(x_values, y_values):
+            #     print(x, y)
+
+            # convert from list of units to a vectorised form
+            if isinstance(x_values[0], Quantity):
+                x_values = Q_.from_list(x_values)
+
+            if isinstance(y_values[0], Quantity):
+                y_values = Q_.from_list(y_values)
 
             # generate plot line
             self.ax.plot(x_values, y_values, label=label)
