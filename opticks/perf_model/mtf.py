@@ -8,6 +8,8 @@ Package for Modulation Transfer Function (MTF) related classes and functions.
 
 """
 
+from typing import Self
+
 import numpy as np
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
@@ -757,9 +759,38 @@ def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
 
 
 class MTF_Plot_1D:  # pragma: no cover
+    """Generates an MTF Plot.
 
-    def __init__(self) -> None:
+    Each MTF Model is used to generate the plot y values,
+    using the `freq_list` as the discrete x axis values
+    and the dict key as the label.
+
+    Use the `set_plot_style` method to further detail the
+    style options and decorators like title and axis labels.
+
+    Parameters
+    ----------
+    freq_list : Arraylike
+        list of spatial frequency values
+    mtf_data : dict[str, MTF_Model_1D]
+        list of MTF models and labels
+    acceptable_limit : float, optional
+        horizontal "acceptable limit" line value, by default 0.1
+    nyq_limit : Quantity, optional
+        spatial frequency corresponding to the Nyquist limit, by default None
+    """
+
+    def __init__(
+        self,
+        freq_list,
+        mtf_data: dict[str, MTF_Model_1D],
+        acceptable_limit: float = 0.1,
+        nyq_limit: Quantity = None,
+    ) -> None:
+
         self.fig, self.ax = plt.subplots()
+
+        self.populate_plot(freq_list, mtf_data, acceptable_limit, nyq_limit)
 
     def populate_plot(
         self,
@@ -767,9 +798,12 @@ class MTF_Plot_1D:  # pragma: no cover
         mtf_data: dict[str, MTF_Model_1D],
         acceptable_limit: float = 0.1,
         nyq_limit: Quantity = None,
-    ) -> None:
+    ) -> Self:
         """
         Populates the MTF plot lines using the MTF Models.
+
+        This conveniently adds items in addition to those
+        in the constructor.
 
         Each MTF Model is used to generate the plot y values,
         using the `freq_list` as the discrete x axis values
@@ -785,6 +819,11 @@ class MTF_Plot_1D:  # pragma: no cover
             horizontal "acceptable limit" line value, by default 0.1
         nyq_limit : Quantity, optional
             spatial frequency corresponding to the Nyquist limit, by default None
+
+        Returns
+        -------
+        MTF_Plot_1D
+            self object for convenience
         """
 
         # generate MTF data lines
@@ -815,6 +854,8 @@ class MTF_Plot_1D:  # pragma: no cover
                 linestyle="--",
             )
 
+        return self
+
     def set_plot_style(
         self,
         x_max=None,
@@ -824,7 +865,7 @@ class MTF_Plot_1D:  # pragma: no cover
         ylabel="MTF",
         height=4,
         width=8,
-    ) -> None:
+    ) -> Self:
         """
         Sets some default style parameters for MTF plots.
 
@@ -845,6 +886,10 @@ class MTF_Plot_1D:  # pragma: no cover
         width : int, optional
             width of the figure (in inches), by default 6
 
+        Returns
+        -------
+        MTF_Plot_1D
+            self object for convenience
         """
 
         # set decorators
@@ -866,6 +911,8 @@ class MTF_Plot_1D:  # pragma: no cover
 
         self.fig.set_figheight(height)
         self.fig.set_figwidth(width)
+
+        return self
 
     # def show_plot(self):
     #     plt.show()
