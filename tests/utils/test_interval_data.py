@@ -4,13 +4,18 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
+import math
+import numbers
+
 import numpy as np
 import portion as P
 import pytest
+from pint import Quantity
 
 from opticks import u
-from opticks.utils.interval_data import IntervalData
+from opticks.utils.interval_data import FunctCombinationMethod, IntervalData
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
+from opticks.utils.testing_utils import assert_allclose
 
 
 class TestIntervalData:
@@ -41,6 +46,22 @@ class TestIntervalData:
         first_rng = P.closed(-4, 0)
         data[first_rng] = 1.0
         second_rng = P.closed(2, 5)
+        data[second_rng] = 1.0
+
+        filter = IntervalData(data)
+
+        return filter
+
+    @pytest.fixture(scope="class")
+    def filter2(self) -> IntervalData:
+        data = P.IntervalDict()
+        # interval of validity
+        validity = P.closed(-20 * u.Hz, 20 * u.Hz)
+        data[validity] = 0.1
+        # data proper
+        first_rng = P.closed(-8 * u.Hz, -6 * u.Hz)
+        data[first_rng] = 1.0
+        second_rng = P.closed(3 * u.Hz, 7 * u.Hz)
         data[second_rng] = 1.0
 
         filter = IntervalData(data)
@@ -82,6 +103,7 @@ class TestIntervalData:
         return main_funct
 
     def test_edge(self, filter, main_funct):
+        """Test the edge with multiplication."""
 
         # cases
         # -------
@@ -101,6 +123,7 @@ class TestIntervalData:
         np.testing.assert_allclose(results, truth, rtol=1e-10)
 
     def test_resampled_edge(self, filter, main_funct):
+        """Test the resampled edge with multiplication."""
 
         # cases
         # -------
@@ -124,6 +147,7 @@ class TestIntervalData:
         np.testing.assert_allclose(results, truth, rtol=1e-8)
 
     def test_resampled_edge_no_units(self, filter_no_units, main_funct_no_units):
+        """Test the resampled edge with multiplication - no units."""
 
         # cases
         # -------
@@ -145,3 +169,74 @@ class TestIntervalData:
         # verification
         # -----------------
         np.testing.assert_allclose(results, truth, rtol=1e-8)
+
+    def test_summation(self, filter, filter2):
+        """Test the edge with multiplication."""
+
+        # cases
+        # -------
+        x = [-3.0, 2.9999, 3.0, 4.5, 5.0, 5.00001] * u.Hz
+
+        # truth
+        # -------
+        truth = [1.1, 1.1, 2.0, 2.0, 2.0, 1.0]
+
+        # test set up
+        # -----------------
+        combined_filter = filter2.combine(filter)
+        results = [
+            combined_filter.get_value(
+                x_val, combination_method=FunctCombinationMethod.SUMMATION
+            )
+            for x_val in x
+        ]
+
+        # verification
+        # -----------------
+        np.testing.assert_allclose(results, truth, rtol=1e-10)
+
+    def test_number_check(self):
+        """Checks the number & Quantity check logic with
+        summation and multiplication."""
+
+        # test summation
+
+        functs1 = [10 * u.m, 20 * u.m, 30 * u.m]
+
+        functs = functs1
+
+        if not isinstance(functs, list):
+            functs = [functs]
+
+        # check whether all are numbers (including Quantity objects)
+        number_check = all(
+            (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
+            for funct in functs
+        )
+
+        sum_functs = sum(functs)
+
+        assert number_check
+
+        assert_allclose(sum_functs, 60 * u.m, atol=1e-6 * u.mm)
+
+        # test multiplication
+
+        functs2 = [10 * u.Hz, 2, 40 * u.Hz]
+
+        functs = functs2
+
+        if not isinstance(functs, list):
+            functs = [functs]
+
+        # check whether all are numbers (including Quantity objects)
+        number_check = all(
+            (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
+            for funct in functs
+        )
+
+        mult_functs = math.prod(functs)
+
+        assert number_check
+
+        assert_allclose(mult_functs, 800 * u.Hz**2, atol=1e-6 * u.Hz**2)

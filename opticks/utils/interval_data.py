@@ -5,7 +5,9 @@
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
+import math
 import numbers
+from enum import Enum
 from typing import Any, Self
 
 import numpy as np
@@ -19,6 +21,12 @@ from opticks.utils.math_utils import (
     InterpolatorWithUnitTypes,
     PPolyWithUnits,
 )
+
+FunctCombinationMethod = Enum(
+    "FunctionCombinationType",
+    [("MULTIPLICATION", 1), ("SUMMATION", 2)],
+)
+"""Interval Data Combination Type Enum."""
 
 
 class IntervalData(P.IntervalDict):
@@ -74,6 +82,12 @@ class IntervalData(P.IntervalDict):
 
         return IntervalData.from_math_funct(ipol, valid_interval)
 
+    def as_atomic(self) -> list[tuple[P.Interval, Any]]:
+        """Returns a list of tuples containing atomic intervals
+        and corresponding functions."""
+
+        return [(ival, functs) for ivals, functs in self.items() for ival in ivals]
+
     def get(
         self, x: Quantity | P.Interval, default=None
     ) -> P.IntervalDict | Quantity | float:
@@ -81,15 +95,15 @@ class IntervalData(P.IntervalDict):
 
         This does not return the numerical result at `x`, rather it returns the
         list of functions (interpolators, mathematical functions or fixed values)
-        at `x`. If the multiplication of all the functions at `x` is desired, use
-        `get_value` method.
+        at `x`. If the mathematical combination (summation or multiplication)
+        of all the functions at `x` is desired, use the `get_value` method.
 
         If `x` is a single value, it returns a single value (if it exists) or
-        `None`.
+        `None` (if it doesn't).
 
         If `x` is an `Interval`, it returns a new `IntervalDict`
-        restricted to given interval. In that case, the default value is used to
-        "fill the gaps" (if any) w.r.t. given `x`.
+        restricted to the requested interval. In that case, the `default` value
+        is used to "fill the gaps" (if any) w.r.t. given `x`.
 
         If `x` is not covered by the bounds of the internal `Interval`,
         then returns `None`.
@@ -110,11 +124,24 @@ class IntervalData(P.IntervalDict):
 
         return super().get(x, default=default)
 
-    def get_value(self, x: Quantity | float, default=None) -> Quantity | float:
+    def combine(self, other: type[P.IntervalDict], *, missing=None) -> Self:
+
+        # overrides combine but the how function is fixed to append functions
+        combined = super().combine(other, how=_append_math_functions, missing=missing)
+
+        return combined
+
+    def get_value(
+        self,
+        x: Quantity | float,
+        combination_method=FunctCombinationMethod.MULTIPLICATION,
+        default=None,
+    ) -> Quantity | float:
         """Gets the value at the arbitrary data point `x`.
 
-        Computes and multiplies all the values of the mathematical functions
-        at `x`.
+        Computes and combines all the values of the mathematical functions
+        at `x`. The combination method can be a summation or a multiplication,
+        depending on the `combination_method` enumerator.
 
         The math function can be any callable, with a signature
         `y=funct(x)`.
@@ -123,6 +150,8 @@ class IntervalData(P.IntervalDict):
         ----------
         x : Quantity | float
             Requested data point
+        combination_method : FunctCombinationMethod
+            method to combine the functions
         default
             default value to be used, by default None
 
@@ -134,23 +163,21 @@ class IntervalData(P.IntervalDict):
         # Retrieve all math functions at x
         functs = super().get(x, default=default)
 
-        return _eval_functs(x, functs)
+        # combine them as requested
+        if combination_method == FunctCombinationMethod.MULTIPLICATION:
+            result = _eval_functs_multiply(x, functs)
+        elif combination_method == FunctCombinationMethod.SUMMATION:
+            result = _eval_functs_sum(x, functs)
+        else:
+            raise ValueError(f"Invalid combination method: {combination_method}")
 
-    def combine(self, other: type[P.IntervalDict], *, missing=None) -> Self:
-
-        # overrides combine but the how function is fixed
-        return super().combine(other, how=_append_math_functions, missing=missing)
-
-    def to_atomic(self) -> list[tuple[P.Interval, Any]]:
-        """Returns a list of tuples containing atomic intervals
-        and corresponding functions."""
-
-        return [(ival, functs) for ivals, functs in self.items() for ival in ivals]
+        return result
 
     def resample(
         self,
         approx_stepsize: float | Quantity,
         ipol_type=InterpolatorWithUnitTypes.AKIMA,
+        combination_method=FunctCombinationMethod.MULTIPLICATION,
         **kwargs,
     ) -> "IntervalData":
         """Combines the stacked values and interpolators, via
@@ -160,19 +187,21 @@ class IntervalData(P.IntervalDict):
         intervals and therefore the interval structure is
         changed.
 
-        This analyses each interval enclosure within
-        the dictionary and combines the functions / values.
-        A `None` or zero takes precedence, and all other functions
-        (continuous or interpolator) is resampled to create
-        a new interpolator.
+        This analyses each interval enclosure within the dictionary
+        and combines the functions / values. A `None` or zero
+        takes precedence, and all other functions (continuous or
+        interpolator) are resampled to create a new interpolator.
 
-        The stepsize for this resampling is approximate,
-        in the sense that, each atomic interval is divided into
-        an integer number of steps between its respective bounds.
+        The combination method can be a summation or a multiplication,
+        depending on the `combination_method` enumerator.
 
-        The interpolator is defined by the user, with the
-        `extrapolate` already set to `True`. The `kwargs`
-        are passed on to the interpolator definition.
+        The stepsize for this resampling is approximate, in the
+        sense that, each atomic interval is divided into an integer
+        number of steps between its respective bounds.
+
+        The interpolator is defined by the user, with the `extrapolate`
+        already set to `True`. The `kwargs` are passed on to the
+        interpolator definition.
 
         Parameters
         ----------
@@ -180,6 +209,8 @@ class IntervalData(P.IntervalDict):
             approximate stepsize
         ipol_type : InterpolatorWithUnitTypes
             Interpolator type, defaults to Akima
+        combination_method : FunctCombinationMethod
+            Function combination method (multiplication or summation)
 
         Returns
         -------
@@ -188,46 +219,50 @@ class IntervalData(P.IntervalDict):
         """
 
         # decompose to atomic intervals and corresponding functions
-        atomic_tuples = self.to_atomic()
+        atomic_tuples = self.as_atomic()
 
         new_intdict = IntervalData()
+
         for interval, functs in atomic_tuples:
 
+            # force functs into a list
             if not isinstance(functs, list):
                 functs = [functs]
 
             if any(funct is None for funct in functs):
                 # at least one funct is None
                 result = None
-            elif any(funct == 0 for funct in functs):
+
+            elif combination_method == FunctCombinationMethod.MULTIPLICATION and any(
+                funct == 0 for funct in functs
+            ):
                 # at least one funct is zero
                 result = 0
-            elif all(isinstance(funct, numbers.Number) for funct in functs):
+
+            elif all(
+                (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
+                for funct in functs
+            ):
+
                 # all functs are numbers
-                result = np.prod(functs)
+                if combination_method == FunctCombinationMethod.MULTIPLICATION:
+                    result = math.prod(functs)
+                elif combination_method == FunctCombinationMethod.SUMMATION:
+                    result = sum(functs)
+                else:
+                    raise ValueError(
+                        f"Invalid combination method: {combination_method}"
+                    )
             else:
                 # create a new interpolator from the resampling
-
-                # generate sample size
-                samples = int((interval.upper - interval.lower) / approx_stepsize)
-
-                if samples < self._MIN_SAMPLE_SIZE:
-                    samples = self._MIN_SAMPLE_SIZE
-
-                # generate range samples (x axis)
-                x_values = np.linspace(
-                    interval.enclosure.lower,
-                    interval.enclosure.upper,
-                    num=samples,
-                    endpoint=True,
-                )
-
-                # generate values
-                y_values = [_eval_functs(x, functs) for x in x_values]
-
-                # init interpolator
-                result = InterpolatorWithUnits.from_ipol_method(
-                    ipol_type, x_values, y_values, extrapolate=True, **kwargs
+                result = _create_interpolator(
+                    combination_method,
+                    interval,
+                    functs,
+                    approx_stepsize,
+                    ipol_type,
+                    self._MIN_SAMPLE_SIZE,
+                    **kwargs,
                 )
 
             # write result to the new IntervalData
@@ -236,8 +271,49 @@ class IntervalData(P.IntervalDict):
         return new_intdict
 
 
-def _eval_functs(x, functs) -> Quantity | float:
-    """Evaluates `x` within a set of functions.
+def _create_interpolator(
+    combination_method,
+    interval,
+    functs,
+    approx_stepsize,
+    ipol_type,
+    min_sample_size,
+    **kwargs,
+) -> InterpolatorWithUnits:
+    """Creates a new interpolator from the resampling"""
+
+    # generate sample size
+    samples = int((interval.upper - interval.lower) / approx_stepsize)
+
+    if samples < min_sample_size:
+        samples = min_sample_size
+
+    # generate range samples (x axis)
+    x_values = np.linspace(
+        interval.enclosure.lower,
+        interval.enclosure.upper,
+        num=samples,
+        endpoint=True,
+    )
+
+    # generate values
+    if combination_method == FunctCombinationMethod.MULTIPLICATION:
+        y_values = [_eval_functs_multiply(x, functs) for x in x_values]
+    elif combination_method == FunctCombinationMethod.SUMMATION:
+        y_values = [_eval_functs_sum(x, functs) for x in x_values]
+    else:
+        raise ValueError(f"Invalid combination method: {combination_method}")
+
+    # init interpolator
+    result = InterpolatorWithUnits.from_ipol_method(
+        ipol_type, x_values, y_values, extrapolate=True, **kwargs
+    )
+
+    return result
+
+
+def _eval_functs_multiply(x, functs) -> Quantity | float:
+    """Evaluates `x` within a set of functions via multiplication.
 
     Computes and multiplies all the values of the mathematical functions
     at `x`.
@@ -269,12 +345,55 @@ def _eval_functs(x, functs) -> Quantity | float:
 
         if funct is None:
             return None
-        elif isinstance(funct, numbers.Number):
+        elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
             # int or float
             result *= funct
         else:
             # interpolator (or other callable)
             result *= funct(x)
+
+    return result
+
+
+def _eval_functs_sum(x, functs) -> Quantity | float:
+    """Evaluates `x` within a set of functions via summation.
+
+    Computes and sums all the values of the mathematical functions
+    at `x`.
+
+    Note that `x` may be outside the domain of an interpolator,
+    therefore this method should be used cautiously.
+
+    Parameters
+    ----------
+    x : Quantity | float
+        Requested data point
+    functs : Any
+        functions to evaluate
+
+    Returns
+    -------
+    Quantity | float
+        Value at the requested data point
+    """
+
+    # upgrade functs to list if only single item is present
+    if not isinstance(functs, list):
+        functs = [functs]
+
+    result = 0.0
+
+    # loop through the functions to multiply the values
+    for funct in functs:
+
+        if funct is None:
+            return None
+        elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
+            # int or float
+            result += funct
+        else:
+            # interpolator (or other callable)
+            result += funct(x)
 
     return result
 
@@ -311,6 +430,9 @@ class IntervalDataPlot:  # pragma: no cover
     using the dict key as the label. The optional `plot_interval`
     constrains the plot interval.
 
+    Uses a default combination method of multiplication for
+    combined interval data, though a summation can also be used.
+
     The plot samples each `IntervalData` object separately,
     therefore the sample points may not exactly match.
     If the points are required to match, then a `plot_interval`
@@ -329,6 +451,8 @@ class IntervalDataPlot:  # pragma: no cover
         for each `IntervalData` object
     approx_stepsize : float | Quantity
         approximate stepsize, if None the minimum value is used
+    combination_method : FunctCombinationMethod
+            Function combination method (multiplication or summation)
     """
 
     def __init__(
@@ -336,11 +460,17 @@ class IntervalDataPlot:  # pragma: no cover
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
         approx_stepsize: float | Quantity = None,
+        combination_method=FunctCombinationMethod.MULTIPLICATION,
     ) -> None:
 
         self.fig, self.ax = plt.subplots()
 
-        self._populate_plot(interval_data_dict, plot_interval, approx_stepsize)
+        self._populate_plot(
+            interval_data_dict,
+            plot_interval,
+            approx_stepsize,
+            combination_method=combination_method,
+        )
 
         # set a sensible default plot style
         self.set_plot_style()
@@ -350,6 +480,7 @@ class IntervalDataPlot:  # pragma: no cover
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
         approx_stepsize: float | Quantity = None,
+        combination_method=FunctCombinationMethod.MULTIPLICATION,
     ) -> None:
         """
         Populates the plot lines using the `IntervalData` objects.
@@ -357,6 +488,9 @@ class IntervalDataPlot:  # pragma: no cover
         Each `IntervalData` is used to generate the plot y values,
         using the dict key as the label. The optional `plot_interval`
         constrains the plot interval.
+
+        The combination method of for the combined interval data
+        can be summation or multiplication.
 
         The plot samples each `IntervalData` object separately,
         therefore the sample points may not exactly match.
@@ -376,6 +510,8 @@ class IntervalDataPlot:  # pragma: no cover
             for each `IntervalData` object
         approx_stepsize : float | Quantity
             approximate stepsize, if None the minimum value is used
+        combination_method : FunctCombinationMethod
+            Function combination method (multiplication or summation)
         """
 
         # generate IntervalData lines
@@ -389,56 +525,123 @@ class IntervalDataPlot:  # pragma: no cover
             x_values = []
             y_values = []
 
-            atomic_tuples = interval_data.to_atomic()
+            atomic_tuples = interval_data.as_atomic()
             # this is to order the intervals
             atomic_tuples.sort(key=lambda tup: tup[0].upper)
 
-            for interval, functs in atomic_tuples:
+            if combination_method == FunctCombinationMethod.MULTIPLICATION:
+                # combination method: multiplication
+                for interval, functs in atomic_tuples:
 
-                if not isinstance(functs, list):
-                    functs = [functs]
+                    # if not isinstance(functs, list):
+                    #     functs = [functs]
 
-                if any(funct is None for funct in functs):
-                    # at least one funct is None
-                    x_list = [interval.lower, interval.upper]
-                    y_list = [None, None]
-                elif any(funct == 0 for funct in functs):
-                    # at least one funct is zero
-                    x_list = [interval.lower, interval.upper]
-                    y_list = [0, 0]
-                elif all(isinstance(funct, numbers.Number) for funct in functs):
-                    # all functs are numbers
-                    result = np.prod(functs)
-                    x_list = [interval.lower, interval.upper]
-                    y_list = [result, result]
-                else:
-                    # create a new interpolator from the resampling
+                    # if any(funct is None for funct in functs):
+                    #     # at least one funct is None
+                    #     x_list = [interval.lower, interval.upper]
+                    #     y_list = [None, None]
+                    # elif any(funct == 0 for funct in functs):
+                    #     # at least one funct is zero
+                    #     x_list = [interval.lower, interval.upper]
+                    #     y_list = [0, 0]
+                    # elif all(
+                    #     (
+                    #         isinstance(funct, numbers.Number)
+                    #         or isinstance(funct, Quantity)
+                    #     )
+                    #     for funct in functs
+                    # ):
+                    #     # all functs are numbers
+                    #     result = math.prod(functs)
+                    #     x_list = [interval.lower, interval.upper]
+                    #     y_list = [result, result]
+                    # else:
+                    #     # create a new interpolator from the resampling
 
-                    # create sample size
-                    if approx_stepsize is None:
-                        samples = IntervalData._MIN_SAMPLE_SIZE
-                    else:
-                        # generate sample size
-                        samples = int(
-                            (interval.upper - interval.lower) / approx_stepsize
-                        )
+                    #     # create sample size
+                    #     if approx_stepsize is None:
+                    #         samples = IntervalData._MIN_SAMPLE_SIZE
+                    #     else:
+                    #         # generate sample size
+                    #         samples = int(
+                    #             (interval.upper - interval.lower) / approx_stepsize
+                    #         )
 
-                        if samples < IntervalData._MIN_SAMPLE_SIZE:
-                            samples = IntervalData._MIN_SAMPLE_SIZE
+                    #         if samples < IntervalData._MIN_SAMPLE_SIZE:
+                    #             samples = IntervalData._MIN_SAMPLE_SIZE
 
-                    # generate range samples (x axis)
-                    x_list = np.linspace(
-                        interval.lower,
-                        interval.upper,
-                        num=samples,
-                        endpoint=True,
+                    #     # generate range samples (x axis)
+                    #     x_list = np.linspace(
+                    #         interval.lower,
+                    #         interval.upper,
+                    #         num=samples,
+                    #         endpoint=True,
+                    #     )
+
+                    #     # generate values
+                    #     y_list = [_eval_functs_multiply(x, functs) for x in x_list]
+
+                    x_list, y_list = self._prep_mult_data(
+                        functs, interval, approx_stepsize
                     )
 
-                    # generate values
-                    y_list = [_eval_functs(x, functs) for x in x_list]
+                    x_values.extend(x_list)
+                    y_values.extend(y_list)
 
-                x_values.extend(x_list)
-                y_values.extend(y_list)
+            else:
+                # combination method: summation
+                for interval, functs in atomic_tuples:
+
+                    # if not isinstance(functs, list):
+                    #     functs = [functs]
+
+                    # if any(funct is None for funct in functs):
+                    #     # at least one funct is None
+                    #     x_list = [interval.lower, interval.upper]
+                    #     y_list = [None, None]
+                    # elif all(
+                    #     (
+                    #         isinstance(funct, numbers.Number)
+                    #         or isinstance(funct, Quantity)
+                    #     )
+                    #     for funct in functs
+                    # ):
+                    #     # all functs are numbers
+                    #     result = sum(functs)
+                    #     x_list = [interval.lower, interval.upper]
+                    #     y_list = [result, result]
+                    # else:
+                    #     # create a new interpolator from the resampling
+
+                    #     # create sample size
+                    #     if approx_stepsize is None:
+                    #         samples = IntervalData._MIN_SAMPLE_SIZE
+                    #     else:
+                    #         # generate sample size
+                    #         samples = int(
+                    #             (interval.upper - interval.lower) / approx_stepsize
+                    #         )
+
+                    #         if samples < IntervalData._MIN_SAMPLE_SIZE:
+                    #             samples = IntervalData._MIN_SAMPLE_SIZE
+
+                    #     # generate range samples (x axis)
+                    #     x_list = np.linspace(
+                    #         interval.lower,
+                    #         interval.upper,
+                    #         num=samples,
+                    #         endpoint=True,
+                    #     )
+
+                    #     # generate values
+                    #     y_list = [_eval_functs_sum(x, functs) for x in x_list]
+
+                    x_list, y_list = self._prep_summed_data(
+                        functs, interval, approx_stepsize
+                    )
+
+                    x_values.extend(x_list)
+                    y_values.extend(y_list)
 
             # print(label)
             # for x, y in zip(x_values, y_values):
@@ -506,3 +709,95 @@ class IntervalDataPlot:  # pragma: no cover
 
     # def show_plot(self):
     #     plt.show()
+
+    def _prep_summed_data(self, functs, interval, approx_stepsize):
+        """Prepares the data for summed combination"""
+
+        if not isinstance(functs, list):
+            functs = [functs]
+
+        if any(funct is None for funct in functs):
+            # at least one funct is None
+            x_list = [interval.lower, interval.upper]
+            y_list = [None, None]
+        elif all(
+            (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
+            for funct in functs
+        ):
+            # all functs are numbers
+            result = sum(functs)
+            x_list = [interval.lower, interval.upper]
+            y_list = [result, result]
+        else:
+            # create a new interpolator from the resampling
+
+            # create sample size
+            if approx_stepsize is None:
+                samples = IntervalData._MIN_SAMPLE_SIZE
+            else:
+                # generate sample size
+                samples = int((interval.upper - interval.lower) / approx_stepsize)
+
+                if samples < IntervalData._MIN_SAMPLE_SIZE:
+                    samples = IntervalData._MIN_SAMPLE_SIZE
+
+            # generate range samples (x axis)
+            x_list = np.linspace(
+                interval.lower,
+                interval.upper,
+                num=samples,
+                endpoint=True,
+            )
+
+            # generate values
+            y_list = [_eval_functs_sum(x, functs) for x in x_list]
+
+        return x_list, y_list
+
+    def _prep_mult_data(self, functs, interval, approx_stepsize):
+        """Prepares the data for multiplied combination"""
+
+        if not isinstance(functs, list):
+            functs = [functs]
+
+        if any(funct is None for funct in functs):
+            # at least one funct is None
+            x_list = [interval.lower, interval.upper]
+            y_list = [None, None]
+        elif any(funct == 0 for funct in functs):
+            # at least one funct is zero
+            x_list = [interval.lower, interval.upper]
+            y_list = [0, 0]
+        elif all(
+            (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
+            for funct in functs
+        ):
+            # all functs are numbers
+            result = math.prod(functs)
+            x_list = [interval.lower, interval.upper]
+            y_list = [result, result]
+        else:
+            # create a new interpolator from the resampling
+
+            # create sample size
+            if approx_stepsize is None:
+                samples = IntervalData._MIN_SAMPLE_SIZE
+            else:
+                # generate sample size
+                samples = int((interval.upper - interval.lower) / approx_stepsize)
+
+                if samples < IntervalData._MIN_SAMPLE_SIZE:
+                    samples = IntervalData._MIN_SAMPLE_SIZE
+
+            # generate range samples (x axis)
+            x_list = np.linspace(
+                interval.lower,
+                interval.upper,
+                num=samples,
+                endpoint=True,
+            )
+
+            # generate values
+            y_list = [_eval_functs_multiply(x, functs) for x in x_list]
+
+        return x_list, y_list
