@@ -533,54 +533,6 @@ class IntervalDataPlot:  # pragma: no cover
                 # combination method: multiplication
                 for interval, functs in atomic_tuples:
 
-                    # if not isinstance(functs, list):
-                    #     functs = [functs]
-
-                    # if any(funct is None for funct in functs):
-                    #     # at least one funct is None
-                    #     x_list = [interval.lower, interval.upper]
-                    #     y_list = [None, None]
-                    # elif any(funct == 0 for funct in functs):
-                    #     # at least one funct is zero
-                    #     x_list = [interval.lower, interval.upper]
-                    #     y_list = [0, 0]
-                    # elif all(
-                    #     (
-                    #         isinstance(funct, numbers.Number)
-                    #         or isinstance(funct, Quantity)
-                    #     )
-                    #     for funct in functs
-                    # ):
-                    #     # all functs are numbers
-                    #     result = math.prod(functs)
-                    #     x_list = [interval.lower, interval.upper]
-                    #     y_list = [result, result]
-                    # else:
-                    #     # create a new interpolator from the resampling
-
-                    #     # create sample size
-                    #     if approx_stepsize is None:
-                    #         samples = IntervalData._MIN_SAMPLE_SIZE
-                    #     else:
-                    #         # generate sample size
-                    #         samples = int(
-                    #             (interval.upper - interval.lower) / approx_stepsize
-                    #         )
-
-                    #         if samples < IntervalData._MIN_SAMPLE_SIZE:
-                    #             samples = IntervalData._MIN_SAMPLE_SIZE
-
-                    #     # generate range samples (x axis)
-                    #     x_list = np.linspace(
-                    #         interval.lower,
-                    #         interval.upper,
-                    #         num=samples,
-                    #         endpoint=True,
-                    #     )
-
-                    #     # generate values
-                    #     y_list = [_eval_functs_multiply(x, functs) for x in x_list]
-
                     x_list, y_list = self._prep_mult_data(
                         functs, interval, approx_stepsize
                     )
@@ -591,50 +543,6 @@ class IntervalDataPlot:  # pragma: no cover
             else:
                 # combination method: summation
                 for interval, functs in atomic_tuples:
-
-                    # if not isinstance(functs, list):
-                    #     functs = [functs]
-
-                    # if any(funct is None for funct in functs):
-                    #     # at least one funct is None
-                    #     x_list = [interval.lower, interval.upper]
-                    #     y_list = [None, None]
-                    # elif all(
-                    #     (
-                    #         isinstance(funct, numbers.Number)
-                    #         or isinstance(funct, Quantity)
-                    #     )
-                    #     for funct in functs
-                    # ):
-                    #     # all functs are numbers
-                    #     result = sum(functs)
-                    #     x_list = [interval.lower, interval.upper]
-                    #     y_list = [result, result]
-                    # else:
-                    #     # create a new interpolator from the resampling
-
-                    #     # create sample size
-                    #     if approx_stepsize is None:
-                    #         samples = IntervalData._MIN_SAMPLE_SIZE
-                    #     else:
-                    #         # generate sample size
-                    #         samples = int(
-                    #             (interval.upper - interval.lower) / approx_stepsize
-                    #         )
-
-                    #         if samples < IntervalData._MIN_SAMPLE_SIZE:
-                    #             samples = IntervalData._MIN_SAMPLE_SIZE
-
-                    #     # generate range samples (x axis)
-                    #     x_list = np.linspace(
-                    #         interval.lower,
-                    #         interval.upper,
-                    #         num=samples,
-                    #         endpoint=True,
-                    #     )
-
-                    #     # generate values
-                    #     y_list = [_eval_functs_sum(x, functs) for x in x_list]
 
                     x_list, y_list = self._prep_summed_data(
                         functs, interval, approx_stepsize
