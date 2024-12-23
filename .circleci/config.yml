@@ -1,8 +1,34 @@
 # Python CircleCI 2.1 configuration file
 version: 2.1
 
+orbs:
+  coverage-reporter: codacy/coverage-reporter@14.0.2
+
 jobs:
 
+  codacy-coverage-report:
+
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - run:
+          name: Install tox
+          command: pip install tox tox-conda
+      - run:
+         name: install dependencies
+         command: conda env create -f environment.yml
+      - run:
+         name: Generate coverage data
+         command: tox -e coverage      
+      - run:
+          name: Upload coverage data
+          command: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
+      - coverage-reporter/send_report:
+          coverage-reports: coverage.xml
+          project-token: $CODACY_PROJECT_TOKEN
+
+  
   tests:
 
     docker:
@@ -52,5 +78,6 @@ jobs:
 workflows:
   tests_and_codestyle:
     jobs:
+      - codacy-coverage-report
       - codestyle
       - tests
