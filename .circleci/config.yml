@@ -37,14 +37,16 @@ jobs:
       - run:
           name: Run coverage
           command: tox -e coverage
+      # - run:
+      #     name: Prepare upload
+      #     command: conda install -y curl
+      # - run:
+      #     name: Prepare validation
+      #     command: apt-get install gpgv gpg
       - run:
-          name: Prepare upload
-          command: conda install -y curl
-      - run:
-          name: Prepare validation
-          command: apt-get install gpgv gpg
-      - codecov/upload:
-          skip_validation: true
+          name: directory listing
+          command: ls -l
+      - codecov/upload
 
 
   codestyle:
