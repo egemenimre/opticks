@@ -43,7 +43,7 @@ jobs:
 #      - run:
 #          name: Prepare validation
 #          command: apt-get install gpgv gpg
-#      - codecov/upload:
+      - codecov/upload
 #          validate: false
 
 
