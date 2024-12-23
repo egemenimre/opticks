@@ -115,7 +115,9 @@ class TestIntervalData:
 
         # test set up
         # -----------------
+        filter.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct.combine(filter)
+
         results = [filtered_main.get_value(x_val) for x_val in x]
 
         # verification
@@ -137,7 +139,9 @@ class TestIntervalData:
         # -----------------
         approx_stepsize = 0.15 * u.Hz
 
+        filter.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct.combine(filter)
+
         resampled_filt_main = filtered_main.resample(approx_stepsize)
 
         results = [resampled_filt_main.get_value(x_val) for x_val in x]
@@ -161,7 +165,9 @@ class TestIntervalData:
         # -----------------
         approx_stepsize = 0.15
 
+        filter_no_units.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct_no_units.combine(filter_no_units)
+
         resampled_filt_main = filtered_main.resample(approx_stepsize)
 
         results = [resampled_filt_main.get_value(x_val) for x_val in x]
@@ -171,7 +177,7 @@ class TestIntervalData:
         np.testing.assert_allclose(results, truth, rtol=1e-8)
 
     def test_summation(self, filter, filter2):
-        """Test the edge with multiplication."""
+        """Test the edge with summation."""
 
         # cases
         # -------
@@ -183,13 +189,10 @@ class TestIntervalData:
 
         # test set up
         # -----------------
+        filter.combination_method = FunctCombinationMethod.SUM
         combined_filter = filter2.combine(filter)
-        results = [
-            combined_filter.get_value(
-                x_val, combination_method=FunctCombinationMethod.SUMMATION
-            )
-            for x_val in x
-        ]
+
+        results = [combined_filter.get_value(x_val) for x_val in x]
 
         # verification
         # -----------------
@@ -240,3 +243,19 @@ class TestIntervalData:
         assert number_check
 
         assert_allclose(mult_functs, 800 * u.Hz**2, atol=1e-6 * u.Hz**2)
+
+    def test_combine_err_1(self, filter, filter2):
+        """Check combination type mismatch errors."""
+        with pytest.raises(ValueError):
+            filter.combination_method = FunctCombinationMethod.SUM
+            filter2.combination_method = FunctCombinationMethod.MULTIPLY
+
+            filter2.combine(filter)
+
+    def test_combine_err_2(self, filter, filter2):
+        """Check combination type mismatch errors."""
+        with pytest.raises(ValueError):
+            filter.combination_method = FunctCombinationMethod.UNDEFINED
+            filter2.combination_method = FunctCombinationMethod.UNDEFINED
+
+            filter2.combine(filter)

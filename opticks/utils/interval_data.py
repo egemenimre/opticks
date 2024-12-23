@@ -23,16 +23,27 @@ from opticks.utils.math_utils import (
 )
 
 FunctCombinationMethod = Enum(
-    "FunctionCombinationType",
-    [("MULTIPLICATION", 1), ("SUMMATION", 2)],
+    "FunctCombinationMethod",
+    [("MULTIPLY", "Multiplication"), ("SUM", "Summation"), ("UNDEFINED", "Undefined")],
 )
-"""Interval Data Combination Type Enum."""
+"""Interval Data Combination Method Enum."""
 
 
 class IntervalData(P.IntervalDict):
 
     _MIN_SAMPLE_SIZE = 20
     """Minimum sample size for interpolation and resampling."""
+
+    def __init__(self, mapping_or_iterable=None):
+        super().__init__(mapping_or_iterable)
+
+        # copy the combination method if exists
+        if mapping_or_iterable is not None and isinstance(
+            mapping_or_iterable, IntervalData
+        ):
+            self._combination_method = mapping_or_iterable.combination_method
+        else:
+            self._combination_method = FunctCombinationMethod.UNDEFINED
 
     @classmethod
     def from_math_funct(cls, math_funct, valid_interval: P.Interval) -> "IntervalData":
@@ -88,9 +99,26 @@ class IntervalData(P.IntervalDict):
 
         return [(ival, functs) for ivals, functs in self.items() for ival in ivals]
 
+    @property
+    def combination_method(self) -> FunctCombinationMethod:
+        """Combination method for the stack of functions."""
+        return self._combination_method
+
+    @combination_method.setter
+    def combination_method(self, combination_method: FunctCombinationMethod) -> Self:
+
+        if combination_method in FunctCombinationMethod:
+            self._combination_method = combination_method
+        else:
+            raise ValueError(
+                f"Requested combination method ({combination_method}) is invalid."
+            )
+
+        return self
+
     def get(
         self, x: Quantity | P.Interval, default=None
-    ) -> P.IntervalDict | Quantity | float:
+    ) -> type[P.IntervalDict] | Quantity | float:
         """Gets the functions at the arbitrary data point `x`.
 
         This does not return the numerical result at `x`, rather it returns the
@@ -119,39 +147,65 @@ class IntervalData(P.IntervalDict):
         Returns
         -------
         IntervalDict | Quantity | float
-            an IntervalDict, or a single value if key is not an Interval.
+            an IntervalDict/IntervalData, or a single value if key is not an Interval.
         """
 
         return super().get(x, default=default)
 
-    def combine(self, other: type[P.IntervalDict], *, missing=None) -> Self:
+    def combine(self, other: "IntervalData", *, missing=None) -> Self:
+
+        # check whether the two IntervalDicts can be combined.
+        # They can be combined when either the combination methods
+        # are the same or at least one is "UNDEFINED".
+        if (
+            self.combination_method
+            == other.combination_method
+            == FunctCombinationMethod.UNDEFINED
+        ):
+            raise ValueError(
+                "Cannot combine UNDEFINED IntervalDicts. Set one to MULTIPLY or SUM."
+            )
+        if self.combination_method == other.combination_method:
+            combination_method = self.combination_method
+        elif self.combination_method == FunctCombinationMethod.UNDEFINED:
+            combination_method = other.combination_method
+        elif other.combination_method == FunctCombinationMethod.UNDEFINED:
+            combination_method = self.combination_method
+        else:
+            raise ValueError(
+                f"Cannot combine conflicting IntervalDicts ({self.combination_method}"
+                f"and {other.combination_method}). Resample at least one of them."
+            )
 
         # overrides combine but the how function is fixed to append functions
         combined = super().combine(other, how=_append_math_functions, missing=missing)
+
+        # set the combination method
+        combined.combination_method = combination_method
 
         return combined
 
     def get_value(
         self,
         x: Quantity | float,
-        combination_method=FunctCombinationMethod.MULTIPLICATION,
         default=None,
     ) -> Quantity | float:
         """Gets the value at the arbitrary data point `x`.
 
         Computes and combines all the values of the mathematical functions
         at `x`. The combination method can be a summation or a multiplication,
-        depending on the `combination_method` enumerator.
+        depending on the `combination_method` parameter. If the
+        `combination_method` is set to neither and there are multiple values
+        to be combined, a `ValueError` is thrown, as the method does not
+        know how to handle the combination.
 
-        The math function can be any callable, with a signature
-        `y=funct(x)`.
+        In case `x` does not exist, the value in the `default` parameter is
+        returned, which is by default `None`.
 
         Parameters
         ----------
         x : Quantity | float
             Requested data point
-        combination_method : FunctCombinationMethod
-            method to combine the functions
         default
             default value to be used, by default None
 
@@ -163,13 +217,22 @@ class IntervalData(P.IntervalDict):
         # Retrieve all math functions at x
         functs = super().get(x, default=default)
 
-        # combine them as requested
-        if combination_method == FunctCombinationMethod.MULTIPLICATION:
-            result = _eval_functs_multiply(x, functs)
-        elif combination_method == FunctCombinationMethod.SUMMATION:
-            result = _eval_functs_sum(x, functs)
+        if isinstance(functs, list):
+            # there are multiple values
+
+            # combine them as requested
+            if self.combination_method == FunctCombinationMethod.MULTIPLY:
+                result = _eval_functs_multiply(x, functs)
+            elif self.combination_method == FunctCombinationMethod.SUM:
+                result = _eval_functs_sum(x, functs)
+            else:
+                raise ValueError(
+                    f"Invalid combination method: {self.combination_method}. "
+                    f"Set the combination method to 'SUM' or 'MULTIPLY'."
+                )
         else:
-            raise ValueError(f"Invalid combination method: {combination_method}")
+            # there is a single value, just return it
+            result = _eval_functs_sum(x, functs)
 
         return result
 
@@ -177,7 +240,6 @@ class IntervalData(P.IntervalDict):
         self,
         approx_stepsize: float | Quantity,
         ipol_type=InterpolatorWithUnitTypes.AKIMA,
-        combination_method=FunctCombinationMethod.MULTIPLICATION,
         **kwargs,
     ) -> "IntervalData":
         """Combines the stacked values and interpolators, via
@@ -193,7 +255,7 @@ class IntervalData(P.IntervalDict):
         interpolator) are resampled to create a new interpolator.
 
         The combination method can be a summation or a multiplication,
-        depending on the `combination_method` enumerator.
+        depending on the `combination_method` parameter.
 
         The stepsize for this resampling is approximate, in the
         sense that, each atomic interval is divided into an integer
@@ -233,7 +295,7 @@ class IntervalData(P.IntervalDict):
                 # at least one funct is None
                 result = None
 
-            elif combination_method == FunctCombinationMethod.MULTIPLICATION and any(
+            elif self.combination_method == FunctCombinationMethod.MULTIPLY and any(
                 funct == 0 for funct in functs
             ):
                 # at least one funct is zero
@@ -245,24 +307,28 @@ class IntervalData(P.IntervalDict):
             ):
 
                 # all functs are numbers
-                if combination_method == FunctCombinationMethod.MULTIPLICATION:
+                if self.combination_method == FunctCombinationMethod.MULTIPLY:
                     result = math.prod(functs)
-                elif combination_method == FunctCombinationMethod.SUMMATION:
+                elif self.combination_method == FunctCombinationMethod.SUM:
                     result = sum(functs)
                 else:
                     raise ValueError(
-                        f"Invalid combination method: {combination_method}"
+                        f"Invalid combination method: {self.combination_method}. "
+                        f"Set the combination method to 'SUM' or 'MULTIPLY'."
                     )
             else:
-                # create a new interpolator from the resampling
-                result = _create_interpolator(
-                    combination_method,
+                # create a new resampling
+                x_values, y_values = _generate_samples(
+                    self.combination_method,
                     interval,
                     functs,
                     approx_stepsize,
-                    ipol_type,
                     self._MIN_SAMPLE_SIZE,
-                    **kwargs,
+                )
+
+                # init interpolator
+                result = InterpolatorWithUnits.from_ipol_method(
+                    ipol_type, x_values, y_values, extrapolate=True, **kwargs
                 )
 
             # write result to the new IntervalData
@@ -271,16 +337,14 @@ class IntervalData(P.IntervalDict):
         return new_intdict
 
 
-def _create_interpolator(
+def _generate_samples(
     combination_method,
     interval,
     functs,
     approx_stepsize,
-    ipol_type,
     min_sample_size,
-    **kwargs,
 ) -> InterpolatorWithUnits:
-    """Creates a new interpolator from the resampling"""
+    """Creates a resampling from the interval"""
 
     # generate sample size
     samples = int((interval.upper - interval.lower) / approx_stepsize)
@@ -290,26 +354,24 @@ def _create_interpolator(
 
     # generate range samples (x axis)
     x_values = np.linspace(
-        interval.enclosure.lower,
-        interval.enclosure.upper,
+        interval.lower,
+        interval.upper,
         num=samples,
         endpoint=True,
     )
 
     # generate values
-    if combination_method == FunctCombinationMethod.MULTIPLICATION:
+    if combination_method == FunctCombinationMethod.MULTIPLY:
         y_values = [_eval_functs_multiply(x, functs) for x in x_values]
-    elif combination_method == FunctCombinationMethod.SUMMATION:
+    elif combination_method == FunctCombinationMethod.SUM:
         y_values = [_eval_functs_sum(x, functs) for x in x_values]
     else:
-        raise ValueError(f"Invalid combination method: {combination_method}")
+        raise ValueError(
+            f"Invalid combination method: {combination_method}. "
+            f"Set the combination method to 'SUM' or 'MULTIPLY'."
+        )
 
-    # init interpolator
-    result = InterpolatorWithUnits.from_ipol_method(
-        ipol_type, x_values, y_values, extrapolate=True, **kwargs
-    )
-
-    return result
+    return x_values, y_values
 
 
 def _eval_functs_multiply(x, functs) -> Quantity | float:
@@ -451,8 +513,7 @@ class IntervalDataPlot:  # pragma: no cover
         for each `IntervalData` object
     approx_stepsize : float | Quantity
         approximate stepsize, if None the minimum value is used
-    combination_method : FunctCombinationMethod
-            Function combination method (multiplication or summation)
+
     """
 
     def __init__(
@@ -460,17 +521,11 @@ class IntervalDataPlot:  # pragma: no cover
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
         approx_stepsize: float | Quantity = None,
-        combination_method=FunctCombinationMethod.MULTIPLICATION,
     ) -> None:
 
         self.fig, self.ax = plt.subplots()
 
-        self._populate_plot(
-            interval_data_dict,
-            plot_interval,
-            approx_stepsize,
-            combination_method=combination_method,
-        )
+        self._populate_plot(interval_data_dict, plot_interval, approx_stepsize)
 
         # set a sensible default plot style
         self.set_plot_style()
@@ -480,7 +535,6 @@ class IntervalDataPlot:  # pragma: no cover
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
         approx_stepsize: float | Quantity = None,
-        combination_method=FunctCombinationMethod.MULTIPLICATION,
     ) -> None:
         """
         Populates the plot lines using the `IntervalData` objects.
@@ -490,7 +544,8 @@ class IntervalDataPlot:  # pragma: no cover
         constrains the plot interval.
 
         The combination method of for the combined interval data
-        can be summation or multiplication.
+        can be summation or multiplication, depending on whatever
+        is specified in the `IntervalData` object.
 
         The plot samples each `IntervalData` object separately,
         therefore the sample points may not exactly match.
@@ -510,8 +565,6 @@ class IntervalDataPlot:  # pragma: no cover
             for each `IntervalData` object
         approx_stepsize : float | Quantity
             approximate stepsize, if None the minimum value is used
-        combination_method : FunctCombinationMethod
-            Function combination method (multiplication or summation)
         """
 
         # generate IntervalData lines
@@ -529,7 +582,7 @@ class IntervalDataPlot:  # pragma: no cover
             # this is to order the intervals
             atomic_tuples.sort(key=lambda tup: tup[0].upper)
 
-            if combination_method == FunctCombinationMethod.MULTIPLICATION:
+            if interval_data.combination_method == FunctCombinationMethod.MULTIPLY:
                 # combination method: multiplication
                 for interval, functs in atomic_tuples:
 
@@ -540,9 +593,25 @@ class IntervalDataPlot:  # pragma: no cover
                     x_values.extend(x_list)
                     y_values.extend(y_list)
 
-            else:
+            elif interval_data.combination_method == FunctCombinationMethod.SUM:
                 # combination method: summation
                 for interval, functs in atomic_tuples:
+
+                    x_list, y_list = self._prep_summed_data(
+                        functs, interval, approx_stepsize
+                    )
+
+                    x_values.extend(x_list)
+                    y_values.extend(y_list)
+            else:
+                # combination method undefined
+                for interval, functs in atomic_tuples:
+
+                    if isinstance(functs, list):
+                        raise ValueError(
+                            f"Invalid combination method: {interval_data.combination_method}. "
+                            f"Set the combination method to 'SUM' or 'MULTIPLY'."
+                        )
 
                     x_list, y_list = self._prep_summed_data(
                         functs, interval, approx_stepsize
@@ -637,7 +706,7 @@ class IntervalDataPlot:  # pragma: no cover
             x_list = [interval.lower, interval.upper]
             y_list = [result, result]
         else:
-            # create a new interpolator from the resampling
+            # create a new resampling
 
             # create sample size
             if approx_stepsize is None:
@@ -685,7 +754,7 @@ class IntervalDataPlot:  # pragma: no cover
             x_list = [interval.lower, interval.upper]
             y_list = [result, result]
         else:
-            # create a new interpolator from the resampling
+            # create a new resampling
 
             # create sample size
             if approx_stepsize is None:
