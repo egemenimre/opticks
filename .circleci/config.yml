@@ -37,9 +37,9 @@ jobs:
       - run:
           name: Run coverage
           command: tox -e coverage
-      # - run:
-      #     name: Prepare upload
-      #     command: conda install -y curl
+      - run:
+          name: Prepare upload
+          command: conda install -y curl
 #      - run:
 #          name: Prepare validation
 #          command: apt-get install gpgv gpg
