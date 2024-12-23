@@ -1,7 +1,7 @@
 # opticks
 
-[![CircleCI Status](https://img.shields.io/circleci/build/github/egemenimre/opticks/master?logo=circleci&label=CircleCI)](https://circleci.com/gh/egemenimre/opticks)
-[![Codecov Status](https://codecov.io/gh/egemenimre/opticks/branch/master/graph/badge.svg)](https://codecov.io/gh/egemenimre/opticks)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/egemenimre/opticks/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/egemenimre/opticks/tree/main)
+[![Codecov Status](https://codecov.io/gh/egemenimre/opticks/branch/main/graph/badge.svg)](https://codecov.io/gh/egemenimre/opticks)
 [![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
 Models and analysis tools for optical system engineering.
