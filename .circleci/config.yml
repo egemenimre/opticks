@@ -65,10 +65,6 @@ jobs:
 
 
 workflows:
-  upload-to-codecov:
-    jobs:
-      - checkout 
-      - codecov/upload
   tests_and_codestyle:
     jobs:
       - codestyle
