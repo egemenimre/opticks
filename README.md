@@ -1,5 +1,6 @@
 # opticks
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e233d62fce6a4be3ab649edf78649cdf)](https://app.codacy.com/gh/egemenimre/opticks?utm_source=github.com&utm_medium=referral&utm_content=egemenimre/opticks&utm_campaign=Badge_Grade)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/egemenimre/opticks/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/egemenimre/opticks/tree/main)
 [![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
