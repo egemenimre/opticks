@@ -1,9 +1,6 @@
 # Python CircleCI 2.1 configuration file
 version: 2.1
 
-orbs:
-  codecov: codecov/codecov@5
-
 jobs:
 
   tests:
@@ -19,10 +16,10 @@ jobs:
       - run:
           name: Install tox
           command: pip install tox
-#      # Create venv and install dependencies - not needed as the docker image is miniconda
-#      - run:
-#          name: install dependencies
-#          command: conda env create -f environment.yml
+     # Create venv and install dependencies - not needed as the docker image is miniconda
+      - run:
+         name: install dependencies
+         command: conda env create -f environment.yml
       - run:
           name: Run tests
           command: | 
@@ -33,20 +30,6 @@ jobs:
           path: test-results
       - store_artifacts:
           path: test-results
-#      Coverage stuff below
-      - run:
-          name: Run coverage
-          command: tox -e coverage
-      # - run:
-      #     name: Prepare upload
-      #     command: conda install -y curl
-      # - run:
-      #     name: Prepare validation
-      #     command: apt-get install gpgv gpg
-      - run:
-          name: directory listing
-          command: ls -l
-      - codecov/upload
 
 
   codestyle:
