@@ -137,12 +137,13 @@ class TestIntervalData:
 
         # test set up
         # -----------------
-        approx_stepsize = 0.15 * u.Hz
+        sample_size = 50
 
         filter.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct.combine(filter)
 
-        resampled_filt_main = filtered_main.resample(approx_stepsize)
+        filtered_main.sample_size = sample_size
+        resampled_filt_main = filtered_main.resample()
 
         results = [resampled_filt_main.get_value(x_val) for x_val in x]
 
@@ -163,12 +164,13 @@ class TestIntervalData:
 
         # test set up
         # -----------------
-        approx_stepsize = 0.15
+        sample_size = 50
 
         filter_no_units.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct_no_units.combine(filter_no_units)
 
-        resampled_filt_main = filtered_main.resample(approx_stepsize)
+        filtered_main.sample_size = sample_size
+        resampled_filt_main = filtered_main.resample()
 
         results = [resampled_filt_main.get_value(x_val) for x_val in x]
 
@@ -281,10 +283,3 @@ class TestIntervalData:
         # verification
         # -----------------
         np.testing.assert_allclose(results, truth, rtol=1e-10, atol=1e-17)
-
-    def test_scaling_err(self, main_funct):
-        """Check scaling type mismatch errors."""
-        with pytest.raises(ValueError):
-            main_funct.combination_method = FunctCombinationMethod.SUM
-
-            main_funct.scale(2.0)

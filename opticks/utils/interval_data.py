@@ -32,25 +32,75 @@ FunctCombinationMethod = Enum(
 class IntervalData(P.IntervalDict):
 
     _MIN_SAMPLE_SIZE = 20
-    """Minimum sample size for interpolation and resampling."""
+    """Minimum sample size for each atomic interval for interpolation 
+    and resampling."""
 
-    def __init__(self, mapping_or_iterable=None):
+    _DEFAULT_SAMPLE_SIZE = 100
+    """Default sample size for each atomic interval for interpolation 
+    and resampling."""
+
+    ipol_type: InterpolatorWithUnitTypes = InterpolatorWithUnitTypes.AKIMA
+    """Interpolator type for resampling."""
+
+    def __init__(self, mapping_or_iterable=None, sample_size: int = None):
+        """Generates a new IntervalData object.
+
+        If no argument is given, an empty `IntervalData` is created.
+        If an argument is given, and is a mapping object (e.g., another
+        `IntervalData`), an new IntervalData with the same key-value pairs
+        (as well as combination method and sample size) is created. If an
+        iterable is provided, it has to be a list of (key, value) pairs.
+
+        The `sample_size` parameter sets the default sample size to be used
+        for each atomic interval for resampling when needed.
+        If `None` is given, the one from the `mapping_or_iterable` is used.
+        If it does not exist, the default value is used.
+
+        Parameters
+        ----------
+        mapping_or_iterable
+            optional mapping or iterable
+        sample_size : int
+            default sample size for resampling
+        """
         super().__init__(mapping_or_iterable)
 
         # copy the combination method if exists
         if mapping_or_iterable is not None and isinstance(
             mapping_or_iterable, IntervalData
         ):
-            self._combination_method = mapping_or_iterable.combination_method
+            self.combination_method = mapping_or_iterable.combination_method
         else:
-            self._combination_method = FunctCombinationMethod.UNDEFINED
+            self.combination_method = FunctCombinationMethod.UNDEFINED
+
+        # assign or copy the sample size if exists
+        if sample_size is not None:
+            self.sample_size = sample_size
+        elif mapping_or_iterable is not None and isinstance(
+            mapping_or_iterable, IntervalData
+        ):
+            self.sample_size = mapping_or_iterable.sample_size
+        else:
+            self.sample_size = IntervalData._DEFAULT_SAMPLE_SIZE
+
+        # copy the interpolation type if exists
+        if mapping_or_iterable is not None and isinstance(
+            mapping_or_iterable, IntervalData
+        ):
+            self.ipol_type = mapping_or_iterable.ipol_type
 
     @classmethod
-    def from_math_funct(cls, math_funct, valid_interval: P.Interval) -> "IntervalData":
+    def from_math_funct(
+        cls, math_funct, valid_interval: P.Interval, sample_size: int = None
+    ) -> "IntervalData":
         """Initialises the `IntervalData` object with a math function.
 
         The math function can be any callable, with a signature
         `y=math_funct(x)`.
+
+        The `sample_size` parameter sets the default sample size to be used
+        for resampling when needed. If `None` is given, the default
+        value is used.
 
         Parameters
         ----------
@@ -58,6 +108,8 @@ class IntervalData(P.IntervalDict):
             Math function with a signature `y=math_funct(x)`.
         valid_interval : Interval
             Interval of validity or domain
+        sample_size : int
+            default sample size for resampling
 
         Returns
         -------
@@ -70,18 +122,26 @@ class IntervalData(P.IntervalDict):
 
         data[valid_interval] = math_funct
 
-        return IntervalData(data)
+        return IntervalData(data, sample_size=sample_size)
 
     @classmethod
-    def from_interpolator(cls, ipol: type[PPolyWithUnits]) -> "IntervalData":
+    def from_interpolator(
+        cls, ipol: type[PPolyWithUnits], sample_size: int = None
+    ) -> "IntervalData":
         """Initialises the `IntervalData` object with an interpolator.
 
         The interval of validity is the data range of the interpolator.
+
+        The `sample_size` parameter sets the default sample size to be used
+        for resampling when needed. If `None` is given, the default
+        value is used.
 
         Parameters
         ----------
         ipol : type[PPolyWithUnits]
             Interpolator
+        sample_size : int
+            default sample size for resampling
 
         Returns
         -------
@@ -91,7 +151,9 @@ class IntervalData(P.IntervalDict):
 
         valid_interval = P.closed(ipol.x[0] * ipol.x_unit, ipol.x[-1] * ipol.x_unit)
 
-        return IntervalData.from_math_funct(ipol, valid_interval)
+        return IntervalData.from_math_funct(
+            ipol, valid_interval, sample_size=sample_size
+        )
 
     def as_atomic(self) -> list[tuple[P.Interval, Any]]:
         """Returns a list of tuples containing atomic intervals
@@ -116,6 +178,22 @@ class IntervalData(P.IntervalDict):
 
         return self
 
+    @property
+    def sample_size(self) -> int:
+        """Sample size for each atomic interval during any resampling needed."""
+        return self._sample_size
+
+    @sample_size.setter
+    def sample_size(self, sample_size: int) -> Self:
+
+        if sample_size >= IntervalData._MIN_SAMPLE_SIZE:
+            self._sample_size = sample_size
+        else:
+            raise ValueError(
+                f"Requsted sample size of {sample_size} is less than "
+                f"the allowable minimum sample size of {IntervalData._MIN_SAMPLE_SIZE}."
+            )
+
     def get(
         self, x: Quantity | P.Interval, default=None
     ) -> type[P.IntervalDict] | Quantity | float:
@@ -133,9 +211,9 @@ class IntervalData(P.IntervalDict):
         restricted to the requested interval. In that case, the `default` value
         is used to "fill the gaps" (if any) w.r.t. given `x`.
 
-        If `x` is not covered by the bounds of the internal `Interval`,
-        then returns `None`.
-
+        If `x` is not covered by the bounds of the `Interval`,
+        the value in the `default` parameter is returned, which is
+        by default `None`.
 
         Parameters
         ----------
@@ -194,13 +272,14 @@ class IntervalData(P.IntervalDict):
 
         Computes and combines all the values of the mathematical functions
         at `x`. The combination method can be a summation or a multiplication,
-        depending on the `combination_method` parameter. If the
+        depending on the internal `combination_method` parameter. If the
         `combination_method` is set to neither and there are multiple values
         to be combined, a `ValueError` is thrown, as the method does not
         know how to handle the combination.
 
-        In case `x` does not exist, the value in the `default` parameter is
-        returned, which is by default `None`.
+        If `x` is not covered by the bounds of the `Interval`,
+        the value in the `default` parameter is returned, which is
+        by default `None`.
 
         Parameters
         ----------
@@ -236,16 +315,20 @@ class IntervalData(P.IntervalDict):
 
         return result
 
-    def scale(self, scaling_value: float | Quantity, *, missing=None) -> "IntervalData":
+    def scale(
+        self,
+        scaling_value: float | Quantity,
+        *,
+        missing=None,
+        **kwargs,
+    ) -> "IntervalData":
         """Scales the `IntervalData` object with a scalar.
 
         The scalar may also be with units.
 
-        If the `self` IntervalData object is of a Summation type, then a
-        `ValueError` is raised as it is not possible to combine a Summation
-        type object with a Multiplication object, which is the case for scaling.
-        In this case, `resample` method will "flatten" the object and make it
-        ready for scaling.
+        If this `IntervalData` object is of a Summation type, then the
+        it is resampled using the internal `sample_size` and `interpolator`
+        properties.
 
         Parameters
         ----------
@@ -253,6 +336,8 @@ class IntervalData(P.IntervalDict):
             scalar value used in scaling
         missing
             if set, use this value for missing values when calling "how", by default None
+        kwargs
+            Parameters to be passed on the interpolator
 
         Returns
         -------
@@ -260,12 +345,11 @@ class IntervalData(P.IntervalDict):
             the new, scaled IntervalData object
         """
 
-        # if self is Summation, raise error
+        # if self is Summation, resample self
         if self.combination_method == FunctCombinationMethod.SUM:
-            raise ValueError(
-                "A Summation type IntervalData object cannot be scaled (multiplied). "
-                "Resample it first."
-            )
+            to_be_scaled = self.resample(**kwargs)
+        else:
+            to_be_scaled = self
 
         # generate the new IntervalData for scaling
         data = P.IntervalDict()
@@ -277,20 +361,17 @@ class IntervalData(P.IntervalDict):
         scale.combination_method = FunctCombinationMethod.MULTIPLY
 
         # combine with self via Multiply
-        return scale.combine(self, missing=missing)
+        return scale.combine(to_be_scaled, missing=missing)
 
     def resample(
         self,
-        approx_stepsize: float | Quantity,
-        ipol_type=InterpolatorWithUnitTypes.AKIMA,
         **kwargs,
     ) -> "IntervalData":
         """Combines the stacked values and interpolators, via
         resampling and setting up a new interpolator.
 
-        The process decomposes the intervals into atomic
-        intervals and therefore the interval structure is
-        changed.
+        The process decomposes the intervals into atomic intervals
+        and therefore the interval structure is changed.
 
         This analyses each interval enclosure within the dictionary
         and combines the functions / values. A `None` or zero
@@ -300,22 +381,18 @@ class IntervalData(P.IntervalDict):
         The combination method can be a summation or a multiplication,
         depending on the `combination_method` parameter.
 
-        The stepsize for this resampling is approximate, in the
-        sense that, each atomic interval is divided into an integer
-        number of steps between its respective bounds.
+        The interpolator is defined by the `ipol_type` parameter,
+        with the `extrapolate` already set to `True`. The `kwargs` are
+        passed on to the interpolator definition.
 
-        The interpolator is defined by the user, with the `extrapolate`
-        already set to `True`. The `kwargs` are passed on to the
-        interpolator definition.
+        For the interpolator, each atomic interval is divided into
+        an integer number of steps (given by the `sample_size` parameter)
+        between its respective bounds.
 
         Parameters
         ----------
-        approx_stepsize : float | Quantity
-            approximate stepsize
-        ipol_type : InterpolatorWithUnitTypes
-            Interpolator type, defaults to Akima
-        combination_method : FunctCombinationMethod
-            Function combination method (multiplication or summation)
+        kwargs
+            Parameters to be passed on the interpolator
 
         Returns
         -------
@@ -360,18 +437,15 @@ class IntervalData(P.IntervalDict):
                         f"Set the combination method to 'SUM' or 'MULTIPLY'."
                     )
             else:
-                # create a new resampling
+
+                # create the new resampling
                 x_values, y_values = _generate_samples(
-                    self.combination_method,
-                    interval,
-                    functs,
-                    approx_stepsize,
-                    self._MIN_SAMPLE_SIZE,
+                    self.combination_method, interval, functs, self.sample_size
                 )
 
                 # init interpolator
                 result = InterpolatorWithUnits.from_ipol_method(
-                    ipol_type, x_values, y_values, extrapolate=True, **kwargs
+                    self.ipol_type, x_values, y_values, extrapolate=True, **kwargs
                 )
 
             # write result to the new IntervalData
@@ -381,19 +455,9 @@ class IntervalData(P.IntervalDict):
 
 
 def _generate_samples(
-    combination_method,
-    interval,
-    functs,
-    approx_stepsize,
-    min_sample_size,
+    combination_method, interval, functs, samples
 ) -> InterpolatorWithUnits:
     """Creates a resampling from the interval"""
-
-    # generate sample size
-    samples = int((interval.upper - interval.lower) / approx_stepsize)
-
-    if samples < min_sample_size:
-        samples = min_sample_size
 
     # generate range samples (x axis)
     x_values = np.linspace(
@@ -529,7 +593,7 @@ def _append_math_functions(fx, fy) -> list | None:
 
 
 class IntervalDataPlot:  # pragma: no cover
-    """Convenience class to plot `IntervalData` objects
+    """Convenience class to plot `IntervalData` objects.
 
     Each `IntervalData` is used to generate the plot y values,
     using the dict key as the label. The optional `plot_interval`
@@ -543,10 +607,6 @@ class IntervalDataPlot:  # pragma: no cover
     If the points are required to match, then a `plot_interval`
     should be specified.
 
-    The stepsize for this resampling is approximate,
-    in the sense that, each atomic interval is divided into
-    an integer number of steps between its respective bounds.
-
     Parameters
     ----------
     interval_data_dict : dict[str, IntervalData]
@@ -554,8 +614,6 @@ class IntervalDataPlot:  # pragma: no cover
         plot_interval : Interval, optional
     plot interval, `None` means the entire domain is plotted
         for each `IntervalData` object
-    approx_stepsize : float | Quantity
-        approximate stepsize, if None the minimum value is used
 
     """
 
@@ -563,12 +621,11 @@ class IntervalDataPlot:  # pragma: no cover
         self,
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
-        approx_stepsize: float | Quantity = None,
     ) -> None:
 
         self.fig, self.ax = plt.subplots()
 
-        self._populate_plot(interval_data_dict, plot_interval, approx_stepsize)
+        self._populate_plot(interval_data_dict, plot_interval)
 
         # set a sensible default plot style
         self.set_plot_style()
@@ -577,7 +634,6 @@ class IntervalDataPlot:  # pragma: no cover
         self,
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
-        approx_stepsize: float | Quantity = None,
     ) -> None:
         """
         Populates the plot lines using the `IntervalData` objects.
@@ -595,10 +651,6 @@ class IntervalDataPlot:  # pragma: no cover
         If the points are required to match, then a `plot_interval`
         should be specified.
 
-        The stepsize for this resampling is approximate,
-        in the sense that, each atomic interval is divided into
-        an integer number of steps between its respective bounds.
-
         Parameters
         ----------
         interval_data_dict : dict[str, IntervalData]
@@ -606,8 +658,6 @@ class IntervalDataPlot:  # pragma: no cover
         plot_interval : Interval, optional
             plot interval, `None` means the entire domain is plotted
             for each `IntervalData` object
-        approx_stepsize : float | Quantity
-            approximate stepsize, if None the minimum value is used
         """
 
         # generate IntervalData lines
@@ -630,7 +680,7 @@ class IntervalDataPlot:  # pragma: no cover
                 for interval, functs in atomic_tuples:
 
                     x_list, y_list = self._prep_mult_data(
-                        functs, interval, approx_stepsize
+                        functs, interval, interval_data.sample_size
                     )
 
                     x_values.extend(x_list)
@@ -641,7 +691,7 @@ class IntervalDataPlot:  # pragma: no cover
                 for interval, functs in atomic_tuples:
 
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, approx_stepsize
+                        functs, interval, interval_data.sample_size
                     )
 
                     x_values.extend(x_list)
@@ -657,7 +707,7 @@ class IntervalDataPlot:  # pragma: no cover
                         )
 
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, approx_stepsize
+                        functs, interval, interval_data.sample_size
                     )
 
                     x_values.extend(x_list)
@@ -730,7 +780,7 @@ class IntervalDataPlot:  # pragma: no cover
     # def show_plot(self):
     #     plt.show()
 
-    def _prep_summed_data(self, functs, interval, approx_stepsize):
+    def _prep_summed_data(self, functs, interval, sample_size):
         """Prepares the data for summed combination"""
 
         if not isinstance(functs, list):
@@ -751,21 +801,11 @@ class IntervalDataPlot:  # pragma: no cover
         else:
             # create a new resampling
 
-            # create sample size
-            if approx_stepsize is None:
-                samples = IntervalData._MIN_SAMPLE_SIZE
-            else:
-                # generate sample size
-                samples = int((interval.upper - interval.lower) / approx_stepsize)
-
-                if samples < IntervalData._MIN_SAMPLE_SIZE:
-                    samples = IntervalData._MIN_SAMPLE_SIZE
-
             # generate range samples (x axis)
             x_list = np.linspace(
                 interval.lower,
                 interval.upper,
-                num=samples,
+                num=sample_size,
                 endpoint=True,
             )
 
@@ -774,7 +814,7 @@ class IntervalDataPlot:  # pragma: no cover
 
         return x_list, y_list
 
-    def _prep_mult_data(self, functs, interval, approx_stepsize):
+    def _prep_mult_data(self, functs, interval, sample_size):
         """Prepares the data for multiplied combination"""
 
         if not isinstance(functs, list):
@@ -799,21 +839,11 @@ class IntervalDataPlot:  # pragma: no cover
         else:
             # create a new resampling
 
-            # create sample size
-            if approx_stepsize is None:
-                samples = IntervalData._MIN_SAMPLE_SIZE
-            else:
-                # generate sample size
-                samples = int((interval.upper - interval.lower) / approx_stepsize)
-
-                if samples < IntervalData._MIN_SAMPLE_SIZE:
-                    samples = IntervalData._MIN_SAMPLE_SIZE
-
             # generate range samples (x axis)
             x_list = np.linspace(
                 interval.lower,
                 interval.upper,
-                num=samples,
+                num=sample_size,
                 endpoint=True,
             )
 
