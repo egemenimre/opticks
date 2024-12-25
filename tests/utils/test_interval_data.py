@@ -259,3 +259,32 @@ class TestIntervalData:
             filter2.combination_method = FunctCombinationMethod.UNDEFINED
 
             filter2.combine(filter)
+
+    def test_scaling(self, main_funct):
+        """Test the scaling."""
+
+        # cases
+        # -------
+        x = [-1, 0, 2] * u.Hz
+        scaling = 2.0
+
+        # truth
+        # -------
+        truth = [0.5, 0.0, 2.0]
+
+        # test set up
+        # -----------------
+        scaled_main = main_funct.scale(scaling)
+
+        results = [scaled_main.get_value(x_val) for x_val in x]
+
+        # verification
+        # -----------------
+        np.testing.assert_allclose(results, truth, rtol=1e-10, atol=1e-17)
+
+    def test_scaling_err(self, main_funct):
+        """Check scaling type mismatch errors."""
+        with pytest.raises(ValueError):
+            main_funct.combination_method = FunctCombinationMethod.SUM
+
+            main_funct.scale(2.0)

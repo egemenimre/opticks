@@ -236,6 +236,49 @@ class IntervalData(P.IntervalDict):
 
         return result
 
+    def scale(self, scaling_value: float | Quantity, *, missing=None) -> "IntervalData":
+        """Scales the `IntervalData` object with a scalar.
+
+        The scalar may also be with units.
+
+        If the `self` IntervalData object is of a Summation type, then a
+        `ValueError` is raised as it is not possible to combine a Summation
+        type object with a Multiplication object, which is the case for scaling.
+        In this case, `resample` method will "flatten" the object and make it
+        ready for scaling.
+
+        Parameters
+        ----------
+        scaling_value : float | Quantity
+            scalar value used in scaling
+        missing
+            if set, use this value for missing values when calling "how", by default None
+
+        Returns
+        -------
+        IntervalData
+            the new, scaled IntervalData object
+        """
+
+        # if self is Summation, raise error
+        if self.combination_method == FunctCombinationMethod.SUM:
+            raise ValueError(
+                "A Summation type IntervalData object cannot be scaled (multiplied). "
+                "Resample it first."
+            )
+
+        # generate the new IntervalData for scaling
+        data = P.IntervalDict()
+
+        validity = self.domain()
+        data[validity] = scaling_value
+
+        scale = IntervalData(data)
+        scale.combination_method = FunctCombinationMethod.MULTIPLY
+
+        # combine with self via Multiply
+        return scale.combine(self, missing=missing)
+
     def resample(
         self,
         approx_stepsize: float | Quantity,
