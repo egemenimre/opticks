@@ -32,11 +32,11 @@ FunctCombinationMethod = Enum(
 class IntervalData(P.IntervalDict):
 
     _MIN_SAMPLE_SIZE = 20
-    """Minimum sample size for each atomic interval for interpolation 
+    """Minimum sample size for each atomic interval for interpolation
     and resampling."""
 
     _DEFAULT_SAMPLE_SIZE = 100
-    """Default sample size for each atomic interval for interpolation 
+    """Default sample size for each atomic interval for interpolation
     and resampling."""
 
     ipol_type: InterpolatorWithUnitTypes = InterpolatorWithUnitTypes.AKIMA
