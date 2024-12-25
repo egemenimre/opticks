@@ -486,6 +486,8 @@ class IntervalData(P.IntervalDict):
                 for funct in functs
             ):
 
+                print(interval, functs)
+
                 # all functs are numbers
                 if len(functs) == 1:
                     # only a single item is present, just return it
@@ -537,7 +539,10 @@ def _generate_samples(
     )
 
     # generate values
-    if combination_method == FunctCombinationMethod.MULTIPLY:
+    if len(functs) == 1:
+        # only a single item is present, multiplication or summation is equivalent
+        y_values = [_eval_functs_multiply(x, functs) for x in x_values]
+    elif combination_method == FunctCombinationMethod.MULTIPLY:
         y_values = [_eval_functs_multiply(x, functs) for x in x_values]
     elif combination_method == FunctCombinationMethod.SUM:
         y_values = [_eval_functs_sum(x, functs) for x in x_values]
