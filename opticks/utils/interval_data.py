@@ -350,7 +350,7 @@ class IntervalData(P.IntervalDict):
             combination_method = self.combination_method
         else:
             raise ValueError(
-                f"Cannot combine conflicting IntervalDicts ({self.combination_method}"
+                f"Cannot combine conflicting IntervalDicts ({self.combination_method} "
                 f"and {other.combination_method}). Resample at least one of them."
             )
 
