@@ -89,6 +89,18 @@ class IntervalData(P.IntervalDict):
         ):
             self.ipol_type = mapping_or_iterable.ipol_type
 
+    def copy_properties_to(self, other: "IntervalData") -> "IntervalData":
+        """Copies the properties (except for the `IntervalDict`) of
+        `Self` to `other`.
+
+        Returns `other` for convenience."""
+
+        other.ipol_type = self.ipol_type
+        other.combination_method = self.combination_method
+        other.sample_size = self.sample_size
+
+        return other
+
     @classmethod
     def from_math_funct(
         cls, math_funct, valid_interval: P.Interval, sample_size: int = None
@@ -330,6 +342,8 @@ class IntervalData(P.IntervalDict):
         it is resampled using the internal `sample_size` and `interpolator`
         properties.
 
+        The properties of this object is preserved in the returned object.
+
         Parameters
         ----------
         scaling_value : float | Quantity
@@ -361,7 +375,10 @@ class IntervalData(P.IntervalDict):
         scale.combination_method = FunctCombinationMethod.MULTIPLY
 
         # combine with self via Multiply
-        return scale.combine(to_be_scaled, missing=missing)
+        scaled = scale.combine(to_be_scaled, missing=missing)
+
+        # copy the params of self to the scaled object
+        return self.copy_properties_to(scaled)
 
     def resample(
         self,
@@ -451,7 +468,7 @@ class IntervalData(P.IntervalDict):
             # write result to the new IntervalData
             new_intdict[interval] = result
 
-        return new_intdict
+        return self.copy_properties_to(new_intdict)
 
 
 def _generate_samples(
