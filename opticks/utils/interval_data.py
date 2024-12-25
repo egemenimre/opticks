@@ -413,7 +413,12 @@ class IntervalData(P.IntervalDict):
         scaled = scale.combine(to_be_scaled, missing=missing)
 
         # copy the params of self to the scaled object
-        return self.copy_properties_to(scaled)
+        scaled = self.copy_properties_to(scaled)
+
+        # but make sure to set the combination method to Multiplication
+        scaled.combination_method = FunctCombinationMethod.MULTIPLY
+
+        return scaled
 
     def resample(
         self,
