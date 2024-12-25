@@ -460,7 +460,7 @@ class IntervalData(P.IntervalDict):
         # decompose to atomic intervals and corresponding functions
         atomic_tuples = self.as_atomic()
 
-        new_intdict = IntervalData()
+        combined = IntervalData()
 
         for interval, functs in atomic_tuples:
 
@@ -506,9 +506,9 @@ class IntervalData(P.IntervalDict):
                 )
 
             # write result to the new IntervalData
-            new_intdict[interval] = result
+            combined[interval] = result
 
-        return self.copy_properties_to(new_intdict)
+        return combined
 
 
 def _generate_samples(
