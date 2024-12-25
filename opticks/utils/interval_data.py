@@ -438,6 +438,9 @@ class IntervalData(P.IntervalDict):
         The combination method can be a summation or a multiplication,
         depending on the `combination_method` parameter.
 
+        The properties of this object is preserved in the returned object,
+        but the combination properties is set to Undefined.
+
         The interpolator is defined by the `ipol_type` parameter,
         with the `extrapolate` already set to `True`. The `kwargs` are
         passed on to the interpolator definition.
@@ -507,6 +510,12 @@ class IntervalData(P.IntervalDict):
 
             # write result to the new IntervalData
             combined[interval] = result
+
+        # copy the params of self to the scaled object
+        combined = self.copy_properties_to(combined)
+
+        # but make sure to set the combination method to Multiplication
+        combined.combination_method = FunctCombinationMethod.UNDEFINED
 
         return combined
 
