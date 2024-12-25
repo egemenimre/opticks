@@ -242,39 +242,6 @@ class IntervalData(P.IntervalDict):
 
         return super().get(x, default=default)
 
-    def combine(self, other: "IntervalData", *, missing=None) -> Self:
-
-        # check whether the two IntervalDicts can be combined.
-        # They can be combined when either the combination methods
-        # are the same or at least one is "UNDEFINED".
-        if (
-            self.combination_method
-            == other.combination_method
-            == FunctCombinationMethod.UNDEFINED
-        ):
-            raise ValueError(
-                "Cannot combine UNDEFINED IntervalDicts. Set one to MULTIPLY or SUM."
-            )
-        if self.combination_method == other.combination_method:
-            combination_method = self.combination_method
-        elif self.combination_method == FunctCombinationMethod.UNDEFINED:
-            combination_method = other.combination_method
-        elif other.combination_method == FunctCombinationMethod.UNDEFINED:
-            combination_method = self.combination_method
-        else:
-            raise ValueError(
-                f"Cannot combine conflicting IntervalDicts ({self.combination_method}"
-                f"and {other.combination_method}). Resample at least one of them."
-            )
-
-        # overrides combine but the how function is fixed to append functions
-        combined = super().combine(other, how=_append_math_functions, missing=missing)
-
-        # set the combination method
-        combined.combination_method = combination_method
-
-        return combined
-
     def get_value(
         self,
         x: Quantity | float,
@@ -326,6 +293,74 @@ class IntervalData(P.IntervalDict):
             result = _eval_functs_sum(x, functs)
 
         return result
+
+    def combine(self, other: "IntervalData", *, missing=None) -> "IntervalData":
+        """Combines this `IntervalData` object with another one.
+
+        The combination method stacks the values or functions in the
+        intersecting regions, but does not evaluate them, until
+        `get_value` is called.
+
+        The combination is not possible when one `IntervalDict` is
+        of Summation type and the other Multiplication type. Then
+        one of them should be resampled, resetting the combination
+        method, which then enables a combination between the two.
+
+        Similarly, two Undefined types cannot be combined as the
+        `get_value` method on the combined object would not know how
+        to combine the various functions.
+
+        The properties of the new object is reset, but the user can
+        easily call `copy_properties_to` from one of the combined
+        objects, so that its properties are exported to the new object.
+
+        The `missing` key is used for the values that are not
+        intersecting between the two domains.
+
+        Parameters
+        ----------
+        other : IntervalData
+            other object to be combined
+        missing : _type_, optional
+            if set, use this value for missing values
+
+        Returns
+        -------
+        IntervalData
+            the new object with properties reset
+
+        """
+
+        # check whether the two IntervalDicts can be combined.
+        # They can be combined when either the combination methods
+        # are the same or at least one is "UNDEFINED".
+        if (
+            self.combination_method
+            == other.combination_method
+            == FunctCombinationMethod.UNDEFINED
+        ):
+            raise ValueError(
+                "Cannot combine UNDEFINED IntervalDicts. Set one to MULTIPLY or SUM."
+            )
+        if self.combination_method == other.combination_method:
+            combination_method = self.combination_method
+        elif self.combination_method == FunctCombinationMethod.UNDEFINED:
+            combination_method = other.combination_method
+        elif other.combination_method == FunctCombinationMethod.UNDEFINED:
+            combination_method = self.combination_method
+        else:
+            raise ValueError(
+                f"Cannot combine conflicting IntervalDicts ({self.combination_method}"
+                f"and {other.combination_method}). Resample at least one of them."
+            )
+
+        # overrides combine but the how function is fixed to append functions
+        combined = super().combine(other, how=_append_math_functions, missing=missing)
+
+        # set the combination method
+        combined.combination_method = combination_method
+
+        return combined
 
     def scale(
         self,
