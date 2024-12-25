@@ -486,8 +486,6 @@ class IntervalData(P.IntervalDict):
                 for funct in functs
             ):
 
-                print(interval, functs)
-
                 # all functs are numbers
                 if len(functs) == 1:
                     # only a single item is present, just return it
