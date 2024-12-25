@@ -487,7 +487,10 @@ class IntervalData(P.IntervalDict):
             ):
 
                 # all functs are numbers
-                if self.combination_method == FunctCombinationMethod.MULTIPLY:
+                if len(functs) == 1:
+                    # only a single item is present, just return it
+                    result = functs[0]
+                elif self.combination_method == FunctCombinationMethod.MULTIPLY:
                     result = math.prod(functs)
                 elif self.combination_method == FunctCombinationMethod.SUM:
                     result = sum(functs)
