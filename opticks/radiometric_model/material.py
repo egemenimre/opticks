@@ -178,6 +178,25 @@ class OpticalMaterial:
             name=name,
         )
 
+    @classmethod
+    def init_blackbody(
+        cls, domain: P.Interval, name="Generic Blackbody"
+    ) -> "OpticalMaterial":
+
+        emissivity = IntervalData({domain: 1.0})
+        transmissivity = IntervalData({domain: 0.0})
+        reflectivity = IntervalData({domain: 0.0})
+
+        # sanity checks can be theoretically skipped
+        # but sticking to them is good practice
+
+        return OpticalMaterial(
+            reflectivity=reflectivity,
+            transmissivity=transmissivity,
+            emissivity=emissivity,
+            name=name,
+        )
+
     @property
     def absorptivity(self) -> IntervalData:
         """Absorptivity, which is equivalent to the Emissivity."""

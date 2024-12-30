@@ -113,6 +113,25 @@ class TestOpticalMaterial:
 
         return _reflectivity_model
 
+    def test_init_blackbody(self):
+        """Check proper init blackbody."""
+
+        input = 500 * u.nm
+
+        domain = P.closed(300 * u.nm, 2500 * u.nm)
+
+        bbody_mat = OpticalMaterial.init_blackbody(domain)
+
+        np.testing.assert_allclose(
+            bbody_mat.absorptivity.get_value(input), 1.0, rtol=1e-13
+        )
+        np.testing.assert_allclose(
+            bbody_mat.reflectivity.get_value(input), 0.0, rtol=1e-13
+        )
+        np.testing.assert_allclose(
+            bbody_mat.transmissivity.get_value(input), 0.0, rtol=1e-13
+        )
+
     @pytest.mark.parametrize(
         "input, expected",
         [
@@ -125,7 +144,7 @@ class TestOpticalMaterial:
             (2100 * u.nm, 0.7),
         ],
     )
-    def test_init_err(
+    def test_init(
         self, reflectivity_model, reflectivity_correct_input, input, expected
     ):
         """Check proper init."""
