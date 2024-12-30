@@ -898,7 +898,7 @@ class MTF_Plot_1D:  # pragma: no cover
         if title:
             self.ax.set_title(title)
 
-        self.fig.legend()
+        self.fig.legend(bbox_to_anchor=(1, 1), loc="upper left")
 
         # set plot formatting
         self.ax.xaxis.grid(True)
