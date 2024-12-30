@@ -643,9 +643,10 @@ def _append_math_functions(fx, fy) -> list | None:
     """Appends the math functions into a list for
     `IntervalDict.combine`."""
 
-    if fx or fy:
-        # neither should be None
-
+    if fx is None or fy is None:
+        # at least one is None
+        return None
+    else:
         # make sure the result is a list
         if isinstance(fx, list):
             result = fx
@@ -659,9 +660,6 @@ def _append_math_functions(fx, fy) -> list | None:
             result.extend(fy)
 
         return result
-    else:
-        # at least one is None
-        return None
 
 
 class IntervalDataPlot:  # pragma: no cover
