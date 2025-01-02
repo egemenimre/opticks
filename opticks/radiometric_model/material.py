@@ -320,15 +320,6 @@ def _property_sanity_check(
             deriv = funct.derivative()
             maxmin_pts = deriv.roots(extrapolate=False)
 
-            # # check whether
-            # x = np.linspace(interval.lower, interval.upper, num=100, endpoint=True)
-            # y = [deriv(x_val).m for x_val in x if x_val is not np.nan]
-
-            # print("shapes ", np.shape(x), np.shape(y))
-
-            # print("deriv values", y)
-            # print("corr coef", np.corrcoef(x.m, y))
-
             # delete the NaNs in the roots
             # this happens when the derivative is equal to zero for a
             # certain part of the interval.
