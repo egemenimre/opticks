@@ -65,29 +65,32 @@ class IntervalData(P.IntervalDict):
         """
         super().__init__(mapping_or_iterable)
 
-        # copy the combination method if exists
         if mapping_or_iterable is not None and isinstance(
             mapping_or_iterable, IntervalData
         ):
+            # copy the combination method
             self.combination_method = mapping_or_iterable.combination_method
+
+            # assign or copy the sample size
+            self.sample_size = mapping_or_iterable.sample_size
+
+            # copy the interpolation type
+            self.ipol_type = mapping_or_iterable.ipol_type
+
+            # copy the resampled flag
+            self._is_resampled = mapping_or_iterable._is_resampled
         else:
+            # set the default combination method
             self.combination_method = FunctCombinationMethod.UNDEFINED
 
-        # assign or copy the sample size if exists
-        if sample_size is not None:
-            self.sample_size = sample_size
-        elif mapping_or_iterable is not None and isinstance(
-            mapping_or_iterable, IntervalData
-        ):
-            self.sample_size = mapping_or_iterable.sample_size
-        else:
-            self.sample_size = IntervalData._DEFAULT_SAMPLE_SIZE
+            # set the sample size
+            if sample_size is not None:
+                self.sample_size = sample_size
+            else:
+                self.sample_size = IntervalData._DEFAULT_SAMPLE_SIZE
 
-        # copy the interpolation type if exists
-        if mapping_or_iterable is not None and isinstance(
-            mapping_or_iterable, IntervalData
-        ):
-            self.ipol_type = mapping_or_iterable.ipol_type
+            # set the default resampled flag
+            self._is_resampled = False
 
     def copy_properties_to(self, other: "IntervalData") -> "IntervalData":
         """Copies the properties (except for the `IntervalDict`) of
@@ -97,6 +100,7 @@ class IntervalData(P.IntervalDict):
 
         other.ipol_type = self.ipol_type
         other.combination_method = self.combination_method
+
         other.sample_size = self.sample_size
 
         return other
@@ -163,10 +167,12 @@ class IntervalData(P.IntervalDict):
 
         valid_interval = P.closed(ipol.x[0] * ipol.x_unit, ipol.x[-1] * ipol.x_unit)
 
-        return IntervalData.from_math_funct(
+        # create the IntervalData object
+        intervalData = IntervalData.from_math_funct(
             ipol, valid_interval, sample_size=sample_size
         )
 
+        return intervalData
     def as_atomic(self) -> list[tuple[P.Interval, Any]]:
         """Returns a list of tuples containing atomic intervals
         and corresponding functions."""
