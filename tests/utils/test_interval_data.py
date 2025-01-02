@@ -283,3 +283,78 @@ class TestIntervalData:
         # verification
         # -----------------
         np.testing.assert_allclose(results, truth, rtol=1e-10, atol=1e-17)
+
+    def test_integration_limited(self):
+        """Integration with limited interval."""
+
+        # cases
+        # -------
+        limited_rng = P.closed(4 * u.s, 6 * u.s)
+
+        # truth
+        # -------
+        truth = 98.10 * u.m
+
+        # test set up
+        # -----------------
+        duration = P.closed(0 * u.s, 10 * u.s)
+
+        t = np.linspace(duration.lower, duration.upper, num=100, endpoint=True)
+
+        v = 9.81 * u("m/s^2") * t
+
+        ipol = InterpolatorWithUnits.from_ipol_method(
+            InterpolatorWithUnitTypes.AKIMA, t, v, extrapolate=True
+        )
+
+        free_fall_funct = IntervalData.from_interpolator(ipol)
+
+        results = free_fall_funct.integrate(limited_rng)
+
+        # verification
+        # -----------------
+        assert_allclose(results, truth, atol=1e-5 * u.um)
+
+    def test_integration_complex(self):
+        """Integration with complex IntervalData."""
+
+        # test set up
+        # -----------------
+        data = P.IntervalDict()
+
+        # segment 1
+        duration_1 = P.closed(0 * u.s, 10 * u.s)
+        vel_1 = 50.0 * u.m / u.s
+        data[duration_1] = vel_1
+
+        # segment 2
+        duration_2 = P.closed(10 * u.s, 20 * u.s)
+        t = np.linspace(duration_2.lower, duration_2.upper, num=100, endpoint=True)
+        v = 9.81 * u("m/s^2") * t
+
+        ipol = InterpolatorWithUnits.from_ipol_method(
+            InterpolatorWithUnitTypes.AKIMA, t, v, extrapolate=True
+        )
+
+        data[duration_2] = ipol
+
+        # segment 3
+        duration_3 = P.closed(20 * u.s, 30 * u.s)
+        vel_3 = 80.0 * u.m / u.s
+        data[duration_3] = vel_3
+
+        free_fall_funct = IntervalData(data)
+
+        # truth
+        # -------
+        truth = (
+            vel_1 * (duration_1.upper - duration_1.lower)
+            + 0.5 * 9.81 * u("m/s^2") * (duration_2.upper**2 - duration_2.lower**2)
+            + vel_3 * (duration_3.upper - duration_3.lower)
+        )
+
+        # verification
+        # -----------------
+        results = free_fall_funct.integrate()
+
+        assert_allclose(results, truth, atol=1e-5 * u.um)

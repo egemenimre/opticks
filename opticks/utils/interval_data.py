@@ -560,6 +560,55 @@ class IntervalData(P.IntervalDict):
 
         return plot
 
+    def integrate(self, interval: P.Interval = None) -> float | Quantity:
+        """Integrates the `IntervalData` over a certain interval.
+
+        The integration can be over a user requested interval
+        (with `interval` parameter defined) or can be over the full
+        interval of the `IntervalData` object.
+
+        Parameters
+        ----------
+        interval : P.Interval, optional
+            integration interval
+
+        Returns
+        -------
+        float | Quantity
+            value of the integration over the interval
+        """
+
+        if interval is None:
+            # integrate over the full interval
+            data = self
+        else:
+            data = self.get(interval)
+
+        if not data._is_resampled:
+            # resample if needed
+            data = data.resample()
+
+        sum = 0
+
+        # go through the atomic intervals and integrate
+        for interval, funct in data.as_dict().items():
+
+            interval: P.Interval
+
+            if isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
+                # funct is constant value, just multiply
+                # with the interval length
+                sum += funct * (interval.upper - interval.lower)
+
+            else:
+                # Interpolated function, integrate the range
+
+                funct: PPolyWithUnits
+
+                sum += funct.integrate(interval.lower, interval.upper)
+
+        return sum
+
 
 def _generate_samples(
     combination_method, interval, functs, samples
