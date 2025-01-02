@@ -103,6 +103,10 @@ class IntervalData(P.IntervalDict):
 
         other.sample_size = self.sample_size
 
+        # this can be risky, therefore turned off
+        # the user can cll this anytime, even after a combine operation.
+        # other._is_resampled = self._is_resampled
+
         return other
 
     @classmethod
@@ -172,7 +176,11 @@ class IntervalData(P.IntervalDict):
             ipol, valid_interval, sample_size=sample_size
         )
 
+        # set the resampled flag
+        intervalData._is_resampled = True
+
         return intervalData
+
     def as_atomic(self) -> list[tuple[P.Interval, Any]]:
         """Returns a list of tuples containing atomic intervals
         and corresponding functions."""
@@ -366,6 +374,9 @@ class IntervalData(P.IntervalDict):
         # set the combination method
         combined.combination_method = combination_method
 
+        # combined can no longer be of type "resampled"
+        combined._is_resampled = False
+
         return combined
 
     def scale(
@@ -469,7 +480,7 @@ class IntervalData(P.IntervalDict):
         # decompose to atomic intervals and corresponding functions
         atomic_tuples = self.as_atomic()
 
-        combined = IntervalData()
+        flattened = IntervalData()
 
         for interval, functs in atomic_tuples:
 
@@ -518,13 +529,18 @@ class IntervalData(P.IntervalDict):
                 )
 
             # write result to the new IntervalData
-            combined[interval] = result
+            flattened[interval] = result
 
-        # copy the params of self to the scaled object
-        combined = self.copy_properties_to(combined)
+        # copy the params of self to the resampled object
+        flattened = self.copy_properties_to(flattened)
 
         # but make sure to set the combination method to Multiplication
-        combined.combination_method = FunctCombinationMethod.UNDEFINED
+        flattened.combination_method = FunctCombinationMethod.UNDEFINED
+
+        # flattened is of type "resampled"
+        flattened._is_resampled = True
+
+        return flattened
 
     def plot(self) -> "IntervalDataPlot":  # pragma: no cover
         """Convenience method to plot `IntervalData` objects.
