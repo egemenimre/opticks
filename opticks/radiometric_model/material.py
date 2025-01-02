@@ -202,7 +202,7 @@ class OpticalMaterial:
         """Absorptivity, which is equivalent to the Emissivity."""
         return self.emissivity
 
-    def plot(self):  # pragma: no cover
+    def plot(self) -> IntervalDataPlot:  # pragma: no cover
         """Convenience method to plot `OpticalMaterial` objects.
 
         Returns an `IntervalDataPlot` object. The `set_plot_style`
@@ -217,7 +217,7 @@ class OpticalMaterial:
             # "summed": self.summed,
         }
 
-        plot = IntervalDataPlot(interval_data_dict)
+        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)
 
         plot.set_plot_style(title=f"{self.name} Material Optical Properties")
 
