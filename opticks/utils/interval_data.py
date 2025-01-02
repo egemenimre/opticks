@@ -684,13 +684,15 @@ class IntervalDataPlot:  # pragma: no cover
         plot_interval : Interval, optional
     plot interval, `None` means the entire domain is plotted
         for each `IntervalData` object
-
+    apply_default_style : bool
+        applies the default style
     """
 
     def __init__(
         self,
         interval_data_dict: dict[str, IntervalData],
         plot_interval: P.Interval = None,
+        apply_default_style: bool = True,
     ) -> None:
 
         self.fig, self.ax = plt.subplots()
@@ -698,7 +700,8 @@ class IntervalDataPlot:  # pragma: no cover
         self._populate_plot(interval_data_dict, plot_interval)
 
         # set a sensible default plot style
-        self.set_plot_style()
+        if apply_default_style:
+            self.set_plot_style()
 
     def _populate_plot(
         self,
@@ -804,6 +807,7 @@ class IntervalDataPlot:  # pragma: no cover
         ylabel: str = None,
         height: Quantity | float = 4 * u.inch,
         width: Quantity | float = 6 * u.inch,
+        legend_off: bool = False,
     ) -> None:
         """
         Sets some basic style parameters for the plot.
@@ -820,6 +824,8 @@ class IntervalDataPlot:  # pragma: no cover
             height of the figure (in inches), by default 4 in
         width : Quantity | float, optional
             width of the figure (in inches), by default 6 in
+        legend_off : bool, optional
+            turns the legend off, by default False
 
         """
 
@@ -831,7 +837,10 @@ class IntervalDataPlot:  # pragma: no cover
         if title:
             self.ax.set_title(title)
 
-        self.fig.legend(bbox_to_anchor=(1, 1), loc="upper left")
+        if legend_off is False:
+            self.fig.legend(bbox_to_anchor=(1, 1), loc="upper left")
+        else:
+            self.fig.legend().remove()
 
         # set plot formatting
         self.ax.xaxis.grid(True)
