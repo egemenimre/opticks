@@ -520,7 +520,23 @@ class IntervalData(P.IntervalDict):
         # but make sure to set the combination method to Multiplication
         combined.combination_method = FunctCombinationMethod.UNDEFINED
 
-        return combined
+    def plot(self) -> "IntervalDataPlot":  # pragma: no cover
+        """Convenience method to plot `IntervalData` objects.
+
+        Returns an `IntervalDataPlot` object. The `set_plot_style`
+        method can be invoked for further styling options and also
+        the usual matplotlib `plot.ax` and `plot.fig` options are
+        available for advanced customisation."""
+
+        interval_data_dict = {
+            "self": self,
+        }
+
+        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)
+
+        plot.set_plot_style(legend_off=True)
+
+        return plot
 
 
 def _generate_samples(
