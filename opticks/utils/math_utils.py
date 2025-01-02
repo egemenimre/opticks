@@ -17,6 +17,8 @@ from scipy.interpolate import (
     PPoly,
 )
 
+from opticks import Q_
+
 
 class InterpolatorWithUnitTypes(Enum):
     """Enumerator for the interpolator types available."""
@@ -243,6 +245,15 @@ class InterpolatorWithUnits(PPolyWithUnits):
         InterpolatorWithUnits
             Interpolator with units
         """
+
+        # if Quantity input is used, it should be
+        # in the form "[0.0 1.0] meter", not a list of individual
+        # Quantity objects
+
+        if isinstance(x, list) and isinstance(x[0], Q_):
+            x = Q_.from_list(x)
+        if isinstance(y, list) and isinstance(y[0], Q_):
+            y = Q_.from_list(y)
 
         klass = ipol_type.value
 
