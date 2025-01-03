@@ -492,12 +492,6 @@ class IntervalData(P.IntervalDict):
                 # at least one funct is None
                 result = None
 
-            elif self.combination_method == FunctCombinationMethod.MULTIPLY and any(
-                funct == 0 for funct in functs
-            ):
-                # at least one funct is zero
-                result = 0
-
             elif all(
                 (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
                 for funct in functs
@@ -990,10 +984,6 @@ class IntervalDataPlot:  # pragma: no cover
             # at least one funct is None
             x_list = [interval.lower, interval.upper]
             y_list = [None, None]
-        elif any(funct == 0 for funct in functs):
-            # at least one funct is zero
-            x_list = [interval.lower, interval.upper]
-            y_list = [0, 0]
         elif all(
             (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
             for funct in functs
