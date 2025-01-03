@@ -594,6 +594,10 @@ class IntervalData(P.IntervalDict):
                 # with the interval length
                 sum += funct * (interval.upper - interval.lower)
 
+            elif funct is None:
+                # None value, skip
+                pass
+
             else:
                 # Interpolated function, integrate the range
 
@@ -948,8 +952,10 @@ class IntervalDataPlot:  # pragma: no cover
 
         if any(funct is None for funct in functs):
             # at least one funct is None
-            x_list = [interval.lower, interval.upper]
-            y_list = [None, None]
+            # x_list = [interval.lower, interval.upper]
+            # y_list = [None, None]
+            x_list = []
+            y_list = []
         elif all(
             (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
             for funct in functs
@@ -982,8 +988,10 @@ class IntervalDataPlot:  # pragma: no cover
 
         if any(funct is None for funct in functs):
             # at least one funct is None
-            x_list = [interval.lower, interval.upper]
-            y_list = [None, None]
+            # x_list = [interval.lower, interval.upper]
+            # y_list = [None, None]
+            x_list = []
+            y_list = []
         elif all(
             (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
             for funct in functs
