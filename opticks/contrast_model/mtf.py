@@ -817,12 +817,19 @@ class MTF_Plot_1D:  # pragma: no cover
         """
         Populates the MTF plot lines using the MTF Models.
 
-        This conveniently adds items in addition to those
-        in the constructor.
+        This conveniently adds items in addition to those in the constructor.
 
         Each MTF Model is used to generate the plot y values,
         using the `freq_list` as the discrete x axis values
         and the dict key as the label.
+
+        If the `freq_list` has a single column (`len(freq_list.shape) == 1`)
+        then the same list is used for each MTF Model. If the `freq_list` has
+        as many columns as the `mtf_data` (`len(freq_list) == len(mtf_data)`)
+        then each column is used for the consecutive MTF Model in the dict.
+        The order of the frequency list should therefore match the order of the
+        models in the dict. The dict implementation keeps the insertion order
+        since Python 3.6.
 
         Parameters
         ----------
@@ -841,14 +848,34 @@ class MTF_Plot_1D:  # pragma: no cover
             self object for convenience
         """
 
-        # generate MTF data lines
-        for label, mtf_model in mtf_data.items():
+        if len(freq_list) == len(mtf_data):
+            # one freq list for each
 
-            # generate values (y axis)
-            mtf_values = mtf_model.mtf_value(freq_list)
+            # generate MTF data lines
+            for label, freqs in list(zip(mtf_data, freq_list)):
 
-            # generate plot line
-            self.ax.plot(freq_list, mtf_values, label=label)
+                # generate values (y axis)
+                mtf_values = mtf_data[label].mtf_value(freqs)
+
+                # generate plot line
+                self.ax.plot(freqs, mtf_values, label=label)
+
+        elif len(freq_list.shape) == 1:
+            # one freq list for all
+
+            # generate MTF data lines
+            for label, mtf_model in mtf_data.items():
+
+                # generate values (y axis)
+                mtf_values = mtf_model.mtf_value(freq_list)
+
+                # generate plot line
+                self.ax.plot(freq_list, mtf_values, label=label)
+        else:
+            raise ValueError(
+                f"Columns of the frequency list ({len(freq_list.shape)}) does not match "
+                f"the columns of the MTF data list ({len(mtf_data)})"
+            )
 
         # -----------------
 
