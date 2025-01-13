@@ -76,7 +76,7 @@ The {py:class}`.MTF_Model_1D` provides some plotting functionality for the class
 # Select midrange wavelength
 ref_wavelength = channel.centre_wavelength
 cutoff_freq = optics.spatial_cutoff_freq(ref_wavelength)
-input_line_freq = np.linspace(0.0, cutoff_freq.m, 100) * cutoff_freq.u
+input_line_freq = np.linspace(0.0, cutoff_freq, 100)
 
 # plot the MTF data
 # -----------------
