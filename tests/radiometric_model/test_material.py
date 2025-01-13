@@ -6,10 +6,9 @@
 
 
 import numpy as np
-import portion as P
 import pytest
 
-from opticks import u
+from opticks import P, u
 from opticks.radiometric_model.material import OpticalMaterial
 from opticks.utils.interval_data import IntervalData
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes

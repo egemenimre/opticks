@@ -7,7 +7,7 @@
 import numbers
 
 import numpy as np
-import portion as P
+from portion import Interval
 
 from opticks.utils.interval_data import (
     FunctCombinationMethod,
@@ -180,7 +180,7 @@ class OpticalMaterial:
 
     @classmethod
     def init_blackbody(
-        cls, domain: P.Interval, name="Generic Blackbody"
+        cls, domain: Interval, name="Generic Blackbody"
     ) -> "OpticalMaterial":
 
         emissivity = IntervalData({domain: 1.0})
@@ -268,7 +268,7 @@ def _property_sanity_check(
 
     for interval, funct in data.as_dict().items():
 
-        interval: P.Interval
+        interval: Interval
 
         err_flag = False
         err_text = ""

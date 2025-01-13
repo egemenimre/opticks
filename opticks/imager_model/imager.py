@@ -1,6 +1,6 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-from pint import Quantity
+from astropy.units import Quantity
 from strictyaml import YAML
 
 from opticks import u
@@ -143,7 +143,7 @@ class Imager:
 
     # ---------- begin modelling functions ----------
 
-    @u.check(None, "[length]", None, None)
+    @u.quantity_input(wavelength="length")
     def q_factor(
         self,
         wavelength: Quantity | np.ndarray[Quantity],
@@ -175,9 +175,9 @@ class Imager:
 
         pixel_pitch = channel.pixel_pitch(with_binning)
 
-        q = (wavelength * self.optics.f_number / pixel_pitch).to_reduced_units()
+        q = (wavelength * self.optics.f_number / pixel_pitch).decompose()
 
-        return q
+        return q.value
 
     def horizontal_fov(self, band_id: str) -> Quantity:
         """
@@ -209,7 +209,7 @@ class Imager:
                 )
                 / self.optics.params.focal_length
             )
-        ).to(u.deg)
+        ).to(u.deg, copy=False)
 
     def vertical_fov(self, band_id: str) -> Quantity:
         """
@@ -240,7 +240,7 @@ class Imager:
                 )
                 / self.optics.params.focal_length
             )
-        ).to(u.deg)
+        ).to(u.deg, copy=False)
 
     def ifov(self, band_id: str, with_binning=True) -> Quantity:
         """
@@ -268,9 +268,11 @@ class Imager:
         channel = self.detector.get_channel(band_id)
 
         # horizontal pixels with binning included
-        horiz_pixels = channel.pixel_count_line(with_binning).to(u.pixel).m
+        horiz_pixels = (
+            channel.pixel_count_line(with_binning).to(u.pixel, copy=False).value
+        )
 
-        return (self.horizontal_fov(band_id) / horiz_pixels).to(u.mdeg)
+        return (self.horizontal_fov(band_id) / horiz_pixels).to(u.mdeg, copy=False)
 
     def pix_solid_angle(self, band_id: str, with_binning=True) -> Quantity:
         """
@@ -295,7 +297,7 @@ class Imager:
         )
 
         # correct the unit from rad to sr (or rad**2)
-        return (pix_solid_angle * u.rad).to(u.steradian)
+        return (pix_solid_angle * u.rad).to(u.steradian, copy=False)
 
     def data_write_rate(
         self,
@@ -353,7 +355,7 @@ class Imager:
 
         return write_data_rate.to("Mbit/s")
 
-    @u.check(None, "[length]", None)
+    @u.quantity_input(distance="length")
     def projected_horiz_img_extent(
         self,
         distance: Quantity | np.ndarray[Quantity],
@@ -379,7 +381,7 @@ class Imager:
 
         return 2 * distance * np.tan(self.horizontal_fov(band_id) / 2.0)
 
-    @u.check(None, "[length]", None)
+    @u.quantity_input(distance="length")
     def projected_vert_img_extent(
         self,
         distance: Quantity | np.ndarray[Quantity],
@@ -405,7 +407,7 @@ class Imager:
 
         return 2 * distance * np.tan(self.vertical_fov(band_id) / 2.0)
 
-    @u.check(None, "[length]", None, None, None)
+    @u.quantity_input(distance="length")
     def spatial_sample_distance(
         self,
         distance: Quantity | np.ndarray[Quantity],
@@ -505,6 +507,6 @@ class Imager:
 
         SSD = namedtuple("SSD", "horiz, vert")
 
-        ssd = SSD(ssd_h.to_reduced_units().to(u.m), ssd_v.to_reduced_units().to(u.m))
+        ssd = SSD(ssd_h.decompose().to(u.m), ssd_v.decompose().to(u.m))
 
         return ssd
