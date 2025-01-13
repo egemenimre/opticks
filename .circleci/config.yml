@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.0.5
+  coverage-reporter: codacy/coverage-reporter@14.0.2
 
 jobs:
 
@@ -23,7 +23,7 @@ jobs:
          command: tox -e coverage      
       - run:
          name: Prepare upload
-         command: apt install curl
+         command: conda install -y curl
       - run:
           name: Upload coverage data
           command: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
