@@ -935,9 +935,9 @@ class IntervalDataPlot:  # pragma: no cover
 
         with imperial.enable():
             if isinstance(height, Quantity):
-                height = height.to_value(u.inch)
+                height = height.to_value(imperial.inch)
             if isinstance(width, Quantity):
-                width = width.to_value(u.inch)
+                width = width.to_value(imperial.inch)
 
         self.fig.set_figheight(height)
         self.fig.set_figwidth(width)
