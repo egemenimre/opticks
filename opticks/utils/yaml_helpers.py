@@ -1,17 +1,20 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 """
 Package for schema and yaml helpers.
 
 """
-from pint import Quantity, UndefinedUnitError
+from astropy.units import Quantity
 from strictyaml import ScalarValidator
 from strictyaml.exceptions import YAMLSerializationError
 
 from opticks import u
+
+# add bpp as a unit
+u.add_enabled_units([u.def_unit("bpp", u.bit / u.pix)])
 
 
 def is_quantity(quantity_text: str) -> bool:
@@ -29,8 +32,8 @@ def is_quantity(quantity_text: str) -> bool:
         `True` if text can be parsed, `False` otherwise
     """
     try:
-        u.Quantity(quantity_text)
-    except UndefinedUnitError:
+        Quantity(quantity_text)
+    except ValueError:
         return False
     else:
         return True
@@ -61,13 +64,13 @@ class Qty(ScalarValidator):
             chunk.expecting_but_found("when expecting a Quantity")
         else:
             # Only Python 3.6+ supports underscores in numeric literals
-            return u.Quantity(val.replace("_", ""))
+            return Quantity(val.replace("_", ""))
 
     def to_yaml(self, data) -> str:
         """Converts `Quantity` data to YAML."""
         if isinstance(data, Quantity):
             if is_quantity(str(data)):
-                return str(f"{data:~}")
+                return str(f"{data}")
         raise YAMLSerializationError(f"'{data}' is not a Quantity object.")
 
 

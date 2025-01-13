@@ -10,8 +10,8 @@ Package for prysm integration utilities and helpers.
 
 import copy
 
+from astropy.units import Quantity, Unit
 from numpy import ndarray
-from pint import Quantity, Unit
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
@@ -159,7 +159,7 @@ class Grid:
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            dx = self.dx.m_as(units)
+            dx = self.dx.to_value(units)
         else:
             # deep copy internal data
             dx = copy.deepcopy(self.dx)
@@ -233,15 +233,15 @@ class OptPathDiff:
         r, t = grid.polar()
 
         # reduce to dimensionless
-        rho = (r / ap_radius).to_reduced_units()
+        rho = (r / ap_radius).decompose()
 
         # compute the polynomials (dimensionless)
         # t should be in radians
-        mode = list(zernike_nm_sequence(nms, rho.m, t.m))
+        mode = list(zernike_nm_sequence(nms, rho.value, t.value))
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm
-        opd = sum_of_2d_modes(mode, wfe_rms.m_as(u.nm))
+        opd = sum_of_2d_modes(mode, wfe_rms.to_value(u.nm))
 
         return OptPathDiff(opd * u.nm)
 
@@ -264,7 +264,7 @@ class OptPathDiff:
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            opd = self.data.m_as(units)
+            opd = self.data.to_value(units)
         else:
             # deep copy internal data without units
             opd = copy.deepcopy(self.data)

@@ -4,23 +4,23 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
-
 import math
 import numbers
 from enum import Enum
 from typing import Any, Self
 
 import numpy as np
-import portion as P
+from astropy.units import Quantity, imperial
 from matplotlib import pyplot as plt
-from pint import Quantity
+from portion import Interval, IntervalDict
 
-from opticks import Q_, u
+from opticks import P, u
 from opticks.utils.math_utils import (
     InterpolatorWithUnits,
     InterpolatorWithUnitTypes,
     PPolyWithUnits,
 )
+from opticks.utils.unit_utils import quantity_from_list
 
 FunctCombinationMethod = Enum(
     "FunctCombinationMethod",
@@ -111,7 +111,7 @@ class IntervalData(P.IntervalDict):
 
     @classmethod
     def from_math_funct(
-        cls, math_funct, valid_interval: P.Interval, sample_size: int = None
+        cls, math_funct, valid_interval: Interval, sample_size: int = None
     ) -> "IntervalData":
         """Initialises the `IntervalData` object with a math function.
 
@@ -169,7 +169,10 @@ class IntervalData(P.IntervalDict):
             The new `IntervalData` object
         """
 
-        valid_interval = P.closed(ipol.x[0] * ipol.x_unit, ipol.x[-1] * ipol.x_unit)
+        # wrapping the operation in Quantity ensures None as unit is handled gracefully
+        valid_interval = P.closed(
+            Quantity(ipol.x[0], ipol.x_unit), Quantity(ipol.x[-1], ipol.x_unit)
+        )
 
         # create the IntervalData object
         intervalData = IntervalData.from_math_funct(
@@ -181,7 +184,7 @@ class IntervalData(P.IntervalDict):
 
         return intervalData
 
-    def as_atomic(self) -> list[tuple[P.Interval, Any]]:
+    def as_atomic(self) -> list[tuple[Interval, Any]]:
         """Returns a list of tuples containing atomic intervals
         and corresponding functions."""
 
@@ -221,8 +224,8 @@ class IntervalData(P.IntervalDict):
             )
 
     def get(
-        self, x: Quantity | P.Interval, default=None
-    ) -> type[P.IntervalDict] | Quantity | float:
+        self, x: Quantity | Interval, default=None
+    ) -> type[IntervalDict] | Quantity | float:
         """Gets the functions at the arbitrary data point `x`.
 
         This does not return the numerical result at `x`, rather it returns the
@@ -554,7 +557,7 @@ class IntervalData(P.IntervalDict):
 
         return plot
 
-    def integrate(self, interval: P.Interval = None) -> float | Quantity:
+    def integrate(self, interval: Interval = None) -> float | Quantity:
         """Integrates the `IntervalData` over a certain interval.
 
         The integration can be over a user requested interval
@@ -587,7 +590,7 @@ class IntervalData(P.IntervalDict):
         # go through the atomic intervals and integrate
         for interval, funct in data.as_dict().items():
 
-            interval: P.Interval
+            interval: Interval
 
             if isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
                 # funct is constant value, just multiply
@@ -776,7 +779,7 @@ class IntervalDataPlot:  # pragma: no cover
     def __init__(
         self,
         interval_data_dict: dict[str, IntervalData],
-        plot_interval: P.Interval = None,
+        plot_interval: Interval = None,
         apply_default_style: bool = True,
     ) -> None:
 
@@ -791,7 +794,7 @@ class IntervalDataPlot:  # pragma: no cover
     def _populate_plot(
         self,
         interval_data_dict: dict[str, IntervalData],
-        plot_interval: P.Interval = None,
+        plot_interval: Interval = None,
     ) -> None:
         """
         Populates the plot lines using the `IntervalData` objects.
@@ -875,12 +878,9 @@ class IntervalDataPlot:  # pragma: no cover
             # for x, y in zip(x_values, y_values):
             #     print(x, y)
 
-            # convert from list of units to a vectorised form
-            if isinstance(x_values[0], Quantity):
-                x_values = Q_.from_list(x_values)
-
-            if isinstance(y_values[0], Quantity):
-                y_values = Q_.from_list(y_values)
+            # force list of units to a vectorised form (if necessary)
+            x_values = quantity_from_list(x_values)
+            y_values = quantity_from_list(y_values)
 
             # generate plot line
             self.ax.plot(x_values, y_values, label=label)
@@ -890,8 +890,8 @@ class IntervalDataPlot:  # pragma: no cover
         title: str = None,
         xlabel: str = None,
         ylabel: str = None,
-        height: Quantity | float = 4 * u.inch,
-        width: Quantity | float = 6 * u.inch,
+        height: Quantity | float = 10 * u.cm,
+        width: Quantity | float = 15 * u.cm,
         legend_off: bool = False,
     ) -> None:
         """
@@ -906,9 +906,9 @@ class IntervalDataPlot:  # pragma: no cover
         ylabel : str, optional
             y-axis label, by default None
         height : Quantity | float, optional
-            height of the figure (in inches), by default 4 in
+            height of the figure (in inches), by default 10 cm
         width : Quantity | float, optional
-            width of the figure (in inches), by default 6 in
+            width of the figure (in inches), by default 15 cm
         legend_off : bool, optional
             turns the legend off, by default False
 
@@ -933,10 +933,11 @@ class IntervalDataPlot:  # pragma: no cover
 
         self.fig.tight_layout()
 
-        if isinstance(height, Quantity):
-            height = height.m_as(u.inch)
-        if isinstance(width, Quantity):
-            width = width.m_as(u.inch)
+        with imperial.enable():
+            if isinstance(height, Quantity):
+                height = height.to_value(u.inch)
+            if isinstance(width, Quantity):
+                width = width.to_value(u.inch)
 
         self.fig.set_figheight(height)
         self.fig.set_figwidth(width)

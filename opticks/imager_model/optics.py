@@ -6,8 +6,8 @@
 
 
 import numpy as np
+from astropy.units import Quantity
 from numpy import ndarray
-from pint import Quantity
 from prysm._richdata import RichData
 from prysm.fttools import pad2d
 from prysm.geometry import circle
@@ -18,6 +18,7 @@ from strictyaml import YAML, Map, Str
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.utils.prysm_utils import Grid, OptPathDiff
+from opticks.utils.unit_utils import split_value_and_force_unit
 from opticks.utils.yaml_helpers import Qty
 
 optics_schema = {
@@ -313,8 +314,8 @@ class Optics(ImagerComponent):
         pupil = Wavefront.from_amp_and_phase(
             self.aperture.data,  # amplitudes
             phase=opd_data,  # float ndarray in nm
-            wavelength=wavelength.m_as(u.um),
-            dx=self.aperture_dx.m_as(u.mm),
+            wavelength=wavelength.to_value(u.um),
+            dx=self.aperture_dx.to_value(u.mm),
         )
 
         # add to the list of pupil functions
@@ -390,9 +391,7 @@ class Optics(ImagerComponent):
 
         """
         return (
-            (self.params.focal_length / self.params.aperture_diameter)
-            .to_reduced_units()
-            .m
+            (self.params.focal_length / self.params.aperture_diameter).decompose().value
         )
 
     @property
@@ -405,7 +404,7 @@ class Optics(ImagerComponent):
         """
         return 2 * np.arctan(
             (self.params.image_diam_on_focal_plane / 2.0) / self.params.focal_length
-        ).to(u.deg)
+        ).to(u.deg, copy=False)
 
     @property
     def aperture_area(self) -> Quantity:
@@ -427,7 +426,7 @@ class Optics(ImagerComponent):
             * u.steradian
         )
 
-    @u.check(None, "[length]")
+    @u.quantity_input(ref_wavelength="length")
     def spatial_cutoff_freq(self, ref_wavelength: Quantity) -> Quantity:
         """
         Spatial cut-off frequency, assumes perfect incoherent optics.
@@ -448,10 +447,9 @@ class Optics(ImagerComponent):
             Spatial cutoff frequency (in cycles/mm)
         """
         # perfect incoherent optics
-        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm)
+        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)
 
 
-@u.wraps(None, (None, u.mm, u.um, u.um, None, None), False)
 def _compute_psf(
     pupils: list[Wavefront],
     focal_length: float | Quantity,
@@ -492,8 +490,12 @@ def _compute_psf(
     Returns
     -------
     RichData
-        PSF model
+        PSF model (without units)
     """
+
+    focal_length, _ = split_value_and_force_unit(focal_length, u.mm)
+    wvl, _ = split_value_and_force_unit(wvl, u.um)
+    psf_dx, _ = split_value_and_force_unit(psf_dx, u.um)
 
     psf_components = []
 

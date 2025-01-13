@@ -6,9 +6,8 @@
 
 from enum import Enum
 
+from astropy.units import FunctionUnitBase, Quantity, UnitBase
 from numpy import ndarray
-from pint import Quantity
-from pint.facets.numpy.numpy_func import unwrap_and_wrap_consistent_units
 from scipy.interpolate import (
     Akima1DInterpolator,
     CubicHermiteSpline,
@@ -17,7 +16,11 @@ from scipy.interpolate import (
     PPoly,
 )
 
-from opticks import Q_
+from opticks.utils.unit_utils import (
+    quantity_from_list,
+    split_value_and_force_unit,
+    split_value_and_unit,
+)
 
 
 class InterpolatorWithUnitTypes(Enum):
@@ -66,9 +69,9 @@ class PPolyWithUnits(PPoly):
         periodic extrapolation is used. Default is True.
     axis : int, optional
         Interpolation axis. Default is zero.
-    x_unit : Quantity, optional
+    x_unit : UnitBase or FunctionUnitBase, optional
         unit of the x axis, by default None
-    y_unit : Quantity, optional
+    y_unit : UnitBase or FunctionUnitBase, optional
         unit of the y axis, by default None
     """
 
@@ -78,25 +81,21 @@ class PPolyWithUnits(PPoly):
         x,
         extrapolate=None,
         axis=0,
-        x_unit: Quantity = None,
-        y_unit: Quantity = None,
+        x_unit: UnitBase | FunctionUnitBase = None,
+        y_unit: UnitBase | FunctionUnitBase = None,
     ):
 
         super().__init__(c, x, extrapolate, axis)
 
-        # Extract output units
-        _, out_wrap_x = unwrap_and_wrap_consistent_units(x_unit)
-        _, out_wrap_y = unwrap_and_wrap_consistent_units(y_unit)
-
-        self.x_unit = out_wrap_x(1)
-        self.y_unit = out_wrap_y(1)
+        self.x_unit = x_unit
+        self.y_unit = y_unit
 
     @classmethod
     def from_ppoly(
         cls,
         ppoly: type[PPoly],
-        x_unit: Quantity = None,
-        y_unit: Quantity = None,
+        x_unit: UnitBase | FunctionUnitBase = None,
+        y_unit: UnitBase | FunctionUnitBase = None,
     ) -> "PPolyWithUnits":
         """Upgrade an existing `PPoly` object (or from a subclass)
         with units.
@@ -108,9 +107,9 @@ class PPolyWithUnits(PPoly):
         ----------
         ppoly : type[PPoly]
             `PPoly` object (or from a subclass)
-        x_unit : Quantity, optional
+        x_unit : UnitBase or FunctionUnitBase, optional
             unit of the x axis, by default None
-        y_unit : Quantity, optional
+        y_unit : UnitBase or FunctionUnitBase, optional
             unit of the y axis, by default None
 
         Returns
@@ -122,49 +121,57 @@ class PPolyWithUnits(PPoly):
             ppoly.c, ppoly.x, ppoly.extrapolate, ppoly.axis, x_unit, y_unit
         )
 
-    def __call__(self, x: float | Quantity, nu=0, extrapolate=None):
+    def __call__(self, x: float | Quantity, nu=0, extrapolate=None, equivalencies=[]):
 
         # check x unit and generate the unitless version of x
-        (_, x), _ = unwrap_and_wrap_consistent_units(self.x_unit, x)
-
-        # generate output unit wrapper
-        _, output_wrap = unwrap_and_wrap_consistent_units(self.y_unit)
+        x, _ = split_value_and_force_unit(x, self.x_unit, equivalencies=equivalencies)
 
         # run the method with the unitless version of x
         # and output the result in y_unit
-        return output_wrap(super().__call__(x, nu, extrapolate))
+        return Quantity(super().__call__(x, nu, extrapolate), self.y_unit, copy=False)
 
     def derivative(self, nu=1) -> "PPolyWithUnits":
 
+        y_unit = self.y_unit / self.x_unit**nu
+
         # compute and add the units
-        return PPolyWithUnits.from_ppoly(
-            super().derivative(nu), self.x_unit, self.y_unit / self.x_unit
-        )
+        return PPolyWithUnits.from_ppoly(super().derivative(nu), self.x_unit, y_unit)
 
     def antiderivative(self, nu=1) -> "PPolyWithUnits":
 
+        y_unit = self.y_unit * self.x_unit**nu
+
         # compute and add the units
         return PPolyWithUnits.from_ppoly(
-            super().antiderivative(nu), self.x_unit, self.x_unit * self.y_unit
+            super().antiderivative(nu), self.x_unit, y_unit
         )
 
-    def integrate(self, a, b, extrapolate=None):
+    def integrate(self, a, b, extrapolate=None, equivalencies=[]):
 
-        (_, a, b), _ = unwrap_and_wrap_consistent_units(self.x_unit, a, b)
-        _, output_wrap = unwrap_and_wrap_consistent_units(self.x_unit * self.y_unit)
-        return output_wrap(super().integrate(a, b, extrapolate))
+        a, _ = split_value_and_force_unit(a, self.x_unit, equivalencies=equivalencies)
+        b, _ = split_value_and_force_unit(b, self.x_unit, equivalencies=equivalencies)
+
+        y_unit = self.y_unit * self.x_unit
+
+        return Quantity(super().integrate(a, b, extrapolate), y_unit, copy=False)
 
     def roots(self, discontinuity=True, extrapolate=None) -> ndarray:
 
         return self.solve(0 * self.y_unit, discontinuity, extrapolate)
 
     def solve(
-        self, y: float | Quantity, discontinuity=True, extrapolate=None
+        self,
+        y: float | Quantity,
+        discontinuity=True,
+        extrapolate=None,
+        equivalencies=[],
     ) -> ndarray:
 
-        (_, y), _ = unwrap_and_wrap_consistent_units(self.y_unit, y)
-        _, output_wrap = unwrap_and_wrap_consistent_units(self.x_unit)
-        return output_wrap(super().solve(y, discontinuity, extrapolate))
+        y, _ = split_value_and_force_unit(y, self.y_unit, equivalencies=equivalencies)
+
+        return Quantity(
+            super().solve(y, discontinuity, extrapolate), self.x_unit, copy=False
+        )
 
     def __str__(self) -> str:
 
@@ -185,17 +192,17 @@ class InterpolatorWithUnits(PPolyWithUnits):
     ----------
     ppoly : type[PPoly]
         Interpolator subclassing `PPoly`
-    x_unit : Quantity, optional
+    x_unit : UnitBase or FunctionUnitBase, optional
         unit of the x axis, by default None
-    y_unit : Quantity, optional
+    y_unit : UnitBase or FunctionUnitBase, optional
         unit of the y axis, by default None
     """
 
     def __init__(
         self,
         ipol: type[PPoly],
-        x_unit: Quantity,
-        y_unit: Quantity,
+        x_unit: UnitBase | FunctionUnitBase = None,
+        y_unit: UnitBase | FunctionUnitBase = None,
     ):
 
         super().__init__(ipol.c, ipol.x, ipol.extrapolate, ipol.axis, x_unit, y_unit)
@@ -213,11 +220,10 @@ class InterpolatorWithUnits(PPolyWithUnits):
     ) -> "InterpolatorWithUnits":
         """Generates and interpolator with units.
 
-        The interpolator is chosen with the enum
-        `InterpolatorWithUnitTypes`, among scipy cubic and
-        monotonic interpolators. Interpolator specific parameters
-        can be passed via `*args, **kwargs`, with the exception
-        of the `method` parameter in `Akima1DInterpolator`.
+        The interpolator is chosen with the enum `InterpolatorWithUnitTypes`,
+        among scipy cubic and monotonic interpolators. Interpolator
+        specific parameters can be passed via `*args, **kwargs`,
+        with the exception of the `method` parameter in `Akima1DInterpolator`.
         Use the enum `MAKIMA` for the Modified Akima instead.
 
         Parameters
@@ -246,21 +252,19 @@ class InterpolatorWithUnits(PPolyWithUnits):
             Interpolator with units
         """
 
-        # if Quantity input is used, it should be
-        # in the form "[0.0 1.0] meter", not a list of individual
-        # Quantity objects
-
-        if isinstance(x, list) and isinstance(x[0], Q_):
-            x = Q_.from_list(x)
-        if isinstance(y, list) and isinstance(y[0], Q_):
-            y = Q_.from_list(y)
-
         klass = ipol_type.value
 
-        # strip units from x and y while extracting output units
-        (x,), out_wrap_x = unwrap_and_wrap_consistent_units(x)
-        (y,), out_wrap_y = unwrap_and_wrap_consistent_units(y)
+        # if Quantity input is used, it should be in the form
+        # "[0.0 1.0] meter", not a list of individual Quantity objects.
+        # This checks and corrects it.
+        x = quantity_from_list(x)
+        y = quantity_from_list(y)
 
+        # split the value and the units
+        x, x_unit = split_value_and_unit(x)
+        y, y_unit = split_value_and_unit(y)
+
+        # Init interpolator with the unitless data
         if ipol_type == InterpolatorWithUnitTypes.AKIMA:
             ipol = klass(x, y, axis=axis, extrapolate=extrapolate, method="akima")
         elif ipol_type == InterpolatorWithUnitTypes.MAKIMA:
@@ -268,5 +272,5 @@ class InterpolatorWithUnits(PPolyWithUnits):
         else:
             ipol = klass(x, y, *args, **kwargs)
 
-        # out_wrap assigns units properly to x and y
-        return InterpolatorWithUnits(ipol, out_wrap_x(1), out_wrap_y(1))
+        # assign units to x and y
+        return InterpolatorWithUnits(ipol, x_unit, y_unit)
