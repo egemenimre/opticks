@@ -58,7 +58,9 @@ As the frequency increases, and the wave periods become comparable to the detect
 
 ## Diffusion MTF
 
-Crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach [^3]
+This is similar to a crosstalk in the detector due to electronics, see chap 13 pg 404 of a Sys eng approach [^3].
+
+In the absence of any better information, it can be taken as a 90% constant reduction to the MTF.
 
 TBW
 
