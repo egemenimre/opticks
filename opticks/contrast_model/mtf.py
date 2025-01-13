@@ -254,7 +254,6 @@ class MTF_Model_1D:
         return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    @u.quantity_input(pixel_pitch="length")
     def motion_blur(pixel_pitch: Quantity, blur_extent: float) -> "MTF_Model_1D":
         """
         Motion blur MTF model.
@@ -513,7 +512,6 @@ def _ideal_optical_mtf(
 
     # normalised optical frequency
     nu = input_line_freq / spatial_cutoff_freq
-
     # This is the alternative formulation
     # psi = np.arccos(f_ov_fc)
     # mtf_ideal_optical = 2/np.pi * (psi-np.cos(psi)*np.sin(psi))
@@ -753,13 +751,13 @@ def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
 
         mtf = mtf_from_psf(psf_copy)
 
-        if psf.wavelength:
+        if psf.wavelength is not None:
             mtf.wavelength = psf.wavelength.to_value(u.um)
     else:
         # psf does not have units, create mtf directly
         mtf = mtf_from_psf(psf)
 
-        if psf.wavelength:
+        if psf.wavelength is not None:
             mtf.wavelength = psf.wavelength
 
     # the resulting mtf is guaranteed to be without units
@@ -889,9 +887,9 @@ class MTF_Plot_1D:  # pragma: no cover
         # ax.axhline(26400 *ureg.feet, color='tab:red')
         # ax.axvline(120* ureg.minutes, color='tab:green')
 
-        if nyq_limit:
+        if nyq_limit is not None:
             self.ax.axvline(
-                nyq_limit.m,
+                nyq_limit.value,
                 label="Detector Nyq Limit",
                 linestyle="--",
             )
@@ -945,7 +943,7 @@ class MTF_Plot_1D:  # pragma: no cover
         # set plot formatting
         self.ax.xaxis.grid(True)
         self.ax.yaxis.grid(True)
-        if x_max:
+        if x_max is not None:
             self.ax.set_xlim(0, x_max)
         self.ax.set_ylim(y_min, 1)
 
@@ -953,9 +951,9 @@ class MTF_Plot_1D:  # pragma: no cover
 
         with imperial.enable():
             if isinstance(height, Quantity):
-                height = height.to_value(u.inch)
+                height = height.to_value(imperial.inch)
             if isinstance(width, Quantity):
-                width = width.to_value(u.inch)
+                width = width.to_value(imperial.inch)
 
         self.fig.set_figheight(height)
         self.fig.set_figwidth(width)
