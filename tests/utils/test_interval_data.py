@@ -8,14 +8,12 @@ import math
 import numbers
 
 import numpy as np
-import portion as P
 import pytest
-from pint import Quantity
+from astropy.units import Quantity, Unit
 
-from opticks import u
+from opticks import P, u
 from opticks.utils.interval_data import FunctCombinationMethod, IntervalData
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
-from opticks.utils.testing_utils import assert_allclose
 
 
 class TestIntervalData:
@@ -75,7 +73,7 @@ class TestIntervalData:
 
         x = np.linspace(range.lower, range.upper, num=100, endpoint=True)
 
-        y = (0.5 * x.m) ** 2
+        y = (0.5 * x.value) ** 2
 
         ipol = InterpolatorWithUnits.from_ipol_method(
             InterpolatorWithUnitTypes.AKIMA, x, y, extrapolate=True
@@ -223,7 +221,7 @@ class TestIntervalData:
 
         assert number_check
 
-        assert_allclose(sum_functs, 60 * u.m, atol=1e-6 * u.mm)
+        np.testing.assert_allclose(sum_functs, 60 * u.m, atol=1e-6 * u.mm)
 
         # test multiplication
 
@@ -244,7 +242,7 @@ class TestIntervalData:
 
         assert number_check
 
-        assert_allclose(mult_functs, 800 * u.Hz**2, atol=1e-6 * u.Hz**2)
+        np.testing.assert_allclose(mult_functs, 800 * u.Hz**2, atol=1e-6 * u.Hz**2)
 
     def test_combine_err_1(self, filter, filter2):
         """Check combination type mismatch errors."""
@@ -301,7 +299,7 @@ class TestIntervalData:
 
         t = np.linspace(duration.lower, duration.upper, num=100, endpoint=True)
 
-        v = 9.81 * u("m/s^2") * t
+        v = 9.81 * Unit("m/s^2") * t
 
         ipol = InterpolatorWithUnits.from_ipol_method(
             InterpolatorWithUnitTypes.AKIMA, t, v, extrapolate=True
@@ -313,7 +311,7 @@ class TestIntervalData:
 
         # verification
         # -----------------
-        assert_allclose(results, truth, atol=1e-5 * u.um)
+        np.testing.assert_allclose(results, truth, atol=1e-5 * u.um)
 
     def test_integration_complex(self):
         """Integration with complex IntervalData."""
@@ -330,7 +328,7 @@ class TestIntervalData:
         # segment 2
         duration_2 = P.closed(10 * u.s, 20 * u.s)
         t = np.linspace(duration_2.lower, duration_2.upper, num=100, endpoint=True)
-        v = 9.81 * u("m/s^2") * t
+        v = 9.81 * Unit("m/s^2") * t
 
         ipol = InterpolatorWithUnits.from_ipol_method(
             InterpolatorWithUnitTypes.AKIMA, t, v, extrapolate=True
@@ -349,7 +347,7 @@ class TestIntervalData:
         # -------
         truth = (
             vel_1 * (duration_1.upper - duration_1.lower)
-            + 0.5 * 9.81 * u("m/s^2") * (duration_2.upper**2 - duration_2.lower**2)
+            + 0.5 * 9.81 * Unit("m/s^2") * (duration_2.upper**2 - duration_2.lower**2)
             + vel_3 * (duration_3.upper - duration_3.lower)
         )
 
@@ -357,4 +355,4 @@ class TestIntervalData:
         # -----------------
         results = free_fall_funct.integrate()
 
-        assert_allclose(results, truth, atol=1e-5 * u.um)
+        np.testing.assert_allclose(results, truth, atol=1e-5 * u.um)

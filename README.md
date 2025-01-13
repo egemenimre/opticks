@@ -20,7 +20,7 @@ The documentation for opticks is here: <https://opticks.readthedocs.io/>
 ## Requirements
 
 - NumPy and SciPy are used for the underlying mathematical algorithms
-- [Pint](https://github.com/hgrecco/pint) provides units and quantity support.
+- [Astropy](https://www.astropy.org/) provides units and quantity support as well as some other underlying models such as vector mechanics.
 - [Prysm](https://github.com/brandondube/prysm/) provides advanced optical design and analysis.
 - [Strictyaml](https://github.com/crdoconnor/strictyaml) provides YAML read/write support.
 

@@ -1,6 +1,6 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
@@ -17,7 +17,6 @@ from prysm.propagation import focus
 from opticks import u
 from opticks.imager_model.optics import Aperture, Optics
 from opticks.utils.prysm_utils import OptPathDiff
-from opticks.utils.testing_utils import assert_allclose
 from tests import process_paths
 
 
@@ -41,7 +40,7 @@ class TestOptics:
         truth = 1.7757828128191897 * u.deg
         fov = optics.full_optical_fov
 
-        assert_allclose(fov, truth, atol=0.001 * u.mdeg)
+        np.testing.assert_allclose(fov, truth, atol=0.001 * u.mdeg)
 
     def test_spatial_cutoff(self, optics):
         """Tests the spatial cutoff frequency."""
@@ -55,11 +54,11 @@ class TestOptics:
         cutoff_freq = optics.spatial_cutoff_freq(ref_wavelength)
 
         # verification
-        assert_allclose(cutoff_freq, truth, atol=0.00001 * u.cy / u.mm)
+        np.testing.assert_allclose(cutoff_freq, truth, atol=0.00001 * u.cy / u.mm)
 
     def test_circle_aperture(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.m_as(u.mm)
+        diameter = optics.params.aperture_diameter.to_value(u.mm)
 
         samples = 256
 
@@ -79,7 +78,7 @@ class TestOptics:
 
     def test_circle_aperture_with_obscuration(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.m_as(u.mm)
+        diameter = optics.params.aperture_diameter.to_value(u.mm)
 
         samples = 256
         obscuration_ratio = 0.3
@@ -285,6 +284,6 @@ class TestOptics:
 
         # verification
         np.testing.assert_allclose(psf_mono.data, psf_mono_prysm.data, rtol=1e-10)
-        assert_allclose(psf_mono.dx, psf_mono_prysm.dx * u.um, rtol=1e-10)
+        np.testing.assert_allclose(psf_mono.dx, psf_mono_prysm.dx * u.um, rtol=1e-10)
         np.testing.assert_allclose(psf_poly.data, psf_poly_prysm.data, rtol=1e-10)
-        assert_allclose(psf_poly.dx, psf_poly_prysm.dx * u.um, rtol=1e-10)
+        np.testing.assert_allclose(psf_poly.dx, psf_poly_prysm.dx * u.um, rtol=1e-10)

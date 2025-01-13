@@ -10,7 +10,6 @@ from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
 
 from opticks import u
 from opticks.utils.prysm_utils import Grid, OptPathDiff
-from opticks.utils.testing_utils import assert_allclose
 
 
 class TestPrysmUtils:
@@ -58,4 +57,4 @@ class TestPrysmUtils:
         opd = OptPathDiff.from_zernike(wfe_rms, ap_diam, grid)
 
         # verification
-        assert_allclose(opd.data, phs * u.nm, rtol=1e-12)
+        np.testing.assert_allclose(opd.data, phs * u.nm, rtol=1e-12)

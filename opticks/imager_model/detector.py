@@ -6,7 +6,7 @@
 from collections.abc import Iterable
 
 import numpy as np
-from pint import Quantity
+from astropy.units import Quantity
 from strictyaml import YAML, Enum, Int, Map, MapPattern, Optional, Str
 
 from opticks import u

@@ -1,16 +1,17 @@
 # opticks: Sizing Tool for Optical Systems
 #
-# Copyright (C) 2024 Egemen Imre
+# Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 from pathlib import Path
 
 import pytest
+from astropy.units import Unit
+from numpy.testing import assert_allclose
 
 from opticks import u
 from opticks.imager_model.imager import Imager
-from opticks.utils.testing_utils import assert_allclose
 from tests import process_paths
 
 
@@ -56,10 +57,10 @@ class TestImager:
         ref_wavelength = 500 * u.nm
 
         # Generate the Q Factor
-        q_value = imager.q_factor(ref_wavelength, self.band_id, with_binning=True)
+        q = imager.q_factor(ref_wavelength, self.band_id, with_binning=True)
 
         # verification
-        assert q_value == pytest.approx(truth, 1e-9)
+        assert q == pytest.approx(truth, abs=1e-9)
 
     def test_fov(self, imager: Imager):
         """Tests the horiz and vert FoV."""
@@ -123,10 +124,10 @@ class TestImager:
         """Tests the read/write rates."""
 
         # set up
-        truth_pix_read_rate_no_tdi = 294.348 * u("megapixel / second")
-        truth_pix_read_rate_tdi = 2943.48 * u("megapixel / second")
-        truth_data_write_rate_uncomp = 3638.14128 * u("megabit / second")
-        truth_data_write_rate_comp = 909.53532 * u("megabit / second")
+        truth_pix_read_rate_no_tdi = 294.348 * Unit("megapixel / second")
+        truth_pix_read_rate_tdi = 2943.48 * Unit("megapixel / second")
+        truth_data_write_rate_uncomp = 3638.14128 * Unit("megabit / second")
+        truth_data_write_rate_comp = 909.53532 * Unit("megabit / second")
 
         # computation
 
@@ -146,20 +147,20 @@ class TestImager:
         assert_allclose(
             pix_read_rate_no_tdi,
             truth_pix_read_rate_no_tdi,
-            atol=0.00000001 * u("megapixel / second"),
+            atol=0.00000001 * Unit("megapixel / second"),
         )
         assert_allclose(
             pix_read_rate_tdi,
             truth_pix_read_rate_tdi,
-            atol=0.00000001 * u("megapixel / second"),
+            atol=0.00000001 * Unit("megapixel / second"),
         )
         assert_allclose(
             data_write_rate_uncomp,
             truth_data_write_rate_uncomp,
-            atol=0.00000001 * u("megabit / second"),
+            atol=0.00000001 * Unit("megabit / second"),
         )
         assert_allclose(
             data_write_rate_comp,
             truth_data_write_rate_comp,
-            atol=0.00000001 * u("megabit / second"),
+            atol=0.00000001 * Unit("megabit / second"),
         )

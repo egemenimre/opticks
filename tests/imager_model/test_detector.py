@@ -6,11 +6,11 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
+from astropy.units import Unit
 
-from opticks import u
 from opticks.imager_model.detector import Detector
-from opticks.utils.testing_utils import assert_allclose
 from tests import process_paths
 
 
@@ -35,7 +35,7 @@ class TestDetector:
         band_id = [id for id in detector.params.channels.all.keys()]
 
         # set up
-        truth = 73.587 * u["megapixel / second"]
+        truth = 73.587 * Unit("megapixel / second")
 
         # computation
         pix_read_rate = detector.pix_read_rate(
@@ -43,7 +43,9 @@ class TestDetector:
         )
 
         # verification
-        assert_allclose(pix_read_rate, truth, atol=0.00000001 * u["megapixel / second"])
+        np.testing.assert_allclose(
+            pix_read_rate, truth, atol=0.00000001 * Unit("megapixel / second")
+        )
 
     def test_det_read_rate_single_band(self, detector):
         """Tests the detector read rate."""
@@ -52,7 +54,7 @@ class TestDetector:
         band_id = "b0_blue"
 
         # set up
-        truth = 18.39675 * u["megapixel / second"]
+        truth = 18.39675 * Unit("megapixel / second")
 
         # computation
         pix_read_rate = detector.pix_read_rate(
@@ -60,4 +62,6 @@ class TestDetector:
         )
 
         # verification
-        assert_allclose(pix_read_rate, truth, atol=0.00000001 * u["megapixel / second"])
+        np.testing.assert_allclose(
+            pix_read_rate, truth, atol=0.00000001 * Unit("megapixel / second")
+        )

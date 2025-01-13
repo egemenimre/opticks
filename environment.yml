@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - pint
+  - astropy
   - portion
   - strictyaml
   - numpy

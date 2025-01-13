@@ -1,7 +1,7 @@
 [project]
 name = "opticks"
 version = "0.1.0"
-dependencies = ["numpy", "scipy", "pint", "strictyaml", "prysm", "matplotlib"]
+dependencies = ["numpy", "scipy", "portion", "astropy", "strictyaml", "prysm", "matplotlib"]
 
 requires-python = ">=3.11"
 
