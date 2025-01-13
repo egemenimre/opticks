@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.0.2
+  coverage-reporter: codacy/coverage-reporter@14.0.5
 
 jobs:
 
