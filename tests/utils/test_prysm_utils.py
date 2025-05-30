@@ -6,7 +6,7 @@
 
 import numpy as np
 from prysm.coordinates import cart_to_polar, make_xy_grid
-from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
+from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_seq
 
 from opticks import u
 from opticks.utils.prysm_utils import Grid, OptPathDiff
@@ -33,7 +33,7 @@ class TestPrysmUtils:
         r_aber = r / r_aper
 
         nms = [ansi_j_to_nm(j) for j in range(0, 13)]
-        basis = list(zernike_nm_sequence(nms, r_aber, t))
+        basis = list(zernike_nm_seq(nms, r_aber, t))
 
         # set a "reproducible" random engine
         seed = 1

@@ -14,7 +14,7 @@ from astropy.units import Quantity, Unit
 from numpy import ndarray
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
-from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_sequence
+from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_seq
 
 from opticks import u
 
@@ -237,7 +237,7 @@ class OptPathDiff:
 
         # compute the polynomials (dimensionless)
         # t should be in radians
-        mode = list(zernike_nm_sequence(nms, rho.value, t.value))
+        mode = list(zernike_nm_seq(nms, rho.value, t.value))
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm

@@ -22,7 +22,9 @@ dependencies:
   - sphinx_rtd_theme
   - pip
   - pip:
-      - prysm
+      # Use the latest development version of prysm
+      # - prysm
+      - git+https://github.com/brandondube/prysm.git
         # packages needed for document generation
       - myst_parser
       - sphinx_autodoc_typehints
