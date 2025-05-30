@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.0.5
+  coverage-reporter: codacy/coverage-reporter@14.1.0
 
 jobs:
 
@@ -81,6 +81,8 @@ jobs:
 workflows:
   tests_and_codestyle:
     jobs:
-      - codacy-coverage-report
       - codestyle
       - tests
+  coverage:
+    jobs:
+      - codacy-coverage-report
