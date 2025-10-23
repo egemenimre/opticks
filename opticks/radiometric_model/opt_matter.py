@@ -19,9 +19,9 @@ from opticks.utils.math_utils import PPolyWithUnits
 
 
 class OpticalMatter:
-    """Generic Optical Matter Properties class.
+    """Generic Optical Matter class.
 
-    Optical parameters are Reflectivity, Transmissivity and
+    Optical matter parameters are Reflectivity, Transmissivity and
     Emissivity, defined within the same interval of wavelengths.
     They are all defined between 0 and 1.
 
@@ -48,11 +48,11 @@ class OpticalMatter:
     Parameters
     ----------
     reflectivity : IntervalData
-        Reflectivity defined in an interval
+        Reflectivity defined in an interval (shallow copied)
     transmissivity : IntervalData
-        Transmissivity defined in an interval
+        Transmissivity defined in an interval (shallow copied)
     emissivity : IntervalData
-        Emissivity (or absorptivity) defined in an interval
+        Emissivity (or absorptivity) defined in an interval (shallow copied)
     name : str
         Name of the material
     abs_tolerance : float
@@ -74,19 +74,161 @@ class OpticalMatter:
         reflectivity: IntervalData,
         transmissivity: IntervalData,
         emissivity: IntervalData,
-        name="Generic Optical Material",
+        name="Generic Optical Matter",
+        reflection_model=None,
+        emissivity_model=None,
+        transmission_model=None,
         abs_tolerance=1e-9,
         skip_checks: bool = False,
     ):
 
+        # shallow copy material properties
         self.reflectivity = reflectivity
         self.transmissivity = transmissivity
         self.emissivity = emissivity
+
         self.name = name
 
-        # sanity check of the properties
+        # shallow copy light-matter interaction models
+        self.reflection_model = reflection_model
+        self.emissivity_model = emissivity_model
+        self.transmission_model = transmission_model
+
+        # sanity check for the properties
         if not skip_checks:
             self._sanity_check(abs_tolerance)
+
+    @property
+    def reflection_model(self):
+        raise NotImplementedError("Model not implemented yet.")
+
+    @property
+    def emissivity_model(self):
+        raise NotImplementedError("Model not implemented yet.")
+
+    @property
+    def transmission_model(self):
+        raise NotImplementedError("Model not implemented yet.")
+
+    @classmethod
+    def init_opaque_from_refl(
+        cls,
+        reflectivity: IntervalData,
+        name="Generic Opaque",
+    ) -> "OpticalMatter":
+        """Generates an "opaque" material from Reflectance only.
+
+        Absorptivity or Emissivity is derived from the Reflectance as
+        $A = 1 - R$. Transmissivity is by definition zero.
+
+        Parameters
+        ----------
+        reflectivity : IntervalData
+            Reflectivity within an interval
+        name : str, optional
+            Name of the material
+
+        Returns
+        -------
+        OpticalMatter
+            generated object
+        """
+
+        domain = reflectivity.domain()
+
+        # transmissivity is zero
+        transmissivity = IntervalData({domain: 0.0})
+
+        # emissivity = 1-reflectivity
+        # resampling is needed for the summation
+        neg_ref = reflectivity.scale(-1.0).resample()
+
+        unity = IntervalData({domain: 1.0})
+        unity.combination_method = FunctCombinationMethod.SUM
+
+        # generate emissivity
+        emissivity = unity.combine(neg_ref)
+        # copy properties like interpolator or sample size
+        # but not the combination method
+        emissivity = reflectivity.copy_properties_to(emissivity)
+        emissivity.combination_method = FunctCombinationMethod.SUM
+
+        # resampling is needed to reset the combination method
+        # and to initialise the interpolators
+        emissivity = emissivity.resample()
+
+        return OpticalMatter(
+            reflectivity=reflectivity,
+            transmissivity=transmissivity,
+            emissivity=emissivity,
+            name=name,
+            reflection_model=None,  # TODO this is not none
+            emissivity_model=None,  # TODO this is not none
+            transmission_model=None,
+        )
+
+    @classmethod
+    def init_blackbody(
+        cls, domain: Interval, name="Generic Blackbody"
+    ) -> "OpticalMatter":
+        """Generates a "Blackbody" i.e., a material with Emissivity only
+        and no Reflectivity or Transmissivity.
+
+        Parameters
+        ----------
+        domain : Interval
+            Range of emissivities (in Hz)
+        name : str, optional
+            Name of the material, by default "Generic Blackbody"
+
+        Returns
+        -------
+        OpticalMatter
+            generated object
+        """
+
+        emissivity = IntervalData({domain: 1.0})
+        transmissivity = IntervalData({domain: 0.0})
+        reflectivity = IntervalData({domain: 0.0})
+
+        # sanity checks can be theoretically skipped
+        # but sticking to them is good practice
+
+        return OpticalMatter(
+            reflectivity=reflectivity,
+            transmissivity=transmissivity,
+            emissivity=emissivity,
+            name=name,
+            reflection_model=None,
+            emissivity_model=None,  # TODO this is not none
+            transmission_model=None,
+        )
+
+    @property
+    def absorptivity(self) -> IntervalData:
+        """Absorptivity, which is equivalent to the Emissivity."""
+        return self.emissivity
+
+    def plot(self) -> IntervalDataPlot:  # pragma: no cover
+        """Convenience method to plot `OpticalMatterProperties` objects.
+
+        Returns an `IntervalDataPlot` object. The `set_plot_style`
+        method can be invoked for further styling options and also
+        the usual matplotlib `plot.ax` and `plot.fig` options are
+        available for advanced customisation."""
+
+        interval_data_dict = {
+            "reflectivity": self.reflectivity,
+            "absorptivity": self.absorptivity,
+            "transmissivity": self.transmissivity,
+            # "summed": self.summed,
+        }
+
+        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)
+
+        plot.set_plot_style(title=f"{self.name} Optical Matter Properties")
+
+        return plot
 
     def _sanity_check(self, abs_tolerance):
         """Checks the properties for adherence to the laws of physics.
@@ -124,105 +266,6 @@ class OpticalMatter:
 
         # upon failure this will raise a ValueError
         _property_sanity_check(summed, 1.0, 1.0, abs_tolerance, resampled=True)
-
-    @classmethod
-    def init_opaque_from_refl(
-        cls,
-        reflectivity: IntervalData,
-        name="Generic Opaque",
-    ) -> "OpticalMatter":
-        """Generates an "opaque" material from Reflectance only.
-
-        Absorptivity or Emissivity is derived from the Reflectance as
-        $A = 1 - R$. Transmissivity is by definition zero.
-
-        Parameters
-        ----------
-        reflectivity : IntervalData
-            Reflectivity within an interval
-        name : str
-            Name of the matierial.
-
-        Returns
-        -------
-        OpticalMaterial
-            generated object
-        """
-
-        domain = reflectivity.domain()
-
-        # transmissivity is zero
-        transmissivity = IntervalData({domain: 0.0})
-
-        # emissivity = 1-reflectivity
-        # resampling is needed for the summation
-        neg_ref = reflectivity.scale(-1.0).resample()
-
-        unity = IntervalData({domain: 1.0})
-        unity.combination_method = FunctCombinationMethod.SUM
-
-        # generate emissivity
-        emissivity = unity.combine(neg_ref)
-        # copy properties like interpolator or sample size
-        # but not the combination method
-        emissivity = reflectivity.copy_properties_to(emissivity)
-        emissivity.combination_method = FunctCombinationMethod.SUM
-
-        # resampling is needed to reset the combination method
-        # and to initialise the interpolators
-        emissivity = emissivity.resample()
-
-        return OpticalMatter(
-            reflectivity=reflectivity,
-            transmissivity=transmissivity,
-            emissivity=emissivity,
-            name=name,
-        )
-
-    @classmethod
-    def init_blackbody(
-        cls, domain: Interval, name="Generic Blackbody"
-    ) -> "OpticalMatter":
-
-        emissivity = IntervalData({domain: 1.0})
-        transmissivity = IntervalData({domain: 0.0})
-        reflectivity = IntervalData({domain: 0.0})
-
-        # sanity checks can be theoretically skipped
-        # but sticking to them is good practice
-
-        return OpticalMatter(
-            reflectivity=reflectivity,
-            transmissivity=transmissivity,
-            emissivity=emissivity,
-            name=name,
-        )
-
-    @property
-    def absorptivity(self) -> IntervalData:
-        """Absorptivity, which is equivalent to the Emissivity."""
-        return self.emissivity
-
-    def plot(self) -> IntervalDataPlot:  # pragma: no cover
-        """Convenience method to plot `OpticalMatter` objects.
-
-        Returns an `IntervalDataPlot` object. The `set_plot_style`
-        method can be invoked for further styling options and also
-        the usual matplotlib `plot.ax` and `plot.fig` options are
-        available for advanced customisation."""
-
-        interval_data_dict = {
-            "reflectivity": self.reflectivity,
-            "absorptivity": self.absorptivity,
-            "transmissivity": self.transmissivity,
-            # "summed": self.summed,
-        }
-
-        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)
-
-        plot.set_plot_style(title=f"{self.name} Material Optical Properties")
-
-        return plot
 
 
 def _check_validity(value, max, min, abs_tolerance):
