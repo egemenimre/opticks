@@ -4,6 +4,7 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
+
 import numbers
 
 import numpy as np
@@ -17,8 +18,8 @@ from opticks.utils.interval_data import (
 from opticks.utils.math_utils import PPolyWithUnits
 
 
-class OpticalMaterial:
-    """Generic Optical Material Properties class.
+class OpticalMatter:
+    """Generic Optical Matter Properties class.
 
     Optical parameters are Reflectivity, Transmissivity and
     Emissivity, defined within the same interval of wavelengths.
@@ -57,7 +58,7 @@ class OpticalMaterial:
     abs_tolerance : float
         Absolute tolerance value for sanity checks
     skip_checks : bool
-        SKip any sanity checks
+        Skip any sanity checks
     """
 
     name: str = None
@@ -129,7 +130,7 @@ class OpticalMaterial:
         cls,
         reflectivity: IntervalData,
         name="Generic Opaque",
-    ) -> "OpticalMaterial":
+    ) -> "OpticalMatter":
         """Generates an "opaque" material from Reflectance only.
 
         Absorptivity or Emissivity is derived from the Reflectance as
@@ -171,7 +172,7 @@ class OpticalMaterial:
         # and to initialise the interpolators
         emissivity = emissivity.resample()
 
-        return OpticalMaterial(
+        return OpticalMatter(
             reflectivity=reflectivity,
             transmissivity=transmissivity,
             emissivity=emissivity,
@@ -181,7 +182,7 @@ class OpticalMaterial:
     @classmethod
     def init_blackbody(
         cls, domain: Interval, name="Generic Blackbody"
-    ) -> "OpticalMaterial":
+    ) -> "OpticalMatter":
 
         emissivity = IntervalData({domain: 1.0})
         transmissivity = IntervalData({domain: 0.0})
@@ -190,7 +191,7 @@ class OpticalMaterial:
         # sanity checks can be theoretically skipped
         # but sticking to them is good practice
 
-        return OpticalMaterial(
+        return OpticalMatter(
             reflectivity=reflectivity,
             transmissivity=transmissivity,
             emissivity=emissivity,
@@ -203,7 +204,7 @@ class OpticalMaterial:
         return self.emissivity
 
     def plot(self) -> IntervalDataPlot:  # pragma: no cover
-        """Convenience method to plot `OpticalMaterial` objects.
+        """Convenience method to plot `OpticalMatter` objects.
 
         Returns an `IntervalDataPlot` object. The `set_plot_style`
         method can be invoked for further styling options and also

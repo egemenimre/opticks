@@ -9,12 +9,12 @@ import numpy as np
 import pytest
 
 from opticks import P, u
-from opticks.radiometric_model.material import OpticalMaterial
+from opticks.radiometric_model.opt_matter import OpticalMatter
 from opticks.utils.interval_data import IntervalData
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 
 
-class TestOpticalMaterial:
+class TestOpticalMatter:
 
     @pytest.fixture(scope="class")
     def reflectivity_correct_input(self) -> IntervalData:
@@ -119,7 +119,7 @@ class TestOpticalMaterial:
 
         domain = P.closed(300 * u.nm, 2500 * u.nm)
 
-        bbody_mat = OpticalMaterial.init_blackbody(domain)
+        bbody_mat = OpticalMatter.init_blackbody(domain)
 
         np.testing.assert_allclose(
             bbody_mat.absorptivity.get_value(input), 1.0, rtol=1e-13
@@ -150,7 +150,7 @@ class TestOpticalMaterial:
 
         reflectivity = reflectivity_model(reflectivity_correct_input)
 
-        opt_mat = OpticalMaterial.init_opaque_from_refl(reflectivity)
+        opt_mat = OpticalMatter.init_opaque_from_refl(reflectivity)
 
         np.testing.assert_allclose(
             opt_mat.absorptivity.get_value(input), expected, rtol=1e-13
@@ -162,7 +162,7 @@ class TestOpticalMaterial:
 
             reflectivity = reflectivity_model(reflectivity_err_type_1_input)
 
-            OpticalMaterial.init_opaque_from_refl(reflectivity)
+            OpticalMatter.init_opaque_from_refl(reflectivity)
 
     def test_init_err_2(self, reflectivity_model, reflectivity_err_type_2_input):
         """Check maxima/minima exceed 1 type errors."""
@@ -170,13 +170,13 @@ class TestOpticalMaterial:
 
             reflectivity = reflectivity_model(reflectivity_err_type_2_input)
 
-            OpticalMaterial.init_opaque_from_refl(reflectivity)
+            OpticalMatter.init_opaque_from_refl(reflectivity)
 
     def test_init_err_3(self, reflectivity_err_type_3):
         """Check summation not equal to 1 errors."""
         with pytest.raises(ValueError):
 
-            OpticalMaterial(
+            OpticalMatter(
                 reflectivity_err_type_3,
                 reflectivity_err_type_3,
                 reflectivity_err_type_3,
@@ -186,4 +186,4 @@ class TestOpticalMaterial:
         """Check single value exceeds 1 type errors."""
         with pytest.raises(ValueError):
 
-            OpticalMaterial.init_opaque_from_refl(reflectivity_err_type_4)
+            OpticalMatter.init_opaque_from_refl(reflectivity_err_type_4)
