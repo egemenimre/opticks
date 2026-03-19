@@ -105,7 +105,7 @@ class TestIntervalData:
 
         # cases
         # -------
-        x = [1.9999, 2.0, 2.0000001] * u.Hz
+        x: Quantity = [1.9999, 2.0, 2.0000001] * u.Hz
 
         # truth
         # -------
@@ -116,7 +116,7 @@ class TestIntervalData:
         filter.combination_method = FunctCombinationMethod.MULTIPLY
         filtered_main = main_funct.combine(filter)
 
-        results = [filtered_main.get_value(x_val) for x_val in x]
+        results = [filtered_main.get_value(x_val) for x_val in x]  # type: ignore[union-attr]
 
         # verification
         # -----------------
@@ -127,7 +127,7 @@ class TestIntervalData:
 
         # cases
         # -------
-        x = [1.9999, 2.0, 2.0000001] * u.Hz
+        x: Quantity = [1.9999, 2.0, 2.0000001] * u.Hz
 
         # truth
         # -------
@@ -143,7 +143,7 @@ class TestIntervalData:
         filtered_main.sample_size = sample_size
         resampled_filt_main = filtered_main.resample()
 
-        results = [resampled_filt_main.get_value(x_val) for x_val in x]
+        results = [resampled_filt_main.get_value(x_val) for x_val in x]  # type: ignore[union-attr]
 
         # verification
         # -----------------
@@ -181,7 +181,7 @@ class TestIntervalData:
 
         # cases
         # -------
-        x = [-3.0, 2.9999, 3.0, 4.5, 5.0, 5.00001] * u.Hz
+        x: Quantity = [-3.0, 2.9999, 3.0, 4.5, 5.0, 5.00001] * u.Hz
 
         # truth
         # -------
@@ -192,7 +192,7 @@ class TestIntervalData:
         filter.combination_method = FunctCombinationMethod.SUM
         combined_filter = filter2.combine(filter)
 
-        results = [combined_filter.get_value(x_val) for x_val in x]
+        results = [combined_filter.get_value(x_val) for x_val in x]  # type: ignore[union-attr]
 
         # verification
         # -----------------
@@ -265,7 +265,7 @@ class TestIntervalData:
 
         # cases
         # -------
-        x = [-1, 0, 2] * u.Hz
+        x: Quantity = [-1, 0, 2] * u.Hz
         scaling = 2.0
 
         # truth
@@ -276,7 +276,7 @@ class TestIntervalData:
         # -----------------
         scaled_main = main_funct.scale(scaling)
 
-        results = [scaled_main.get_value(x_val) for x_val in x]
+        results = [scaled_main.get_value(x_val) for x_val in x]  # type: ignore[union-attr]
 
         # verification
         # -----------------

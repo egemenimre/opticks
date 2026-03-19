@@ -146,7 +146,7 @@ class IntervalData(P.IntervalDict):
 
     @classmethod
     def from_interpolator(
-        cls, ipol: type[PPolyWithUnits], sample_size: int | None = None
+        cls, ipol: PPolyWithUnits, sample_size: int | None = None
     ) -> "IntervalData":
         """Initialises the `IntervalData` object with an interpolator.
 
@@ -158,7 +158,7 @@ class IntervalData(P.IntervalDict):
 
         Parameters
         ----------
-        ipol : type[PPolyWithUnits]
+        ipol : PPolyWithUnits
             Interpolator
         sample_size : int
             default sample size for resampling

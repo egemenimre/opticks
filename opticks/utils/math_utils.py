@@ -93,7 +93,7 @@ class PPolyWithUnits(PPoly):
     @classmethod
     def from_ppoly(
         cls,
-        ppoly: type[PPoly],
+        ppoly: PPoly,
         x_unit: UnitBase | FunctionUnitBase | None = None,
         y_unit: UnitBase | FunctionUnitBase | None = None,
     ) -> "PPolyWithUnits":
@@ -105,7 +105,7 @@ class PPolyWithUnits(PPoly):
 
         Parameters
         ----------
-        ppoly : type[PPoly]
+        ppoly : PPoly
             `PPoly` object (or from a subclass)
         x_unit : UnitBase or FunctionUnitBase, optional
             unit of the x axis, by default None
@@ -190,7 +190,7 @@ class InterpolatorWithUnits(PPolyWithUnits):
 
     Parameters
     ----------
-    ppoly : type[PPoly]
+    ppoly : PPoly
         Interpolator subclassing `PPoly`
     x_unit : UnitBase or FunctionUnitBase, optional
         unit of the x axis, by default None
@@ -200,7 +200,7 @@ class InterpolatorWithUnits(PPolyWithUnits):
 
     def __init__(
         self,
-        ipol: type[PPoly],
+        ipol: PPoly,
         x_unit: UnitBase | FunctionUnitBase | None = None,
         y_unit: UnitBase | FunctionUnitBase | None = None,
     ):

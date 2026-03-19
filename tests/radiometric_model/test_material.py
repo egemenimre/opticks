@@ -33,7 +33,7 @@ class TestOpticalMaterial:
 
         sub_range = P.closed(1000 * u.nm, 1800 * u.nm)
         x = np.linspace(sub_range.lower, sub_range.upper, num=100, endpoint=True)
-        y = (x - 1200 * u.nm) * (x - 1700 * u.nm) / (400 * u.nm) ** 2 + 0.4
+        y = (x - 1200 * u.nm) * (x - 1700 * u.nm) / (400 * u.nm) ** 2 + 0.4  # type: ignore[operator]
 
         return y
 
@@ -46,7 +46,7 @@ class TestOpticalMaterial:
         x = np.linspace(sub_range.lower, sub_range.upper, num=100, endpoint=True)
         y = (x - 1200 * u.nm) * (x - 1500 * u.nm) * (x - 1900 * u.nm) / (
             500 * u.nm
-        ) ** 3 + 1.0
+        ) ** 3 + 1.0  # type: ignore[operator]
 
         return y
 
@@ -121,6 +121,8 @@ class TestOpticalMaterial:
 
         bbody_mat = OpticalMaterial.init_blackbody(domain)
 
+        assert bbody_mat.reflectivity is not None
+        assert bbody_mat.transmissivity is not None
         np.testing.assert_allclose(
             bbody_mat.absorptivity.get_value(input), 1.0, rtol=1e-13
         )

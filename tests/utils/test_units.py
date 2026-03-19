@@ -80,7 +80,7 @@ class TestUnitUtils:
         value, unit = split_value_and_unit(q)
 
         assert value == 5
-        assert unit is Unit()
+        assert unit is Unit()  # type: ignore[call-arg]
 
 
 class TestUnits:

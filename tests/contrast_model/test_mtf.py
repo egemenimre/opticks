@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.units import Quantity
 from numpy.testing import assert_allclose
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import regular_polygon
@@ -30,8 +31,8 @@ class TestMTF:
     perf_model_file_dir = Path("data")
     perf_model_alt_file_dir = Path("tests", "contrast_model", "data")
 
-    ref_wavelength = 650 * u.nm
-    input_line_freq = 30 * u.cy / u.mm
+    ref_wavelength: Quantity = 650 * u.nm
+    input_line_freq: Quantity = 30 * u.cy / u.mm
 
     @pytest.fixture(scope="class")
     def optics(self) -> Optics:
@@ -221,7 +222,7 @@ class TestMTF:
 
         ap_samples = 256
 
-        x, y = make_xy_grid(ap_samples, diameter=efl / fno)
+        x, y = make_xy_grid(ap_samples, diameter=efl / fno)  # type: ignore[arg-type]
         dx = x[0, 1] - x[0, 0]
         r, t = cart_to_polar(x, y)
 

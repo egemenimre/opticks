@@ -224,7 +224,9 @@ class Optics(ImagerComponent):
 
     # ---------- begin modelling functions ----------
 
-    def set_aperture_model(self, aperture: Aperture | None = None, samples: int = 400) -> None:
+    def set_aperture_model(
+        self, aperture: Aperture | None = None, samples: int = 400
+    ) -> None:
         """Sets the aperture model for the optics.
 
         The aperture model is as defined by `prysm`, it contains an `ndarray` grid of

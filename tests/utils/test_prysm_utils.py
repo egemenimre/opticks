@@ -27,7 +27,7 @@ class TestPrysmUtils:
         epd = efl / fno  # aperture diameter
         r_aper = epd / 2  # aperture radius
 
-        xi, eta = make_xy_grid(samples, diameter=epd)
+        xi, eta = make_xy_grid(samples, diameter=epd)  # type: ignore[arg-type]
         r, t = cart_to_polar(xi, eta)
 
         r_aber = r / r_aper

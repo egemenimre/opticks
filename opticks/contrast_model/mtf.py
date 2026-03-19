@@ -41,7 +41,7 @@ class MTF_Model_1D:
         self._value_func = mtf_value_func
 
     def mtf_value(
-        self, input_line_freq: Quantity | Quantity
+        self, input_line_freq: Quantity
     ) -> float | NDArray[np.float64]:
         """
         Gets the MTF value for the given input line frequency.
@@ -110,9 +110,7 @@ class MTF_Model_1D:
 
     @staticmethod
     # @u.quantity_input(wavelength="length")
-    def ideal_optics(
-        wavelength: Quantity | Quantity, optics: Optics
-    ) -> "MTF_Model_1D":
+    def ideal_optics(wavelength: Quantity, optics: Optics) -> "MTF_Model_1D":
         """
         Ideal optical MTF model.
 
@@ -145,7 +143,7 @@ class MTF_Model_1D:
 
     @staticmethod
     def emp_model_aberrated_optics(
-        wavelength: Quantity | Quantity,
+        wavelength: Quantity,
         w_rms: float,
         optics: Optics,
     ) -> "MTF_Model_1D":
@@ -358,7 +356,7 @@ class MTF_Model_1D:
         return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    def combined(*mtf_models: tuple["MTF_Model_1D", ...]) -> "MTF_Model_1D":
+    def combined(*mtf_models: "MTF_Model_1D") -> "MTF_Model_1D":
         """
         Combination MTF models.
 
@@ -430,7 +428,7 @@ def _force_return_float(mtf_value):
 
 
 def _combined_mtf(
-    input_line_freq: Quantity | Quantity, value_funcs
+    input_line_freq: Quantity, value_funcs
 ) -> float | NDArray[np.float64]:
     """
     Combination of multiple MTF Model MTF data for the given
@@ -458,7 +456,7 @@ def _combined_mtf(
 
 
 def _external_data_mtf(
-    input_line_freq: Quantity | Quantity,
+    input_line_freq: Quantity,
     interpolator: InterpolatorWithUnits,
 ) -> float | NDArray[np.float64]:
     """
@@ -488,7 +486,7 @@ def _external_data_mtf(
 
 
 def _ideal_optical_mtf(
-    input_line_freq: Quantity | Quantity, spatial_cutoff_freq: Quantity
+    input_line_freq: Quantity, spatial_cutoff_freq: Quantity
 ) -> float | NDArray[np.float64]:
     """
     Ideal optical MTF for the given input line frequency.
@@ -524,7 +522,7 @@ def _ideal_optical_mtf(
 
 
 def _aberrated_optical_mtf(
-    input_line_freq: Quantity | Quantity,
+    input_line_freq: Quantity,
     spatial_cutoff_freq: Quantity,
     w_rms: float,
 ) -> float | NDArray[np.float64]:
@@ -564,7 +562,7 @@ def _aberrated_optical_mtf(
 
 
 def _aberration_transfer_factor(
-    input_line_freq: Quantity | Quantity,
+    input_line_freq: Quantity,
     spatial_cutoff_freq: Quantity,
     w_rms: float,
 ) -> float | NDArray[np.float64]:
@@ -608,7 +606,7 @@ def _aberration_transfer_factor(
 
 @u.quantity_input(pixel_pitch="length")
 def _detector_sampling_mtf(
-    input_line_freq: Quantity | Quantity, pixel_pitch: Quantity
+    input_line_freq: Quantity, pixel_pitch: Quantity
 ) -> float | NDArray[np.float64]:
     """
     Detector sampling MTF for the given input line frequency.
@@ -647,7 +645,7 @@ def _detector_sampling_mtf(
 
 @u.quantity_input(pixel_pitch="length")
 def _smear_mtf(
-    input_line_freq: Quantity | Quantity,
+    input_line_freq: Quantity,
     pixel_pitch: Quantity,
     blur_extent: float | Quantity,
 ) -> float | NDArray[np.float64]:
@@ -682,7 +680,7 @@ def _smear_mtf(
 
 @u.quantity_input(pixel_pitch="length")
 def _jitter_mtf(
-    input_line_freq: Quantity | Quantity,
+    input_line_freq: Quantity,
     pixel_pitch: Quantity,
     jitter_stdev: float | Quantity,
 ) -> float | NDArray[np.float64]:
