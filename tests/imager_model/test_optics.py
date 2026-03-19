@@ -58,7 +58,7 @@ class TestOptics:
 
     def test_circle_aperture(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.to_value(u.mm)
+        diameter = optics.aperture_diameter.to_value(u.mm)
 
         samples = 256
 
@@ -70,7 +70,7 @@ class TestOptics:
 
         # computation
         aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, samples, with_units=True
+            optics.aperture_diameter, samples, with_units=True
         )
 
         # verification
@@ -78,7 +78,7 @@ class TestOptics:
 
     def test_circle_aperture_with_obscuration(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.to_value(u.mm)
+        diameter = optics.aperture_diameter.to_value(u.mm)
 
         samples = 256
         obscuration_ratio = 0.3
@@ -93,7 +93,7 @@ class TestOptics:
 
         # computation
         aperture = Aperture.circle_aperture_with_obscuration(
-            optics.params.aperture_diameter, obscuration_ratio, samples, with_units=True
+            optics.aperture_diameter, obscuration_ratio, samples, with_units=True
         )
 
         # verification
@@ -130,9 +130,7 @@ class TestOptics:
 
         pup_samples = 256
 
-        aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, pup_samples
-        )
+        aperture = Aperture.circle_aperture(optics.aperture_diameter, pup_samples)
 
         optics.set_aperture_model(aperture)
 
@@ -253,7 +251,7 @@ class TestOptics:
         optics = Optics.from_yaml_text(yaml_text)
 
         aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, ap_samples, with_units=True
+            optics.aperture_diameter, ap_samples, with_units=True
         )
         optics.set_aperture_model(aperture)
 

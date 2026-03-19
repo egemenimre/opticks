@@ -143,7 +143,7 @@ class TestMTF:
         truth = 0.7679273089188128
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         mtf_model = MTF_Model_1D.detector_sampling(channel.pixel_pitch())
@@ -160,7 +160,7 @@ class TestMTF:
         truth = 0.9704228869250533
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         stdev_jitter = 0.1  # 10% of the pix
@@ -178,7 +178,7 @@ class TestMTF:
         truth = 0.9776341205410619
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         blur_extent = 0.3  # 30% of the pix
@@ -196,7 +196,7 @@ class TestMTF:
         truth = 0.3990703920059105
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         mtf_model_1 = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
