@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.units import Quantity
 from prysm import _richdata, coordinates, geometry, polynomials, propagation
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.fttools import pad2d
@@ -117,7 +118,7 @@ class TestOptics:
         aperture3 = pad2d(aperture, Q=2)
         aperture3 = aperture3 * (2 * np.sqrt(aperture.size) / aperture.sum())
         inc_psf_norm_peak = abs(focus(aperture3, Q=1)) ** 2
-        inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()
+        _ = inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()
 
         # computation
         yaml_text = """
@@ -139,7 +140,7 @@ class TestOptics:
         optics.add_pupil_func(ref_wvl, None)
 
         Q = 2
-        psf_dx = ref_wvl.to(u.um) * optics.f_number / Q
+        psf_dx: Quantity = ref_wvl.to(u.um) * optics.f_number / Q  # type: ignore[operator]
 
         psf_samples = pup_samples * Q
         psf = optics.psf(ref_wvl, psf_dx, psf_samples=psf_samples)
@@ -202,7 +203,7 @@ class TestOptics:
         # sample size in microns
         res_el = wvl0 * fno * 1.22 / 4  # 4 pixels per airy radius
 
-        xi, eta = coordinates.make_xy_grid(ap_samples, diameter=epd)
+        xi, eta = coordinates.make_xy_grid(ap_samples, diameter=epd)  # type: ignore[arg-type]
         r, t = coordinates.cart_to_polar(xi, eta)
         dx = xi[0, 1] - xi[0, 0]
 
