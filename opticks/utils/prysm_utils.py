@@ -194,7 +194,7 @@ class OptPathDiff:
 
     @classmethod
     def from_zernike(
-        cls, wfe_rms: list[Quantity], aperture_diameter: Quantity, grid: Grid
+        cls, wfe_rms: Quantity, aperture_diameter: Quantity, grid: Grid
     ) -> "OptPathDiff":
         """Computes the Optical Path Difference via Zernike Polynomials.
 
@@ -207,7 +207,7 @@ class OptPathDiff:
 
         Parameters
         ----------
-        wfe_rms : list[Quantity]
+        wfe_rms : Quantity
             ANSI list of aberration coefficients (WFE RMS) (in nm)
         diameter : Quantity
             aperture diameter in mm
@@ -238,8 +238,6 @@ class OptPathDiff:
         # compute the polynomials (dimensionless)
         # t should be in radians
         mode = list(zernike_nm_seq(nms, rho.value, t.value))  # type: ignore[union-attr]
-
-        # TODO list[Quantity] is very dubious here, likely a Quantity of lists
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm
