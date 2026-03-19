@@ -23,6 +23,8 @@ The documentation for opticks is here: <https://opticks.readthedocs.io/>
 - [Astropy](https://www.astropy.org/) provides units and quantity support as well as some other underlying models such as vector mechanics.
 - [Prysm](https://github.com/brandondube/prysm/) provides advanced optical design and analysis.
 - [Strictyaml](https://github.com/crdoconnor/strictyaml) provides YAML read/write support.
+- [Portion](https://github.com/AlexandreDecan/portion) provides interval arithmetic support.
+- [Matplotlib](https://matplotlib.org/) provides plotting support.
 
 ## Licence
 
