@@ -75,6 +75,10 @@ target-version = "py313"
 select = ["E", "F", "W", "B", "C", "I"]
 ignore = ["E203", "E266", "E501"]
 
+[tool.ruff.lint.per-file-ignores]
+"docs/conf.py" = ["E402"]
+"docs/**/*.ipynb" = ["E402"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["opticks"]
 
