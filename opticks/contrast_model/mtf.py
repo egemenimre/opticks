@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -24,7 +24,6 @@ from opticks.utils.prysm_utils import richdata_with_units
 
 
 class MTF_Model_1D:
-
     def __init__(self, id: str, mtf_value_func) -> None:
         """
         Modulation Transfer Function (MTF) Model in 1D.
@@ -40,9 +39,7 @@ class MTF_Model_1D:
         self.id = id
         self._value_func = mtf_value_func
 
-    def mtf_value(
-        self, input_line_freq: Quantity | np.ndarray[Quantity]
-    ) -> float | NDArray[np.float64]:
+    def mtf_value(self, input_line_freq: Quantity) -> float | NDArray[np.float64]:
         """
         Gets the MTF value for the given input line frequency.
 
@@ -63,9 +60,9 @@ class MTF_Model_1D:
 
     @staticmethod
     def external_data(
-        freq_values: np.ndarray[Quantity],
-        mtf_values: np.ndarray[np.float64],
-        id: str = None,
+        freq_values: Quantity,
+        mtf_values: NDArray[np.float64],
+        id: str | None = None,
     ) -> "MTF_Model_1D":
         """
         MTF Model from an external data.
@@ -99,7 +96,9 @@ class MTF_Model_1D:
 
         # prepare interpolator
         interpolator = InterpolatorWithUnits.from_ipol_method(
-            InterpolatorWithUnitTypes.AKIMA, freq_values, mtf_values
+            InterpolatorWithUnitTypes.AKIMA,
+            freq_values,
+            mtf_values,  # type: ignore[arg-type]
         )
 
         # set the value function (with the interpolator)
@@ -110,9 +109,7 @@ class MTF_Model_1D:
 
     @staticmethod
     # @u.quantity_input(wavelength="length")
-    def ideal_optics(
-        wavelength: Quantity | np.ndarray[Quantity], optics: Optics
-    ) -> "MTF_Model_1D":
+    def ideal_optics(wavelength: Quantity, optics: Optics) -> "MTF_Model_1D":
         """
         Ideal optical MTF model.
 
@@ -145,7 +142,7 @@ class MTF_Model_1D:
 
     @staticmethod
     def emp_model_aberrated_optics(
-        wavelength: Quantity | np.ndarray[Quantity],
+        wavelength: Quantity,
         w_rms: float,
         optics: Optics,
     ) -> "MTF_Model_1D":
@@ -358,7 +355,7 @@ class MTF_Model_1D:
         return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    def combined(*mtf_models: tuple["MTF_Model_1D", ...]) -> "MTF_Model_1D":
+    def combined(*mtf_models: "MTF_Model_1D") -> "MTF_Model_1D":
         """
         Combination MTF models.
 
@@ -381,7 +378,7 @@ class MTF_Model_1D:
         id = "A combination of multiple MTF Models."
 
         # build list of value functions
-        value_funcs = [mtf_model._value_func for mtf_model in mtf_models]
+        value_funcs = [mtf_model._value_func for mtf_model in mtf_models]  # type: ignore[union-attr]
 
         # set the value function
         def value_func(input_line_freq):
@@ -430,7 +427,7 @@ def _force_return_float(mtf_value):
 
 
 def _combined_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], value_funcs
+    input_line_freq: Quantity, value_funcs
 ) -> float | NDArray[np.float64]:
     """
     Combination of multiple MTF Model MTF data for the given
@@ -458,7 +455,7 @@ def _combined_mtf(
 
 
 def _external_data_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity],
+    input_line_freq: Quantity,
     interpolator: InterpolatorWithUnits,
 ) -> float | NDArray[np.float64]:
     """
@@ -488,7 +485,7 @@ def _external_data_mtf(
 
 
 def _ideal_optical_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], spatial_cutoff_freq: Quantity
+    input_line_freq: Quantity, spatial_cutoff_freq: Quantity
 ) -> float | NDArray[np.float64]:
     """
     Ideal optical MTF for the given input line frequency.
@@ -524,7 +521,7 @@ def _ideal_optical_mtf(
 
 
 def _aberrated_optical_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity],
+    input_line_freq: Quantity,
     spatial_cutoff_freq: Quantity,
     w_rms: float,
 ) -> float | NDArray[np.float64]:
@@ -564,7 +561,7 @@ def _aberrated_optical_mtf(
 
 
 def _aberration_transfer_factor(
-    input_line_freq: Quantity | np.ndarray[Quantity],
+    input_line_freq: Quantity,
     spatial_cutoff_freq: Quantity,
     w_rms: float,
 ) -> float | NDArray[np.float64]:
@@ -608,7 +605,7 @@ def _aberration_transfer_factor(
 
 @u.quantity_input(pixel_pitch="length")
 def _detector_sampling_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity], pixel_pitch: Quantity
+    input_line_freq: Quantity, pixel_pitch: Quantity
 ) -> float | NDArray[np.float64]:
     """
     Detector sampling MTF for the given input line frequency.
@@ -647,7 +644,7 @@ def _detector_sampling_mtf(
 
 @u.quantity_input(pixel_pitch="length")
 def _smear_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity],
+    input_line_freq: Quantity,
     pixel_pitch: Quantity,
     blur_extent: float | Quantity,
 ) -> float | NDArray[np.float64]:
@@ -674,7 +671,7 @@ def _smear_mtf(
     # pixel pitch (um) x input line freq (cycles/mm)
     a_fx = pixel_pitch * input_line_freq / u.cy
 
-    mtf_value = np.sinc((blur_extent * a_fx).decompose().value)
+    mtf_value = np.sinc((blur_extent * a_fx).decompose().value)  # type: ignore[union-attr]
 
     # force return float
     return _force_return_float(mtf_value)
@@ -682,7 +679,7 @@ def _smear_mtf(
 
 @u.quantity_input(pixel_pitch="length")
 def _jitter_mtf(
-    input_line_freq: Quantity | np.ndarray[Quantity],
+    input_line_freq: Quantity,
     pixel_pitch: Quantity,
     jitter_stdev: float | Quantity,
 ) -> float | NDArray[np.float64]:
@@ -717,7 +714,7 @@ def _jitter_mtf(
     # pixel pitch (um) x input line freq (cycles/mm)
     a_fx = pixel_pitch * input_line_freq / u.cy
 
-    mtf_value = np.exp(-2 * ((np.pi * jitter_stdev * a_fx).decompose() ** 2))
+    mtf_value = np.exp(-2 * ((np.pi * jitter_stdev * a_fx).decompose() ** 2))  # type: ignore[union-attr]
 
     # force return float
     return _force_return_float(mtf_value)
@@ -798,7 +795,7 @@ class MTF_Plot_1D:  # pragma: no cover
         freq_list,
         mtf_data: dict[str, MTF_Model_1D],
         acceptable_limit: float = 0.1,
-        nyq_limit: Quantity = None,
+        nyq_limit: Quantity | None = None,
     ) -> None:
 
         self.fig, self.ax = plt.subplots()
@@ -810,7 +807,7 @@ class MTF_Plot_1D:  # pragma: no cover
         freq_list,
         mtf_data: dict[str, MTF_Model_1D],
         acceptable_limit: float = 0.1,
-        nyq_limit: Quantity = None,
+        nyq_limit: Quantity | None = None,
     ) -> Self:
         """
         Populates the MTF plot lines using the MTF Models.
@@ -850,8 +847,7 @@ class MTF_Plot_1D:  # pragma: no cover
             # one freq list for each
 
             # generate MTF data lines
-            for label, freqs in list(zip(mtf_data, freq_list)):
-
+            for label, freqs in zip(mtf_data, freq_list, strict=True):
                 # generate values (y axis)
                 mtf_values = mtf_data[label].mtf_value(freqs)
 
@@ -863,7 +859,6 @@ class MTF_Plot_1D:  # pragma: no cover
 
             # generate MTF data lines
             for label, mtf_model in mtf_data.items():
-
                 # generate values (y axis)
                 mtf_values = mtf_model.mtf_value(freq_list)
 
@@ -951,12 +946,12 @@ class MTF_Plot_1D:  # pragma: no cover
 
         with imperial.enable():
             if isinstance(height, Quantity):
-                height = height.to_value(imperial.inch)
+                height = height.to_value(imperial.inch)  # type: ignore[assignment]
             if isinstance(width, Quantity):
-                width = width.to_value(imperial.inch)
+                width = width.to_value(imperial.inch)  # type: ignore[assignment]
 
-        self.fig.set_figheight(height)
-        self.fig.set_figwidth(width)
+        self.fig.set_figheight(height)  # type: ignore[arg-type]
+        self.fig.set_figwidth(width)  # type: ignore[arg-type]
 
         return self
 

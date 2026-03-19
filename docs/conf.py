@@ -18,15 +18,14 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "opticks"
-copyright = "2024, Egemen Imre"
+copyright = "2024-2026, Egemen Imre"
 author = "Egemen Imre"
 
-# Version Info
-# ------------
-# The short X.Y version.
-version = "0.0.1"
-# The full version, including alpha/beta/rc tags.
-release = "0.0.1"
+# Version Info - read dynamically from the package
+from importlib.metadata import version as _get_version
+
+version = _get_version("opticks")
+release = version
 
 # -- General configuration ---------------------------------------------------
 # By default, highlight as Python 3.
@@ -77,20 +76,12 @@ napoleon_use_rtype = False
 # convert the type definitions in the docstrings as references.
 napoleon_preprocess_types = True
 
-# -- Options for numpydoc -------------------------------------------------
-
-numpydoc_show_class_members = False
-
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
 html_theme = "sphinx_rtd_theme"
-html_theme_path = [
-    "_themes",
-]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -104,7 +95,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    # currently not needed    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "astropy": ("https://docs.astropy.org/en/stable/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
 }
 
 # -- Options for nbsphinx -------------------------------------------------
@@ -115,7 +107,7 @@ else:
     nbsphinx_execute = "always"
 
 # Controls when a cell will time out (defaults to 30; use -1 for no timeout):
-nbsphinx_timeout = 1000
+nbsphinx_timeout = 100
 
 # -- Options for autosummary and autodoc ------------------------------------------
 
@@ -148,7 +140,7 @@ myst_enable_extensions = [
 ]
 
 myst_substitutions = {
-    "pint_quantity": "[`Quantity`](https://pint.readthedocs.io/en/stable/api/base.html#pint.Quantity)",
+    "astropy_quantity": "[`Quantity`](https://docs.astropy.org/en/stable/api/astropy.units.Quantity.html)",
 }
 
 # Render all links (including html) as external. Prevents download of marimo htmls.
@@ -178,7 +170,7 @@ myst_all_links_external = True
 # -- Options for hoverxref -------------------------------------------
 hoverxref_auto_ref = True
 hoverxref_mathjax = True
-hoverxref_intersphinx = ["numpy", "scipy", "matplotlib", "prysm", "pint"]
+hoverxref_intersphinx = ["numpy", "scipy", "astropy", "matplotlib"]
 
 # -- Options for copybutton -------------------------------------------
 

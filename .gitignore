@@ -135,6 +135,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Ruff linter
+.ruff_cache/
+
 # Other temporary stuff and large data dirs
 temp
 opticks/temp
@@ -144,3 +147,6 @@ opticks/temp
 
 # other project config
 opticks.code-workspace
+
+# AI helpers
+.claude/

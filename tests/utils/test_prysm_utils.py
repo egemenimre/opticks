@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) 2024 Egemen Imre
 #
@@ -13,7 +13,6 @@ from opticks.utils.prysm_utils import Grid, OptPathDiff
 
 
 class TestPrysmUtils:
-
     def test_zernike(self):
         """Replicate the 'Q2d_sequence' example in
         the prysm docs 'Image Simulation' with Zernikes."""
@@ -27,7 +26,7 @@ class TestPrysmUtils:
         epd = efl / fno  # aperture diameter
         r_aper = epd / 2  # aperture radius
 
-        xi, eta = make_xy_grid(samples, diameter=epd)
+        xi, eta = make_xy_grid(samples, diameter=epd)  # type: ignore[arg-type]
         r, t = cart_to_polar(xi, eta)
 
         r_aber = r / r_aper

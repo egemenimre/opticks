@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -20,17 +20,16 @@ from opticks import u
 
 
 class Grid:
-
-    x: ndarray = None
+    x: ndarray | None = None
     """Cartesian x coordinate."""
 
-    y: ndarray = None
+    y: ndarray | None = None
     """Cartesian y coordinate."""
 
-    _r: ndarray = None
+    _r: ndarray | None = None
     """Radial coordinate."""
 
-    _t: ndarray = None
+    _t: ndarray | None = None
     """Azimuthal coordinate"""
 
     dx: Quantity
@@ -62,7 +61,7 @@ class Grid:
         self.dx = dx
 
         # Cartesian grid
-        self.x, self.y = make_xy_grid(shape, dx=dx, grid=grid)
+        self.x, self.y = make_xy_grid(shape, dx=dx, grid=grid)  # type: ignore[arg-type]
 
     @classmethod
     def from_size(cls, shape, size: Quantity) -> "Grid":
@@ -106,7 +105,7 @@ class Grid:
         if self._r is None:
             self._r, self._t = cart_to_polar(self.x, self.y)
 
-        return self._r, self._t
+        return self._r, self._t  # type: ignore[return-value]
 
     def cartesian(self) -> tuple[ndarray, ndarray]:
         """Gets the cartesian grid with the given internal sample points.
@@ -116,7 +115,7 @@ class Grid:
         x, y: tuple[ndarray, ndarray]
             tuple of x and y cartesian coordinates, respectively
         """
-        return self.x, self.y
+        return self.x, self.y  # type: ignore[return-value]
 
     @property
     def r(self) -> ndarray:
@@ -126,7 +125,7 @@ class Grid:
         if self._r is None:
             self.polar()
 
-        return self._r
+        return self._r  # type: ignore[return-value]
 
     @property
     def t(self) -> ndarray:
@@ -136,9 +135,9 @@ class Grid:
         if self._t is None:
             self.polar()
 
-        return self._t
+        return self._t  # type: ignore[return-value]
 
-    def strip_units(self, units: Unit = Unit("mm")) -> "Grid":
+    def strip_units(self, units: Unit = Unit("mm")) -> "Grid":  # noqa: B008
         """Converts the Grid object to the default units.
 
         Converts the internal parameters to float ndarrays
@@ -164,7 +163,7 @@ class Grid:
             # deep copy internal data
             dx = copy.deepcopy(self.dx)
 
-        return Grid(self.shape, dx)
+        return Grid(self.shape, dx)  # type: ignore[arg-type]
 
     @property
     def has_units(self) -> bool:
@@ -177,7 +176,6 @@ class Grid:
 
 
 class OptPathDiff:
-
     def __init__(self, opd: ndarray):
         """Init with Optical Path Difference.
 
@@ -194,7 +192,7 @@ class OptPathDiff:
 
     @classmethod
     def from_zernike(
-        cls, wfe_rms: list[Quantity], aperture_diameter: Quantity, grid: Grid
+        cls, wfe_rms: Quantity, aperture_diameter: Quantity, grid: Grid
     ) -> "OptPathDiff":
         """Computes the Optical Path Difference via Zernike Polynomials.
 
@@ -207,7 +205,7 @@ class OptPathDiff:
 
         Parameters
         ----------
-        wfe_rms : list[Quantity]
+        wfe_rms : Quantity
             ANSI list of aberration coefficients (WFE RMS) (in nm)
         diameter : Quantity
             aperture diameter in mm
@@ -233,19 +231,19 @@ class OptPathDiff:
         r, t = grid.polar()
 
         # reduce to dimensionless
-        rho = (r / ap_radius).decompose()
+        rho = (r / ap_radius).decompose()  # type: ignore[union-attr]
 
         # compute the polynomials (dimensionless)
         # t should be in radians
-        mode = list(zernike_nm_seq(nms, rho.value, t.value))
+        mode = list(zernike_nm_seq(nms, rho.value, t.value))  # type: ignore[union-attr]
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm
-        opd = sum_of_2d_modes(mode, wfe_rms.to_value(u.nm))
+        opd = sum_of_2d_modes(mode, wfe_rms.to_value(u.nm))  # type: ignore[union-attr]
 
         return OptPathDiff(opd * u.nm)
 
-    def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":
+    def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":  # noqa: B008
         """Converts the OptPhaseDiff object to the default units.
 
         Converts the internal parameters to float ndarrays
@@ -264,7 +262,7 @@ class OptPathDiff:
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            opd = self.data.to_value(units)
+            opd = self.data.to_value(units)  # type: ignore[union-attr]
         else:
             # deep copy internal data without units
             opd = copy.deepcopy(self.data)
@@ -289,7 +287,7 @@ def richdata_has_units(rich_data: RichData) -> bool:
         return False
 
 
-def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
+def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:  # noqa: B008
     """Generates a deepcopy of the input `RichData` object with units.
 
     Adds units to `dx` and `wavelength` (if available).

@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -15,7 +15,6 @@ from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnit
 
 
 class TestOpticalMaterial:
-
     @pytest.fixture(scope="class")
     def reflectivity_correct_input(self) -> IntervalData:
         """Correct reflectivity with an interpolator in between."""
@@ -33,7 +32,7 @@ class TestOpticalMaterial:
 
         sub_range = P.closed(1000 * u.nm, 1800 * u.nm)
         x = np.linspace(sub_range.lower, sub_range.upper, num=100, endpoint=True)
-        y = (x - 1200 * u.nm) * (x - 1700 * u.nm) / (400 * u.nm) ** 2 + 0.4
+        y = (x - 1200 * u.nm) * (x - 1700 * u.nm) / (400 * u.nm) ** 2 + 0.4  # type: ignore[operator]
 
         return y
 
@@ -46,7 +45,7 @@ class TestOpticalMaterial:
         x = np.linspace(sub_range.lower, sub_range.upper, num=100, endpoint=True)
         y = (x - 1200 * u.nm) * (x - 1500 * u.nm) * (x - 1900 * u.nm) / (
             500 * u.nm
-        ) ** 3 + 1.0
+        ) ** 3 + 1.0  # type: ignore[operator]
 
         return y
 
@@ -121,6 +120,8 @@ class TestOpticalMaterial:
 
         bbody_mat = OpticalMaterial.init_blackbody(domain)
 
+        assert bbody_mat.reflectivity is not None
+        assert bbody_mat.transmissivity is not None
         np.testing.assert_allclose(
             bbody_mat.absorptivity.get_value(input), 1.0, rtol=1e-13
         )
@@ -159,7 +160,6 @@ class TestOpticalMaterial:
     def test_init_err_1(self, reflectivity_model, reflectivity_err_type_1_input):
         """Check edges exceed 1 type errors."""
         with pytest.raises(ValueError):
-
             reflectivity = reflectivity_model(reflectivity_err_type_1_input)
 
             OpticalMaterial.init_opaque_from_refl(reflectivity)
@@ -167,7 +167,6 @@ class TestOpticalMaterial:
     def test_init_err_2(self, reflectivity_model, reflectivity_err_type_2_input):
         """Check maxima/minima exceed 1 type errors."""
         with pytest.raises(ValueError):
-
             reflectivity = reflectivity_model(reflectivity_err_type_2_input)
 
             OpticalMaterial.init_opaque_from_refl(reflectivity)
@@ -175,7 +174,6 @@ class TestOpticalMaterial:
     def test_init_err_3(self, reflectivity_err_type_3):
         """Check summation not equal to 1 errors."""
         with pytest.raises(ValueError):
-
             OpticalMaterial(
                 reflectivity_err_type_3,
                 reflectivity_err_type_3,
@@ -185,5 +183,4 @@ class TestOpticalMaterial:
     def test_init_err_4(self, reflectivity_err_type_4):
         """Check single value exceeds 1 type errors."""
         with pytest.raises(ValueError):
-
             OpticalMaterial.init_opaque_from_refl(reflectivity_err_type_4)

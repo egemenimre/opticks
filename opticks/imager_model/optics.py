@@ -1,9 +1,8 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
-
 
 import numpy as np
 from astropy.units import Quantity
@@ -13,29 +12,20 @@ from prysm.fttools import pad2d
 from prysm.geometry import circle
 from prysm.polynomials import sum_of_2d_modes
 from prysm.propagation import Wavefront
-from strictyaml import YAML, Map, Str
+from pydantic import Field
 
 from opticks import u
 from opticks.imager_model.imager_component import ImagerComponent
+from opticks.utils.parser_helpers import PositivePydanticQty
 from opticks.utils.prysm_utils import Grid, OptPathDiff
 from opticks.utils.unit_utils import split_value_and_force_unit
-from opticks.utils.yaml_helpers import Qty
-
-optics_schema = {
-    "name": Str(),
-    "focal_length": Qty(),
-    "aperture_diameter": Qty(),
-    "image_diam_on_focal_plane": Qty(),
-}
-"""Schema containing optical parameters."""
 
 
 class Aperture:
-
-    grid: Grid = None
+    grid: Grid | None = None
     """Grid object associated with the aperture"""
 
-    def __init__(self, data: ndarray, grid: Grid = None) -> None:
+    def __init__(self, data: ndarray, grid: Grid | None = None) -> None:
         """Aperture class.
 
         Holds the Aperture data as defined by `prysm`.
@@ -208,7 +198,7 @@ class Aperture:
         ap_data = self.data
 
         # scale for PSF sum = 1.0
-        aperture_padded = pad2d(ap_data, Q=Q_pad)
+        aperture_padded = pad2d(ap_data, Q=Q_pad)  # type: ignore[arg-type]
         aperture_unity_peak = aperture_padded * (
             Q_pad * Q * np.sqrt(ap_data.size) / ap_data.sum()
         )
@@ -221,29 +211,21 @@ class Optics(ImagerComponent):
     Class containing generic Optics parameters.
     """
 
-    @classmethod
-    def schema(cls) -> Map:
-        return Map(optics_schema)
+    name: str
+    focal_length: PositivePydanticQty
+    aperture_diameter: PositivePydanticQty
+    image_diam_on_focal_plane: PositivePydanticQty
 
-    @classmethod
-    def _params_class_name(cls) -> str:
-        return "OpticsParams"
+    # Non-serialized state (set after init, not from YAML)
+    pupils: list = Field(default_factory=list, exclude=True)
+    aperture_dx: Quantity | None = Field(default=None, exclude=True)
+    aperture: Aperture | None = Field(default=None, exclude=True)
 
     # ---------- begin modelling functions ----------
 
-    aperture_dx: Quantity = None
-    """Aperture sample distance (in mm).
-    """
-
-    def __init__(self, yaml: YAML):
-        super().__init__(yaml)
-
-        # Empty list of pupil functions
-        self.pupils: list[Wavefront] = []
-
-        self.aperture_dx: Quantity = None
-
-    def set_aperture_model(self, aperture: Aperture = None, samples: int = 400) -> None:
+    def set_aperture_model(
+        self, aperture: Aperture | None = None, samples: int = 400
+    ) -> None:
         """Sets the aperture model for the optics.
 
         The aperture model is as defined by `prysm`, it contains an `ndarray` grid of
@@ -272,7 +254,7 @@ class Optics(ImagerComponent):
             # aperture function not defined, use circular aperture
             # grid currently ignored
             self.aperture = Aperture.circle_aperture(
-                self.params.aperture_diameter, samples, with_units
+                self.aperture_diameter, samples, with_units
             )
         else:
             # aperture function defined, use it
@@ -282,9 +264,9 @@ class Optics(ImagerComponent):
         samples = len(self.aperture.data)
 
         # compute aperture sample distance
-        self.aperture_dx = (self.params.aperture_diameter / samples).to(u.mm)
+        self.aperture_dx = (self.aperture_diameter / samples).to(u.mm)
 
-    def add_pupil_func(self, wavelength, opd: OptPathDiff = None):
+    def add_pupil_func(self, wavelength, opd: OptPathDiff | None = None):
         """Adds a pupil function.
 
         A pupil function combines amplitude with phase information
@@ -312,10 +294,10 @@ class Optics(ImagerComponent):
 
         # Generate the pupil function (no units)
         pupil = Wavefront.from_amp_and_phase(
-            self.aperture.data,  # amplitudes
+            self.aperture.data,  # type: ignore[union-attr]  # amplitudes
             phase=opd_data,  # float ndarray in nm
             wavelength=wavelength.to_value(u.um),
-            dx=self.aperture_dx.to_value(u.mm),
+            dx=self.aperture_dx.to_value(u.mm),  # type: ignore[union-attr]
         )
 
         # add to the list of pupil functions
@@ -326,7 +308,7 @@ class Optics(ImagerComponent):
         wvl_ref: Quantity,
         psf_dx: Quantity,
         psf_samples: int = 512,
-        spectral_weights: np.ndarray = None,
+        spectral_weights: np.ndarray | None = None,
         with_units=True,
     ) -> RichData:
         """Computes the PSF for a single point on the Image Plane.
@@ -364,7 +346,7 @@ class Optics(ImagerComponent):
             PSF model with or without units
         """
 
-        focal_length = self.params.focal_length
+        focal_length = self.focal_length
 
         if not spectral_weights:
             # set uniform weights if no weights defined
@@ -390,9 +372,7 @@ class Optics(ImagerComponent):
         Computed as: focal length / aperture diameter
 
         """
-        return (
-            (self.params.focal_length / self.params.aperture_diameter).decompose().value
-        )
+        return (self.focal_length / self.aperture_diameter).decompose().value
 
     @property
     def full_optical_fov(self) -> Quantity:
@@ -403,7 +383,7 @@ class Optics(ImagerComponent):
 
         """
         return 2 * np.arctan(
-            (self.params.image_diam_on_focal_plane / 2.0) / self.params.focal_length
+            (self.image_diam_on_focal_plane / 2.0) / self.focal_length
         ).to(u.deg, copy=False)
 
     @property
@@ -413,7 +393,7 @@ class Optics(ImagerComponent):
 
         Computed as: pi x (aperture diameter/2 )^2
         """
-        return np.pi * (self.params.aperture_diameter / 2.0) ** 2
+        return np.pi * (self.aperture_diameter / 2.0) ** 2
 
     @property
     def aperture_solid_angle(self) -> Quantity:
@@ -422,7 +402,7 @@ class Optics(ImagerComponent):
         """
         return (
             np.pi
-            / (self.params.focal_length / (self.params.aperture_diameter / 2.0)) ** 2
+            / (self.focal_length / (self.aperture_diameter / 2.0)) ** 2
             * u.steradian
         )
 
@@ -447,7 +427,7 @@ class Optics(ImagerComponent):
             Spatial cutoff frequency (in cycles/mm)
         """
         # perfect incoherent optics
-        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)
+        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)  # type: ignore[union-attr]
 
 
 def _compute_psf(
@@ -493,9 +473,9 @@ def _compute_psf(
         PSF model (without units)
     """
 
-    focal_length, _ = split_value_and_force_unit(focal_length, u.mm)
-    wvl, _ = split_value_and_force_unit(wvl, u.um)
-    psf_dx, _ = split_value_and_force_unit(psf_dx, u.um)
+    focal_length_val, _ = split_value_and_force_unit(focal_length, u.mm)
+    wvl_val, _ = split_value_and_force_unit(wvl, u.um)
+    psf_dx_val, _ = split_value_and_force_unit(psf_dx, u.um)
 
     psf_components = []
 
@@ -505,7 +485,9 @@ def _compute_psf(
         # Note: focusing changes aperture sampling,
         # and is a function of wavelength. Therefore we use fixed sampling
         # for multiple wavelengths.
-        coherent_psf = pupil.focus_fixed_sampling(focal_length, psf_dx, psf_samples)
+        coherent_psf = pupil.focus_fixed_sampling(
+            focal_length_val, psf_dx_val, psf_samples
+        )
         psf_data = coherent_psf.intensity.data
         # sum of intensities, wvls are incoherent to each other
         psf_components.append(psf_data)
@@ -515,6 +497,6 @@ def _compute_psf(
 
     # Add scaling and wavelength information
     # pupil to psf plane means dx is switched from mm to um
-    psf = RichData(psf_data, psf_dx, wvl)
+    psf = RichData(psf_data, psf_dx_val, wvl_val)
 
     return psf

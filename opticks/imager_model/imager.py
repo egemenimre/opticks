@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -10,7 +10,6 @@ from typing import Iterable
 
 import numpy as np
 from astropy.units import Quantity
-from strictyaml import YAML
 
 from opticks import u
 from opticks.imager_model.detector import Detector
@@ -32,14 +31,14 @@ class Imager:
     detector_data : Detector
         Detector data object
     rw_electronics_data : RWElectronics
-        Read-out/Write Electronics data object
+        Read-out/Write Electronics data object (optional)
     """
 
     def __init__(
         self,
         optics_data: Optics,
         detector_data: Detector,
-        rw_electronics_data: RWElectronics = None,
+        rw_electronics_data: RWElectronics | None = None,
     ):
 
         self.optics = optics_data
@@ -50,40 +49,11 @@ class Imager:
             self.rw_electronics = None
 
     @classmethod
-    def from_yaml_data(
-        cls, optics_data: YAML, detector_data: YAML, rw_electronics_data: YAML = None
-    ) -> "Imager":
-        """
-        Initialises an Imager from components defined in YAML data.
-
-        Parameters
-        ----------
-        optics_data : YAML
-            YAML containing optics design data
-        detector_data : YAML
-            YAML containing detector design data
-        rw_electronics_data : YAML
-            YAML containing read-write electronics design data
-
-        Returns
-        -------
-        Imager
-            Imager object from the input data
-        """
-
-        # extract data structures from YAML data
-        optics = Optics(optics_data)
-        detector = Detector(detector_data)
-        rw_electronics = None
-        if rw_electronics_data:
-            rw_electronics = RWElectronics(rw_electronics_data)
-
-        # return a new instance of Imager
-        return cls(optics, detector, rw_electronics)
-
-    @classmethod
     def from_yaml_file(
-        cls, optics_data: Path, detector_data: Path, rw_electronics_data: Path = None
+        cls,
+        optics_data: Path,
+        detector_data: Path,
+        rw_electronics_data: Path | None = None,
     ) -> "Imager":
         """
         Initialises an Imager from components in YAML files.
@@ -113,7 +83,10 @@ class Imager:
 
     @classmethod
     def from_yaml_text(
-        cls, optics_data: str, detector_data: str, rw_electronics_data: str = None
+        cls,
+        optics_data: str,
+        detector_data: str,
+        rw_electronics_data: str | None = None,
     ) -> "Imager":
         """
         Initialises an Imager from components in YAML text.
@@ -146,7 +119,7 @@ class Imager:
     @u.quantity_input(wavelength="length")
     def q_factor(
         self,
-        wavelength: Quantity | np.ndarray[Quantity],
+        wavelength: Quantity,
         band_id: str,
         with_binning=True,
     ):
@@ -171,11 +144,11 @@ class Imager:
         """
 
         # select the correct channel
-        channel = self.detector.params.channels.all[band_id]
+        channel = self.detector.channels[band_id]
 
         pixel_pitch = channel.pixel_pitch(with_binning)
 
-        q = (wavelength * self.optics.f_number / pixel_pitch).decompose()
+        q = (wavelength * self.optics.f_number / pixel_pitch).decompose()  # type: ignore[union-attr]
 
         return q.value
 
@@ -207,7 +180,7 @@ class Imager:
                     * channel.horizontal_pixels
                     / 2.0
                 )
-                / self.optics.params.focal_length
+                / self.optics.focal_length
             )
         ).to(u.deg, copy=False)
 
@@ -238,7 +211,7 @@ class Imager:
                     * channel.vertical_pixels
                     / 2.0
                 )
-                / self.optics.params.focal_length
+                / self.optics.focal_length
             )
         ).to(u.deg, copy=False)
 
@@ -337,28 +310,28 @@ class Imager:
         # data rate after encoding
         enc_data_rate = (
             self.detector.pix_read_rate(band_id, with_binning, with_tdi)
-            * self.rw_electronics.params.pixel_encoding
+            * self.rw_electronics.pixel_encoding  # type: ignore[union-attr]
         )
 
         # data rate after compression and other processing
         if with_compression:
             process_output_data_rate = (
-                enc_data_rate / self.rw_electronics.params.compression_ratio
+                enc_data_rate / self.rw_electronics.compression_ratio  # type: ignore[union-attr]
             )
         else:
             process_output_data_rate = enc_data_rate
 
         # data rate after overheads
         write_data_rate = process_output_data_rate * (
-            1 + self.rw_electronics.params.data_write_overhead
+            1 + self.rw_electronics.data_write_overhead  # type: ignore[union-attr]
         )
 
-        return write_data_rate.to("Mbit/s")
+        return write_data_rate.to("Mbit/s")  # type: ignore[union-attr]
 
     @u.quantity_input(distance="length")
     def projected_horiz_img_extent(
         self,
-        distance: Quantity | np.ndarray[Quantity],
+        distance: Quantity,
         band_id: str,
     ) -> Quantity:
         """
@@ -368,8 +341,8 @@ class Imager:
 
         Parameters
         ----------
-        distance : Quantity | np.ndarray[Quantity]
-            _description_
+        distance : Quantity
+            distance to the target or plane
         band_id : str
             band ID (to select the correct band or channel)
 
@@ -384,7 +357,7 @@ class Imager:
     @u.quantity_input(distance="length")
     def projected_vert_img_extent(
         self,
-        distance: Quantity | np.ndarray[Quantity],
+        distance: Quantity,
         band_id: str,
     ) -> Quantity:
         """
@@ -394,7 +367,7 @@ class Imager:
 
         Parameters
         ----------
-        distance : Quantity | np.ndarray[Quantity]
+        distance : Quantity
             _description_
         band_id : str
             band ID (to select the correct band or channel)
@@ -410,7 +383,7 @@ class Imager:
     @u.quantity_input(distance="length")
     def spatial_sample_distance(
         self,
-        distance: Quantity | np.ndarray[Quantity],
+        distance: Quantity,
         band_id: str,
         with_binning=True,
         location="centre",
@@ -441,7 +414,7 @@ class Imager:
 
         Parameters
         ----------
-        distance : Quantity | np.ndarray[Quantity]
+        distance : Quantity
             distance between the imager and the target
         band_id : str
             band ID (to select the correct band or channel)
@@ -467,7 +440,6 @@ class Imager:
             ssd_v = ssd_h
 
         elif location == "centre left" or location == "centre right":
-
             s_h = self.projected_horiz_img_extent(distance, band_id)
             fov_h = self.horizontal_fov(band_id)
 
@@ -477,7 +449,6 @@ class Imager:
             ssd_v = 2 * a_v * np.tan(ifov / 2)
 
         elif location == "centre top" or location == "centre bottom":
-
             s_v = self.projected_vert_img_extent(distance, band_id)
             fov_v = self.vertical_fov(band_id)
 
@@ -487,7 +458,6 @@ class Imager:
             ssd_h = 2 * a_h * np.tan(ifov / 2)
 
         elif location == "corner":
-
             s_v = self.projected_vert_img_extent(distance, band_id)
             fov_v = self.vertical_fov(band_id)
 
@@ -507,6 +477,6 @@ class Imager:
 
         SSD = namedtuple("SSD", "horiz, vert")
 
-        ssd = SSD(ssd_h.decompose().to(u.m), ssd_v.decompose().to(u.m))
+        ssd = SSD(ssd_h.decompose().to(u.m), ssd_v.decompose().to(u.m))  # type: ignore[union-attr]
 
         return ssd

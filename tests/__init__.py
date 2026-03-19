@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -8,14 +8,14 @@
 from pathlib import Path
 
 
-def process_paths(filepath: Path, *search_dirs: Path):
+def process_paths(filepath: Path, *search_dirs: Path) -> Path:
     """
     Inits a filepath with different alternative locations.
 
     Searches the file first in the given path, then in the
     current working directory. If it does not exist, tries the
-    alternate directories. Returns `None` if the file is not found
-    in any of the directories.
+    alternate directories. Raises `FileNotFoundError` if the file
+    is not found in any of the directories.
 
     - Nominal path: `current working dir` + `filepath`
     - Alternate paths: `current working dir` + `alternate search dir` + `filepath`
@@ -30,7 +30,12 @@ def process_paths(filepath: Path, *search_dirs: Path):
     Returns
     -------
     Path
-        Path of the file, `None` if not found
+        Path of the file
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file is not found in any of the directories
     """
     working_dir = Path.cwd()
 
@@ -49,5 +54,6 @@ def process_paths(filepath: Path, *search_dirs: Path):
                 if file_path.exists():
                     return file_path.resolve()
 
-    # File is nowhere to be found, return None
-    return None
+    raise FileNotFoundError(
+        f"File '{filepath}' not found in any of the search directories."
+    )

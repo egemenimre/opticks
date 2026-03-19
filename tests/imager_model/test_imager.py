@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -16,7 +16,6 @@ from tests import process_paths
 
 
 class TestImager:
-
     file_directory = Path("sat_pushbroom_data")
     alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
     optics_file_path = Path("optics.yaml")
@@ -99,26 +98,26 @@ class TestImager:
         sat_altitude = 694.0 * u.km
 
         # computation
-        ssd = imager.spatial_sample_distance(
+        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
             sat_altitude, self.band_id, False, "centre"
         )
 
         # verification
-        assert_allclose(ssd.horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd.vert, truth_vert, atol=0.00000001 * u.m)
+        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
 
         # set up - centre right
         truth_horiz = 0.699215273 * u.m
         truth_vert = 0.699135473 * u.m
 
         # computation
-        ssd = imager.spatial_sample_distance(
+        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
             sat_altitude, self.band_id, False, "centre right"
         )
 
         # verification
-        assert_allclose(ssd.horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd.vert, truth_vert, atol=0.00000001 * u.m)
+        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
 
     def test_rw(self, imager: Imager):
         """Tests the read/write rates."""

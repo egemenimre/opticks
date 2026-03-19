@@ -1,43 +1,23 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 import os
-from abc import ABC, abstractmethod
 from pathlib import Path
 
-from strictyaml import YAML, Map, load
+import yaml
+from pydantic import BaseModel, ConfigDict
 
-from opticks.utils.yaml_helpers import dict_to_obj_creator
 
-
-class ImagerComponent(ABC):
+class ImagerComponent(BaseModel):
     """
     Common base class for the generic imager components.
 
-    Parameters
-    ----------
-    yaml : YAML
-        YAML containing design data
+    Subclasses define their YAML parameters as Pydantic field annotations.
     """
 
-    def __init__(self, yaml: YAML):
-        # extract data structures as a class
-        class_name = self._params_class_name()
-        self.params = dict_to_obj_creator(class_name, yaml.data)(class_name, yaml.data)
-
-    @classmethod
-    @abstractmethod
-    def schema(cls) -> Map:
-        """Schema to be used when converting YAML data to/from a dict."""
-        pass
-
-    @classmethod
-    @abstractmethod
-    def _params_class_name(cls) -> str:
-        """Class name after the dict-to-obj conversion."""
-        pass
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @classmethod
     def from_yaml_file(cls, file_path: Path):
@@ -52,8 +32,7 @@ class ImagerComponent(ABC):
         Returns
         -------
         component_data
-            Detector component object from the input data
-
+            Component object from the input data
         """
 
         if not file_path:
@@ -61,13 +40,8 @@ class ImagerComponent(ABC):
         elif not os.path.isfile(file_path):
             raise FileNotFoundError(f"File does not exist: {file_path}")
         else:
-            # Open the file and read its contents
             with open(file_path, "rt") as file:
-                # retrieve the component-specific schema dict
-                schema = cls.schema()
-                data_yaml = load(file.read(), schema, label=file_path)
-
-            return cls(data_yaml)
+                return cls.from_yaml_text(file.read())
 
     @classmethod
     def from_yaml_text(cls, yaml_text: str):
@@ -82,17 +56,40 @@ class ImagerComponent(ABC):
         Returns
         -------
         component_data
-            Detector component object from the input data
-
+            Component object from the input data
         """
 
         if not yaml_text:
             raise ValueError("Text content is None.")
         else:
-            # Open the text and read its contents
+            data = yaml.safe_load(yaml_text)
+            return cls(**data)
 
-            # retrieve the component-specific schema
-            schema = cls.schema()
-            data_yaml = load(yaml_text, schema, label=cls.__name__)
+    def to_yaml_text(self) -> str:
+        """
+        Serialise the component to a YAML string.
 
-            return cls(data_yaml)
+        Allows Unicode characters in the dump.
+
+        Returns
+        -------
+        str
+            YAML text representation of the component
+        """
+        return yaml.dump(
+            self.model_dump(mode="json"),
+            default_flow_style=False,
+            allow_unicode=True,
+        )
+
+    def to_yaml_file(self, file_path: Path) -> None:
+        """
+        Serialise the component to a YAML file.
+
+        Parameters
+        ----------
+        file_path : Path
+            Filepath to write the YAML data
+        """
+        with open(file_path, "wt") as file:
+            file.write(self.to_yaml_text())

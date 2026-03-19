@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -60,13 +60,13 @@ class OpticalMaterial:
         SKip any sanity checks
     """
 
-    name: str = None
+    name: str | None = None
 
-    reflectivity: IntervalData = None
+    reflectivity: IntervalData | None = None
 
-    transmissivity: IntervalData = None
+    transmissivity: IntervalData | None = None
 
-    emissivity: IntervalData = None
+    emissivity: IntervalData | None = None
 
     def __init__(
         self,
@@ -102,9 +102,9 @@ class OpticalMaterial:
         the checks fail, explaining which interval has an issue.
         """
 
-        t = self.transmissivity.resample()
-        r = self.reflectivity.resample()
-        e = self.emissivity.resample()
+        t = self.transmissivity.resample()  # type: ignore[union-attr]
+        r = self.reflectivity.resample()  # type: ignore[union-attr]
+        e = self.emissivity.resample()  # type: ignore[union-attr]
 
         # for every wavelength verify that 1 >= T or R or E >= 0
         # upon failure these will raise a ValueError
@@ -200,7 +200,7 @@ class OpticalMaterial:
     @property
     def absorptivity(self) -> IntervalData:
         """Absorptivity, which is equivalent to the Emissivity."""
-        return self.emissivity
+        return self.emissivity  # type: ignore[return-value]
 
     def plot(self) -> IntervalDataPlot:  # pragma: no cover
         """Convenience method to plot `OpticalMaterial` objects.
@@ -267,7 +267,6 @@ def _property_sanity_check(
         data = property.resample()
 
     for interval, funct in data.as_dict().items():
-
         interval: Interval
 
         err_flag = False
@@ -295,8 +294,8 @@ def _property_sanity_check(
             # *and* the maxima/minima.
 
             # check the data at the edges
-            left_edge_value = funct(interval.lower)
-            right_edge_value = funct(interval.upper)
+            left_edge_value = funct(interval.lower)  # type: ignore[arg-type]
+            right_edge_value = funct(interval.upper)  # type: ignore[arg-type]
 
             # print("values at edges: ", left_edge_value, right_edge_value)
 
@@ -336,10 +335,8 @@ def _property_sanity_check(
             # print("maxmin val ", maxmin_values)
 
             maxmin_values_are_ok = all(
-                [
-                    _check_validity(funct(maxmin_pt), max, min, abs_tolerance)
-                    for maxmin_pt in maxmin_pts
-                ]
+                _check_validity(funct(maxmin_pt), max, min, abs_tolerance)
+                for maxmin_pt in maxmin_pts
             )
 
             if not maxmin_values_are_ok:

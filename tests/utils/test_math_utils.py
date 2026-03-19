@@ -1,12 +1,15 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) 2024 Egemen Imre
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
 
+from typing import cast
+
 import numpy as np
 import pytest
+from astropy.units import Quantity, UnitBase
 from scipy.interpolate import Akima1DInterpolator
 
 from opticks import Q_, u
@@ -14,10 +17,10 @@ from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnit
 
 
 class TestInterpolatorWithUnits:
-
     # define the polynomial with discrete samples
-    t = np.linspace(-10, 10, endpoint=True) * u.s
-    y = (t.value - 2) * (t.value + 3) * u.m
+    _t_arr = np.linspace(-10, 10, endpoint=True)
+    t: Quantity = _t_arr * u.s
+    y: Quantity = (_t_arr - 2) * (_t_arr + 3) * u.m
 
     @pytest.fixture(scope="class")
     def ipol(self) -> InterpolatorWithUnits:
@@ -112,7 +115,7 @@ class TestInterpolatorWithUnits:
         scipy_ipol = Akima1DInterpolator(self.t.value, self.y.value, method="makima")
 
         # Init the Interpolator with units, but try deleting the units of y
-        ipol2 = InterpolatorWithUnits(scipy_ipol, self.t.unit, None)
+        ipol2 = InterpolatorWithUnits(scipy_ipol, cast(UnitBase, self.t.unit), None)
 
         # results
         result_1 = ipol2(t_tgt)

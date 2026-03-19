@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.units import Quantity
 from prysm import _richdata, coordinates, geometry, polynomials, propagation
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.fttools import pad2d
@@ -21,7 +22,6 @@ from tests import process_paths
 
 
 class TestOptics:
-
     @pytest.fixture(scope="class")
     def optics(self) -> Optics:
 
@@ -58,7 +58,7 @@ class TestOptics:
 
     def test_circle_aperture(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.to_value(u.mm)
+        diameter = optics.aperture_diameter.to_value(u.mm)
 
         samples = 256
 
@@ -70,7 +70,7 @@ class TestOptics:
 
         # computation
         aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, samples, with_units=True
+            optics.aperture_diameter, samples, with_units=True
         )
 
         # verification
@@ -78,7 +78,7 @@ class TestOptics:
 
     def test_circle_aperture_with_obscuration(self, optics):
         """Tests the circle aperture."""
-        diameter = optics.params.aperture_diameter.to_value(u.mm)
+        diameter = optics.aperture_diameter.to_value(u.mm)
 
         samples = 256
         obscuration_ratio = 0.3
@@ -93,7 +93,7 @@ class TestOptics:
 
         # computation
         aperture = Aperture.circle_aperture_with_obscuration(
-            optics.params.aperture_diameter, obscuration_ratio, samples, with_units=True
+            optics.aperture_diameter, obscuration_ratio, samples, with_units=True
         )
 
         # verification
@@ -117,7 +117,7 @@ class TestOptics:
         aperture3 = pad2d(aperture, Q=2)
         aperture3 = aperture3 * (2 * np.sqrt(aperture.size) / aperture.sum())
         inc_psf_norm_peak = abs(focus(aperture3, Q=1)) ** 2
-        inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()
+        _ = inc_psf_norm_peak.sum(), inc_psf_norm_peak.max()
 
         # computation
         yaml_text = """
@@ -130,9 +130,7 @@ class TestOptics:
 
         pup_samples = 256
 
-        aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, pup_samples
-        )
+        aperture = Aperture.circle_aperture(optics.aperture_diameter, pup_samples)
 
         optics.set_aperture_model(aperture)
 
@@ -141,7 +139,7 @@ class TestOptics:
         optics.add_pupil_func(ref_wvl, None)
 
         Q = 2
-        psf_dx = ref_wvl.to(u.um) * optics.f_number / Q
+        psf_dx: Quantity = ref_wvl.to(u.um) * optics.f_number / Q  # type: ignore[operator]
 
         psf_samples = pup_samples * Q
         psf = optics.psf(ref_wvl, psf_dx, psf_samples=psf_samples)
@@ -204,7 +202,7 @@ class TestOptics:
         # sample size in microns
         res_el = wvl0 * fno * 1.22 / 4  # 4 pixels per airy radius
 
-        xi, eta = coordinates.make_xy_grid(ap_samples, diameter=epd)
+        xi, eta = coordinates.make_xy_grid(ap_samples, diameter=epd)  # type: ignore[arg-type]
         r, t = coordinates.cart_to_polar(xi, eta)
         dx = xi[0, 1] - xi[0, 0]
 
@@ -253,7 +251,7 @@ class TestOptics:
         optics = Optics.from_yaml_text(yaml_text)
 
         aperture = Aperture.circle_aperture(
-            optics.params.aperture_diameter, ap_samples, with_units=True
+            optics.aperture_diameter, ap_samples, with_units=True
         )
         optics.set_aperture_model(aperture)
 

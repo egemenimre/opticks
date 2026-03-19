@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -11,7 +11,7 @@ from numpy.typing import ArrayLike
 
 
 def quantity_from_list(
-    data: list[Quantity], unit: UnitBase | FunctionUnitBase = None
+    data: list[Quantity], unit: UnitBase | FunctionUnitBase | None = None
 ) -> Quantity:
     """Converts a list of values to a Quantity object.
 
@@ -37,18 +37,17 @@ def quantity_from_list(
     """
 
     if isinstance(data, list) and any(isinstance(x, Quantity) for x in data):
-
         # find the first unit
         for x in data:
             if isinstance(x, Quantity):
-                unit = x.unit
+                unit = x.unit  # type: ignore[assignment]
                 # found one unit, break
                 break
 
         # all items should be Quantity, otherwise this will raise an Exception
-        return Quantity(data, unit)
+        return Quantity(data, unit)  # type: ignore[arg-type]
     else:
-        return data
+        return data  # type: ignore[return-value]
 
 
 def split_value_and_unit(
@@ -80,13 +79,13 @@ def split_value_and_unit(
         data_val = data.value
         unit = data.unit
 
-    return (data_val, unit)
+    return (data_val, unit)  # type: ignore[return-value]
 
 
 def split_value_and_force_unit(
     data: Quantity | float | ArrayLike,
     tgt_unit: UnitBase | FunctionUnitBase,
-    equivalencies=[],
+    equivalencies=None,
 ) -> tuple[float | np.ndarray, UnitBase | FunctionUnitBase]:
     """Splits the value and the unit, converting the data to the target unit.
 
@@ -117,4 +116,4 @@ def split_value_and_force_unit(
         data_val = data.to_value(tgt_unit, equivalencies=equivalencies)
         unit = tgt_unit
 
-    return (data_val, unit)
+    return (data_val, unit)  # type: ignore[return-value]

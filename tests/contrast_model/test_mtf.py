@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) Egemen Imre
 #
@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.units import Quantity
 from numpy.testing import assert_allclose
 from prysm.coordinates import cart_to_polar, make_xy_grid
 from prysm.geometry import regular_polygon
@@ -23,15 +24,14 @@ from tests import process_paths
 
 
 class TestMTF:
-
     pushbr_file_dir = Path("sat_pushbroom_data")
     pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
 
     perf_model_file_dir = Path("data")
     perf_model_alt_file_dir = Path("tests", "contrast_model", "data")
 
-    ref_wavelength = 650 * u.nm
-    input_line_freq = 30 * u.cy / u.mm
+    ref_wavelength: Quantity = 650 * u.nm
+    input_line_freq: Quantity = 30 * u.cy / u.mm
 
     @pytest.fixture(scope="class")
     def optics(self) -> Optics:
@@ -100,7 +100,6 @@ class TestMTF:
 
     def test_mtf_fixed_value_err_neg(self):
         with pytest.raises(ValueError):
-
             mtf_value = -0.5
             # Generate the MTF model and values
             MTF_Model_1D.fixed(mtf_value)
@@ -143,7 +142,7 @@ class TestMTF:
         truth = 0.7679273089188128
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         mtf_model = MTF_Model_1D.detector_sampling(channel.pixel_pitch())
@@ -160,7 +159,7 @@ class TestMTF:
         truth = 0.9704228869250533
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         stdev_jitter = 0.1  # 10% of the pix
@@ -178,7 +177,7 @@ class TestMTF:
         truth = 0.9776341205410619
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         blur_extent = 0.3  # 30% of the pix
@@ -196,7 +195,7 @@ class TestMTF:
         truth = 0.3990703920059105
 
         # select the pan channel
-        channel: Channel = detector.params.channels.pan
+        channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
         mtf_model_1 = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
@@ -221,7 +220,7 @@ class TestMTF:
 
         ap_samples = 256
 
-        x, y = make_xy_grid(ap_samples, diameter=efl / fno)
+        x, y = make_xy_grid(ap_samples, diameter=efl / fno)  # type: ignore[arg-type]
         dx = x[0, 1] - x[0, 0]
         r, t = cart_to_polar(x, y)
 
