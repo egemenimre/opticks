@@ -1,4 +1,4 @@
-# opticks: Sizing Tool for Optical Systems
+# opticks Models and analysis tools for optical system engineering
 #
 # Copyright (C) 2024 Egemen Imre
 #
