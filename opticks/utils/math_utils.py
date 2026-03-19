@@ -121,7 +121,7 @@ class PPolyWithUnits(PPoly):
             ppoly.c, ppoly.x, ppoly.extrapolate, ppoly.axis, x_unit, y_unit
         )
 
-    def __call__(self, x: float | Quantity, nu=0, extrapolate=None, equivalencies=[]):
+    def __call__(self, x: float | Quantity, nu=0, extrapolate=None, equivalencies=None):
 
         # check x unit and generate the unitless version of x
         x, _ = split_value_and_force_unit(x, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
@@ -143,10 +143,12 @@ class PPolyWithUnits(PPoly):
 
         # compute and add the units
         return PPolyWithUnits.from_ppoly(
-            super().antiderivative(nu), self.x_unit, y_unit  # type: ignore[arg-type]
+            super().antiderivative(nu),
+            self.x_unit,
+            y_unit,  # type: ignore[arg-type]
         )
 
-    def integrate(self, a, b, extrapolate=None, equivalencies=[]):
+    def integrate(self, a, b, extrapolate=None, equivalencies=None):
 
         a, _ = split_value_and_force_unit(a, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
         b, _ = split_value_and_force_unit(b, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
@@ -164,13 +166,15 @@ class PPolyWithUnits(PPoly):
         y: float | Quantity,
         discontinuity=True,
         extrapolate=None,
-        equivalencies=[],
+        equivalencies=None,
     ) -> ndarray:
 
         y, _ = split_value_and_force_unit(y, self.y_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
 
         return Quantity(
-            super().solve(y, discontinuity, extrapolate), self.x_unit, copy=False  # type: ignore[arg-type]
+            super().solve(y, discontinuity, extrapolate),  # type: ignore[arg-type]
+            self.x_unit,
+            copy=False,  # type: ignore[arg-type]
         )
 
     def __str__(self) -> str:

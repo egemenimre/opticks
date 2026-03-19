@@ -20,7 +20,6 @@ from opticks import u
 
 
 class Grid:
-
     x: ndarray | None = None
     """Cartesian x coordinate."""
 
@@ -138,7 +137,7 @@ class Grid:
 
         return self._t  # type: ignore[return-value]
 
-    def strip_units(self, units: Unit = Unit("mm")) -> "Grid":
+    def strip_units(self, units: Unit = Unit("mm")) -> "Grid":  # noqa: B008
         """Converts the Grid object to the default units.
 
         Converts the internal parameters to float ndarrays
@@ -177,7 +176,6 @@ class Grid:
 
 
 class OptPathDiff:
-
     def __init__(self, opd: ndarray):
         """Init with Optical Path Difference.
 
@@ -245,7 +243,7 @@ class OptPathDiff:
 
         return OptPathDiff(opd * u.nm)
 
-    def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":
+    def strip_units(self, units: Unit = Unit("nm")) -> "OptPathDiff":  # noqa: B008
         """Converts the OptPhaseDiff object to the default units.
 
         Converts the internal parameters to float ndarrays
@@ -289,7 +287,7 @@ def richdata_has_units(rich_data: RichData) -> bool:
         return False
 
 
-def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:
+def richdata_with_units(rich_data: RichData, dx_units: Unit = Unit("mm")) -> RichData:  # noqa: B008
     """Generates a deepcopy of the input `RichData` object with units.
 
     Adds units to `dx` and `wavelength` (if available).

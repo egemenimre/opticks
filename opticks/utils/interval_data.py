@@ -30,7 +30,6 @@ FunctCombinationMethod = Enum(
 
 
 class IntervalData(P.IntervalDict):
-
     _MIN_SAMPLE_SIZE = 20
     """Minimum sample size for each atomic interval for interpolation
     and resampling."""
@@ -487,7 +486,6 @@ class IntervalData(P.IntervalDict):
         flattened = IntervalData()
 
         for interval, functs in atomic_tuples:
-
             # force functs into a list
             if not isinstance(functs, list):
                 functs = [functs]
@@ -500,7 +498,6 @@ class IntervalData(P.IntervalDict):
                 (isinstance(funct, numbers.Number) or isinstance(funct, Quantity))
                 for funct in functs
             ):
-
                 # all functs are numbers
                 if len(functs) == 1:
                     # only a single item is present, just return it
@@ -515,7 +512,6 @@ class IntervalData(P.IntervalDict):
                         f"Set the combination method to 'SUM' or 'MULTIPLY'."
                     )
             else:
-
                 # create the new resampling
                 x_values, y_values = _generate_samples(  # type: ignore[misc]
                     self.combination_method, interval, functs, self.sample_size
@@ -591,7 +587,6 @@ class IntervalData(P.IntervalDict):
 
         # go through the atomic intervals and integrate
         for atomic_int, funct in data.as_dict().items():  # type: ignore[union-attr]
-
             atomic_int: Interval
 
             if isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
@@ -673,7 +668,6 @@ def _eval_functs_multiply(x, functs) -> Quantity | float:
 
     # loop through the functions to multiply the values
     for funct in functs:
-
         if funct is None:
             return None  # type: ignore[return-value]
         elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
@@ -716,7 +710,6 @@ def _eval_functs_sum(x, functs) -> Quantity | float:
 
     # loop through the functions to multiply the values
     for funct in functs:
-
         if funct is None:
             return None  # type: ignore[return-value]
         elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
@@ -825,7 +818,6 @@ class IntervalDataPlot:  # pragma: no cover
 
         # generate IntervalData lines
         for label, interval_data in interval_data_dict.items():
-
             # If plot interval is defined, intersect here
             # and get the new IntervalData
             if plot_interval is not None:
@@ -841,9 +833,10 @@ class IntervalDataPlot:  # pragma: no cover
             if interval_data.combination_method == FunctCombinationMethod.MULTIPLY:  # type: ignore[union-attr]
                 # combination method: multiplication
                 for interval, functs in atomic_tuples:
-
                     x_list, y_list = self._prep_mult_data(
-                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
+                        functs,
+                        interval,
+                        interval_data.sample_size,  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)
@@ -852,9 +845,10 @@ class IntervalDataPlot:  # pragma: no cover
             elif interval_data.combination_method == FunctCombinationMethod.SUM:  # type: ignore[union-attr]
                 # combination method: summation
                 for interval, functs in atomic_tuples:
-
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
+                        functs,
+                        interval,
+                        interval_data.sample_size,  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)
@@ -862,7 +856,6 @@ class IntervalDataPlot:  # pragma: no cover
             else:
                 # combination method undefined
                 for interval, functs in atomic_tuples:
-
                     if isinstance(functs, list):
                         raise ValueError(
                             f"Invalid combination method: {interval_data.combination_method}. "  # type: ignore[union-attr]
@@ -870,7 +863,9 @@ class IntervalDataPlot:  # pragma: no cover
                         )
 
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
+                        functs,
+                        interval,
+                        interval_data.sample_size,  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)

@@ -24,7 +24,6 @@ from opticks.utils.prysm_utils import richdata_with_units
 
 
 class MTF_Model_1D:
-
     def __init__(self, id: str, mtf_value_func) -> None:
         """
         Modulation Transfer Function (MTF) Model in 1D.
@@ -40,9 +39,7 @@ class MTF_Model_1D:
         self.id = id
         self._value_func = mtf_value_func
 
-    def mtf_value(
-        self, input_line_freq: Quantity
-    ) -> float | NDArray[np.float64]:
+    def mtf_value(self, input_line_freq: Quantity) -> float | NDArray[np.float64]:
         """
         Gets the MTF value for the given input line frequency.
 
@@ -99,7 +96,9 @@ class MTF_Model_1D:
 
         # prepare interpolator
         interpolator = InterpolatorWithUnits.from_ipol_method(
-            InterpolatorWithUnitTypes.AKIMA, freq_values, mtf_values  # type: ignore[arg-type]
+            InterpolatorWithUnitTypes.AKIMA,
+            freq_values,
+            mtf_values,  # type: ignore[arg-type]
         )
 
         # set the value function (with the interpolator)
@@ -848,8 +847,7 @@ class MTF_Plot_1D:  # pragma: no cover
             # one freq list for each
 
             # generate MTF data lines
-            for label, freqs in list(zip(mtf_data, freq_list)):
-
+            for label, freqs in zip(mtf_data, freq_list, strict=True):
                 # generate values (y axis)
                 mtf_values = mtf_data[label].mtf_value(freqs)
 
@@ -861,7 +859,6 @@ class MTF_Plot_1D:  # pragma: no cover
 
             # generate MTF data lines
             for label, mtf_model in mtf_data.items():
-
                 # generate values (y axis)
                 mtf_values = mtf_model.mtf_value(freq_list)
 

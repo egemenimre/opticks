@@ -23,7 +23,6 @@ class DetectorType(StrEnum):
 
 
 class Channel(BaseModel):
-
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     name: str
@@ -81,7 +80,7 @@ class Channel(BaseModel):
             Pixel area with or without binning
         """
 
-        return self.pixel_pitch(with_binning) ** 2
+        return self.pixel_pitch(with_binning) ** 2  # type: ignore[return-value]
 
     def nyquist_freq(self, with_binning: bool = True) -> Quantity:
         """
@@ -123,9 +122,7 @@ class Channel(BaseModel):
         # total number of pixels in the frame
         return (
             self.horizontal_pixels / binning * self.vertical_pixels / binning * u.pixel
-        ).to(
-            "Mpixel"
-        )  # type: ignore[return-value]
+        ).to("Mpixel")  # type: ignore[return-value]
 
     def pixel_count_line(self, with_binning: bool = True) -> Quantity:
         """
@@ -185,7 +182,7 @@ class Channel(BaseModel):
         else:
             raise ValueError(f"Invalid detector type: {self._detector_type}")
 
-        return pix_read_rate.to("Mpixel/s")
+        return pix_read_rate.to("Mpixel/s")  # type: ignore[union-attr]
 
     @property
     def centre_wavelength(self) -> Quantity:
@@ -304,7 +301,7 @@ class Detector(ImagerComponent):
             # total tdi col duration = line/frame duration (w/bin) x Nr of TDI stages
             channel.total_tdi_col_duration = (
                 timings.frame_duration * channel.binning * channel.tdi_stages  # type: ignore[operator]
-            ).to(u.ms)
+            ).to(u.ms)  # type: ignore[union-attr]
 
     # ---------- begin modelling functions ----------
 
@@ -362,12 +359,13 @@ class Detector(ImagerComponent):
         timings = self.timings
 
         if isinstance(band_id, str):
-
             # there is a single channel
             channel = self.get_channel(band_id)
 
             pix_read_rate = channel.pix_read_rate(
-                timings.frame_rate, with_binning, with_tdi  # type: ignore[arg-type]
+                timings.frame_rate,  # type: ignore[arg-type]
+                with_binning,
+                with_tdi,
             )
         else:
             # there are multiple channels, sum the values
@@ -375,7 +373,9 @@ class Detector(ImagerComponent):
 
             for channel in channels:
                 pix_read_rate_single_chan = channel.pix_read_rate(
-                    timings.frame_rate, with_binning, with_tdi  # type: ignore[arg-type]
+                    timings.frame_rate,  # type: ignore[arg-type]
+                    with_binning,
+                    with_tdi,
                 )
                 pix_read_rate += pix_read_rate_single_chan
 

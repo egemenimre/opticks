@@ -267,7 +267,6 @@ def _property_sanity_check(
         data = property.resample()
 
     for interval, funct in data.as_dict().items():
-
         interval: Interval
 
         err_flag = False
@@ -336,10 +335,8 @@ def _property_sanity_check(
             # print("maxmin val ", maxmin_values)
 
             maxmin_values_are_ok = all(
-                [
-                    _check_validity(funct(maxmin_pt), max, min, abs_tolerance)
-                    for maxmin_pt in maxmin_pts
-                ]
+                _check_validity(funct(maxmin_pt), max, min, abs_tolerance)
+                for maxmin_pt in maxmin_pts
             )
 
             if not maxmin_values_are_ok:

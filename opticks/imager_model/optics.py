@@ -22,7 +22,6 @@ from opticks.utils.unit_utils import split_value_and_force_unit
 
 
 class Aperture:
-
     grid: Grid | None = None
     """Grid object associated with the aperture"""
 
@@ -428,7 +427,7 @@ class Optics(ImagerComponent):
             Spatial cutoff frequency (in cycles/mm)
         """
         # perfect incoherent optics
-        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)
+        return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)  # type: ignore[union-attr]
 
 
 def _compute_psf(

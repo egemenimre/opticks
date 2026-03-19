@@ -15,7 +15,6 @@ from tests import process_paths
 
 
 class TestDetector:
-
     @pytest.fixture(scope="class")
     def detector(self) -> Detector:
 
@@ -32,7 +31,7 @@ class TestDetector:
         """Tests the detector read rate."""
 
         # select all channels
-        band_id = [id for id in detector.channels.keys()]
+        band_id = list(detector.channels.keys())
 
         # set up
         truth = 73.587 * Unit("megapixel / second")

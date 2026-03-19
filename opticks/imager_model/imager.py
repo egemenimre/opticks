@@ -148,7 +148,7 @@ class Imager:
 
         pixel_pitch = channel.pixel_pitch(with_binning)
 
-        q = (wavelength * self.optics.f_number / pixel_pitch).decompose()
+        q = (wavelength * self.optics.f_number / pixel_pitch).decompose()  # type: ignore[union-attr]
 
         return q.value
 
@@ -326,7 +326,7 @@ class Imager:
             1 + self.rw_electronics.data_write_overhead  # type: ignore[union-attr]
         )
 
-        return write_data_rate.to("Mbit/s")
+        return write_data_rate.to("Mbit/s")  # type: ignore[union-attr]
 
     @u.quantity_input(distance="length")
     def projected_horiz_img_extent(
@@ -440,7 +440,6 @@ class Imager:
             ssd_v = ssd_h
 
         elif location == "centre left" or location == "centre right":
-
             s_h = self.projected_horiz_img_extent(distance, band_id)
             fov_h = self.horizontal_fov(band_id)
 
@@ -450,7 +449,6 @@ class Imager:
             ssd_v = 2 * a_v * np.tan(ifov / 2)
 
         elif location == "centre top" or location == "centre bottom":
-
             s_v = self.projected_vert_img_extent(distance, band_id)
             fov_v = self.vertical_fov(band_id)
 
@@ -460,7 +458,6 @@ class Imager:
             ssd_h = 2 * a_h * np.tan(ifov / 2)
 
         elif location == "corner":
-
             s_v = self.projected_vert_img_extent(distance, band_id)
             fov_v = self.vertical_fov(band_id)
 

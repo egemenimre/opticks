@@ -17,7 +17,6 @@ from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnit
 
 
 class TestIntervalData:
-
     @pytest.fixture(scope="class")
     def filter(self) -> IntervalData:
         data = P.IntervalDict()

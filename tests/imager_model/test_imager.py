@@ -16,7 +16,6 @@ from tests import process_paths
 
 
 class TestImager:
-
     file_directory = Path("sat_pushbroom_data")
     alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
     optics_file_path = Path("optics.yaml")

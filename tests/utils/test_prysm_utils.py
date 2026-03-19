@@ -13,7 +13,6 @@ from opticks.utils.prysm_utils import Grid, OptPathDiff
 
 
 class TestPrysmUtils:
-
     def test_zernike(self):
         """Replicate the 'Q2d_sequence' example in
         the prysm docs 'Image Simulation' with Zernikes."""

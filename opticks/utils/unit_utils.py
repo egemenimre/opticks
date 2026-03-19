@@ -37,7 +37,6 @@ def quantity_from_list(
     """
 
     if isinstance(data, list) and any(isinstance(x, Quantity) for x in data):
-
         # find the first unit
         for x in data:
             if isinstance(x, Quantity):
@@ -86,7 +85,7 @@ def split_value_and_unit(
 def split_value_and_force_unit(
     data: Quantity | float | ArrayLike,
     tgt_unit: UnitBase | FunctionUnitBase,
-    equivalencies=[],
+    equivalencies=None,
 ) -> tuple[float | np.ndarray, UnitBase | FunctionUnitBase]:
     """Splits the value and the unit, converting the data to the target unit.
 

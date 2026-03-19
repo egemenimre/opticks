@@ -18,7 +18,6 @@ from opticks.utils.unit_utils import (
 
 
 class TestUnitUtils:
-
     def test_quantity_from_list(self):
         """Test Quantity from list."""
         data = [Q_(1, "mm"), Q_(2, "m"), Q_(3, "m")]
@@ -84,7 +83,6 @@ class TestUnitUtils:
 
 
 class TestUnits:
-
     a = P.closed(0 * u.mm, 1 * u.mm)
 
     b = P.closed(1.2 * u.mm, 2.4 * u.mm)

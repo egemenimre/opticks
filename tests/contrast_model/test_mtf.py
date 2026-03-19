@@ -24,7 +24,6 @@ from tests import process_paths
 
 
 class TestMTF:
-
     pushbr_file_dir = Path("sat_pushbroom_data")
     pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
 
@@ -101,7 +100,6 @@ class TestMTF:
 
     def test_mtf_fixed_value_err_neg(self):
         with pytest.raises(ValueError):
-
             mtf_value = -0.5
             # Generate the MTF model and values
             MTF_Model_1D.fixed(mtf_value)

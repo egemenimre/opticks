@@ -17,7 +17,6 @@ from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnit
 
 
 class TestInterpolatorWithUnits:
-
     # define the polynomial with discrete samples
     _t_arr = np.linspace(-10, 10, endpoint=True)
     t: Quantity = _t_arr * u.s

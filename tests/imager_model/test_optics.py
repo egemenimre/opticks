@@ -22,7 +22,6 @@ from tests import process_paths
 
 
 class TestOptics:
-
     @pytest.fixture(scope="class")
     def optics(self) -> Optics:
 

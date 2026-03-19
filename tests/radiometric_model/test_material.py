@@ -15,7 +15,6 @@ from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnit
 
 
 class TestOpticalMaterial:
-
     @pytest.fixture(scope="class")
     def reflectivity_correct_input(self) -> IntervalData:
         """Correct reflectivity with an interpolator in between."""
@@ -161,7 +160,6 @@ class TestOpticalMaterial:
     def test_init_err_1(self, reflectivity_model, reflectivity_err_type_1_input):
         """Check edges exceed 1 type errors."""
         with pytest.raises(ValueError):
-
             reflectivity = reflectivity_model(reflectivity_err_type_1_input)
 
             OpticalMaterial.init_opaque_from_refl(reflectivity)
@@ -169,7 +167,6 @@ class TestOpticalMaterial:
     def test_init_err_2(self, reflectivity_model, reflectivity_err_type_2_input):
         """Check maxima/minima exceed 1 type errors."""
         with pytest.raises(ValueError):
-
             reflectivity = reflectivity_model(reflectivity_err_type_2_input)
 
             OpticalMaterial.init_opaque_from_refl(reflectivity)
@@ -177,7 +174,6 @@ class TestOpticalMaterial:
     def test_init_err_3(self, reflectivity_err_type_3):
         """Check summation not equal to 1 errors."""
         with pytest.raises(ValueError):
-
             OpticalMaterial(
                 reflectivity_err_type_3,
                 reflectivity_err_type_3,
@@ -187,5 +183,4 @@ class TestOpticalMaterial:
     def test_init_err_4(self, reflectivity_err_type_4):
         """Check single value exceeds 1 type errors."""
         with pytest.raises(ValueError):
-
             OpticalMaterial.init_opaque_from_refl(reflectivity_err_type_4)
