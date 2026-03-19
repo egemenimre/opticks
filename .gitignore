@@ -144,3 +144,6 @@ opticks/temp
 
 # other project config
 opticks.code-workspace
+
+# AI helpers
+.claude/
