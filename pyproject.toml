@@ -1,15 +1,19 @@
+[build-system]
+requires = ["flit_core>=3.4"]
+build-backend = "flit_core.buildapi"
+
 [project]
 name = "opticks"
 version = "0.1.0"
-dependencies = ["numpy", "scipy", "portion", "astropy", "pydantic>=2.0", "pyyaml", "prysm", "matplotlib"]
+dependencies = ["numpy", "scipy>=1.13.0", "portion", "astropy", "pydantic>=2.0", "pyyaml", "prysm", "matplotlib"]
 
 requires-python = ">=3.11"
 
 authors = [{ name = "Egemen Imre" }]
 
-description = "Optical System Analysis Tools and Models"
+description = "Models and analysis tools for optical system engineering"
 readme = "README.md"
-license = { file = "LICENSE.md" }
+license = "GPL-3.0-or-later"
 
 keywords = [
     "optics",
@@ -26,6 +30,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
 ]
@@ -38,4 +46,14 @@ Repository = "https://github.com/egemenimre/opticks/"
 
 [project.optional-dependencies]
 test = ["pytest", "coverage", "pytest-xdist"]
-doc = ["sphinx"]
+doc = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints",
+    "sphinx-copybutton",
+    "sphinx-notfound-page",
+    "sphinx-hoverxref",
+    "myst-parser",
+    "nbsphinx",
+    "ipykernel",
+]
