@@ -7,9 +7,9 @@ version: 2
 
 # Set the version of Python and other tools that might be needed
 build:
-  os: ubuntu-lts-latest
+  os: ubuntu-24.04
   tools:
-    python: mambaforge-latest
+    python: miniforge3-latest
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
