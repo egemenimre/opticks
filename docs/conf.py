@@ -47,7 +47,7 @@ extensions = [
     "sphinx.ext.viewcode",  # links to highlighted source code
     "sphinx_copybutton",
     "notfound.extension",
-    "hoverxref.extension",
+    # "hoverxref.extension",  # disabled: incompatible with current Sphinx version
     # "sphinx.ext.githubpages",
     "sphinx.ext.doctest",  # Doctest
     "myst_parser",  # MyST parser
@@ -168,9 +168,9 @@ myst_all_links_external = True
 # autoapi_add_toctree_entry = True  # Generate autoapi index page
 
 # -- Options for hoverxref -------------------------------------------
-hoverxref_auto_ref = True
-hoverxref_mathjax = True
-hoverxref_intersphinx = ["numpy", "scipy", "astropy", "matplotlib"]
+# hoverxref_auto_ref = True
+# hoverxref_mathjax = True
+# hoverxref_intersphinx = ["numpy", "scipy", "astropy", "matplotlib"]
 
 # -- Options for copybutton -------------------------------------------
 
