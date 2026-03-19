@@ -99,26 +99,26 @@ class TestImager:
         sat_altitude = 694.0 * u.km
 
         # computation
-        ssd = imager.spatial_sample_distance(
+        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
             sat_altitude, self.band_id, False, "centre"
         )
 
         # verification
-        assert_allclose(ssd.horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd.vert, truth_vert, atol=0.00000001 * u.m)
+        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
 
         # set up - centre right
         truth_horiz = 0.699215273 * u.m
         truth_vert = 0.699135473 * u.m
 
         # computation
-        ssd = imager.spatial_sample_distance(
+        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
             sat_altitude, self.band_id, False, "centre right"
         )
 
         # verification
-        assert_allclose(ssd.horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd.vert, truth_vert, atol=0.00000001 * u.m)
+        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
 
     def test_rw(self, imager: Imager):
         """Tests the read/write rates."""
