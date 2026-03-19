@@ -310,20 +310,20 @@ class Imager:
         # data rate after encoding
         enc_data_rate = (
             self.detector.pix_read_rate(band_id, with_binning, with_tdi)
-            * self.rw_electronics.pixel_encoding
+            * self.rw_electronics.pixel_encoding  # type: ignore[union-attr]
         )
 
         # data rate after compression and other processing
         if with_compression:
             process_output_data_rate = (
-                enc_data_rate / self.rw_electronics.compression_ratio
+                enc_data_rate / self.rw_electronics.compression_ratio  # type: ignore[union-attr]
             )
         else:
             process_output_data_rate = enc_data_rate
 
         # data rate after overheads
         write_data_rate = process_output_data_rate * (
-            1 + self.rw_electronics.data_write_overhead
+            1 + self.rw_electronics.data_write_overhead  # type: ignore[union-attr]
         )
 
         return write_data_rate.to("Mbit/s")
@@ -480,6 +480,6 @@ class Imager:
 
         SSD = namedtuple("SSD", "horiz, vert")
 
-        ssd = SSD(ssd_h.decompose().to(u.m), ssd_v.decompose().to(u.m))
+        ssd = SSD(ssd_h.decompose().to(u.m), ssd_v.decompose().to(u.m))  # type: ignore[union-attr]
 
         return ssd

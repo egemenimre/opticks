@@ -26,7 +26,7 @@ class Aperture:
     grid: Grid | None = None
     """Grid object associated with the aperture"""
 
-    def __init__(self, data: ndarray, grid: Grid = None) -> None:
+    def __init__(self, data: ndarray, grid: Grid | None = None) -> None:
         """Aperture class.
 
         Holds the Aperture data as defined by `prysm`.
@@ -199,7 +199,7 @@ class Aperture:
         ap_data = self.data
 
         # scale for PSF sum = 1.0
-        aperture_padded = pad2d(ap_data, Q=Q_pad)
+        aperture_padded = pad2d(ap_data, Q=Q_pad)  # type: ignore[arg-type]
         aperture_unity_peak = aperture_padded * (
             Q_pad * Q * np.sqrt(ap_data.size) / ap_data.sum()
         )
@@ -224,7 +224,7 @@ class Optics(ImagerComponent):
 
     # ---------- begin modelling functions ----------
 
-    def set_aperture_model(self, aperture: Aperture = None, samples: int = 400) -> None:
+    def set_aperture_model(self, aperture: Aperture | None = None, samples: int = 400) -> None:
         """Sets the aperture model for the optics.
 
         The aperture model is as defined by `prysm`, it contains an `ndarray` grid of
@@ -265,7 +265,7 @@ class Optics(ImagerComponent):
         # compute aperture sample distance
         self.aperture_dx = (self.aperture_diameter / samples).to(u.mm)
 
-    def add_pupil_func(self, wavelength, opd: OptPathDiff = None):
+    def add_pupil_func(self, wavelength, opd: OptPathDiff | None = None):
         """Adds a pupil function.
 
         A pupil function combines amplitude with phase information
@@ -307,7 +307,7 @@ class Optics(ImagerComponent):
         wvl_ref: Quantity,
         psf_dx: Quantity,
         psf_samples: int = 512,
-        spectral_weights: np.ndarray = None,
+        spectral_weights: np.ndarray | None = None,
         with_units=True,
     ) -> RichData:
         """Computes the PSF for a single point on the Image Plane.

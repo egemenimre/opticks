@@ -24,20 +24,20 @@ class UnitInterval(Portion.Interval):
         if isinstance(lower, Portion.const._PInf):
             lower = np.inf
             if isinstance(upper, u.Quantity):
-                lower = lower * upper.unit
+                lower = lower * upper.unit  # type: ignore[operator]
         elif isinstance(lower, Portion.const._NInf):
             lower = -1 * np.inf
             if isinstance(upper, u.Quantity):
-                lower = lower * upper.unit
+                lower = lower * upper.unit  # type: ignore[operator]
 
         if isinstance(upper, Portion.const._PInf):
             upper = np.inf
             if isinstance(lower, u.Quantity):
-                upper = upper * lower.unit
+                upper = upper * lower.unit  # type: ignore[operator]
         elif isinstance(upper, Portion.const._NInf):
             upper = -1 * np.inf
             if isinstance(lower, u.Quantity):
-                upper = upper * lower.unit
+                upper = upper * lower.unit  # type: ignore[operator]
 
         return super().from_atomic(left, lower, upper, right)
 

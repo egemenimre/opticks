@@ -11,7 +11,7 @@ from numpy.typing import ArrayLike
 
 
 def quantity_from_list(
-    data: list[Quantity], unit: UnitBase | FunctionUnitBase = None
+    data: list[Quantity], unit: UnitBase | FunctionUnitBase | None = None
 ) -> Quantity:
     """Converts a list of values to a Quantity object.
 
@@ -41,14 +41,14 @@ def quantity_from_list(
         # find the first unit
         for x in data:
             if isinstance(x, Quantity):
-                unit = x.unit
+                unit = x.unit  # type: ignore[assignment]
                 # found one unit, break
                 break
 
         # all items should be Quantity, otherwise this will raise an Exception
-        return Quantity(data, unit)
+        return Quantity(data, unit)  # type: ignore[arg-type]
     else:
-        return data
+        return data  # type: ignore[return-value]
 
 
 def split_value_and_unit(
@@ -80,7 +80,7 @@ def split_value_and_unit(
         data_val = data.value
         unit = data.unit
 
-    return (data_val, unit)
+    return (data_val, unit)  # type: ignore[return-value]
 
 
 def split_value_and_force_unit(
@@ -117,4 +117,4 @@ def split_value_and_force_unit(
         data_val = data.to_value(tgt_unit, equivalencies=equivalencies)
         unit = tgt_unit
 
-    return (data_val, unit)
+    return (data_val, unit)  # type: ignore[return-value]

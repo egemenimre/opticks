@@ -276,9 +276,9 @@ class Detector(ImagerComponent):
         timings = self.timings
 
         # frame duration: inverse of the frame rate
-        timings.frame_duration = (1 / timings.frame_rate).to(u.ms)
+        timings.frame_duration = (1 / timings.frame_rate).to(u.ms)  # type: ignore[operator]
         # max integration duration possible
-        timings.max_integration_duration = (
+        timings.max_integration_duration = (  # type: ignore[misc]
             timings.frame_duration
             - timings.frame_overhead_duration
             + timings.frame_overlap_duration
@@ -293,17 +293,17 @@ class Detector(ImagerComponent):
             # is binned
             channel.is_binned = False if channel.binning == 1 else True
             # line/frame duration (with binning)
-            channel.frame_duration = timings.frame_duration * channel.binning
+            channel.frame_duration = timings.frame_duration * channel.binning  # type: ignore[operator]
             # line/frame rate (with binning)
-            channel.frame_rate = timings.frame_rate / channel.binning
+            channel.frame_rate = timings.frame_rate / channel.binning  # type: ignore[operator]
             # total exposure duration (with binning)
             channel.integration_duration = (
-                timings.integration_duration * channel.binning
+                timings.integration_duration * channel.binning  # type: ignore[operator]
             )
             # total TDI column duration
             # total tdi col duration = line/frame duration (w/bin) x Nr of TDI stages
             channel.total_tdi_col_duration = (
-                timings.frame_duration * channel.binning * channel.tdi_stages
+                timings.frame_duration * channel.binning * channel.tdi_stages  # type: ignore[operator]
             ).to(u.ms)
 
     # ---------- begin modelling functions ----------
@@ -367,7 +367,7 @@ class Detector(ImagerComponent):
             channel = self.get_channel(band_id)
 
             pix_read_rate = channel.pix_read_rate(
-                timings.frame_rate, with_binning, with_tdi
+                timings.frame_rate, with_binning, with_tdi  # type: ignore[arg-type]
             )
         else:
             # there are multiple channels, sum the values
@@ -375,7 +375,7 @@ class Detector(ImagerComponent):
 
             for channel in channels:
                 pix_read_rate_single_chan = channel.pix_read_rate(
-                    timings.frame_rate, with_binning, with_tdi
+                    timings.frame_rate, with_binning, with_tdi  # type: ignore[arg-type]
                 )
                 pix_read_rate += pix_read_rate_single_chan
 

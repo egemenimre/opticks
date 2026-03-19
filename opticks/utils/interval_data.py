@@ -42,7 +42,7 @@ class IntervalData(P.IntervalDict):
     ipol_type: InterpolatorWithUnitTypes = InterpolatorWithUnitTypes.AKIMA
     """Interpolator type for resampling."""
 
-    def __init__(self, mapping_or_iterable=None, sample_size: int = None):
+    def __init__(self, mapping_or_iterable=None, sample_size: int | None = None):
         """Generates a new IntervalData object.
 
         If no argument is given, an empty `IntervalData` is created.
@@ -111,7 +111,7 @@ class IntervalData(P.IntervalDict):
 
     @classmethod
     def from_math_funct(
-        cls, math_funct, valid_interval: Interval, sample_size: int = None
+        cls, math_funct, valid_interval: Interval, sample_size: int | None = None
     ) -> "IntervalData":
         """Initialises the `IntervalData` object with a math function.
 
@@ -146,7 +146,7 @@ class IntervalData(P.IntervalDict):
 
     @classmethod
     def from_interpolator(
-        cls, ipol: type[PPolyWithUnits], sample_size: int = None
+        cls, ipol: type[PPolyWithUnits], sample_size: int | None = None
     ) -> "IntervalData":
         """Initialises the `IntervalData` object with an interpolator.
 
@@ -171,7 +171,8 @@ class IntervalData(P.IntervalDict):
 
         # wrapping the operation in Quantity ensures None as unit is handled gracefully
         valid_interval = P.closed(
-            Quantity(ipol.x[0], ipol.x_unit), Quantity(ipol.x[-1], ipol.x_unit)
+            Quantity(ipol.x[0], ipol.x_unit),  # type: ignore[union-attr]
+            Quantity(ipol.x[-1], ipol.x_unit),  # type: ignore[union-attr]
         )
 
         # create the IntervalData object
@@ -213,7 +214,7 @@ class IntervalData(P.IntervalDict):
         return self._sample_size
 
     @sample_size.setter
-    def sample_size(self, sample_size: int) -> Self:
+    def sample_size(self, sample_size: int) -> None:
 
         if sample_size >= IntervalData._MIN_SAMPLE_SIZE:
             self._sample_size = sample_size
@@ -516,7 +517,7 @@ class IntervalData(P.IntervalDict):
             else:
 
                 # create the new resampling
-                x_values, y_values = _generate_samples(
+                x_values, y_values = _generate_samples(  # type: ignore[misc]
                     self.combination_method, interval, functs, self.sample_size
                 )
 
@@ -551,18 +552,19 @@ class IntervalData(P.IntervalDict):
             "self": self,
         }
 
-        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)
+        plot = IntervalDataPlot(interval_data_dict, apply_default_style=False)  # type: ignore[arg-type]
 
         plot.set_plot_style(legend_off=True)
 
         return plot
 
-    def integrate(self, interval: Interval = None) -> float | Quantity:
+    def integrate(self, interval: Interval | None = None) -> float | Quantity:
         """Integrates the `IntervalData` over a certain interval.
 
         The integration can be over a user requested interval
         (with `interval` parameter defined) or can be over the full
-        interval of the `IntervalData` object.
+        interval of the `IntervalData` object (when `interval` parameter
+        is not defined).
 
         Parameters
         ----------
@@ -581,21 +583,21 @@ class IntervalData(P.IntervalDict):
         else:
             data = self.get(interval)
 
-        if not data._is_resampled:
+        if not data._is_resampled:  # type: ignore[union-attr]
             # resample if needed
-            data = data.resample()
+            data = data.resample()  # type: ignore[union-attr]
 
         sum = 0
 
         # go through the atomic intervals and integrate
-        for interval, funct in data.as_dict().items():
+        for atomic_int, funct in data.as_dict().items():  # type: ignore[union-attr]
 
-            interval: Interval
+            atomic_int: Interval
 
             if isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
                 # funct is constant value, just multiply
                 # with the interval length
-                sum += funct * (interval.upper - interval.lower)
+                sum += funct * (atomic_int.upper - atomic_int.lower)  # type: ignore[operator]
 
             elif funct is None:
                 # None value, skip
@@ -606,9 +608,9 @@ class IntervalData(P.IntervalDict):
 
                 funct: PPolyWithUnits
 
-                sum += funct.integrate(interval.lower, interval.upper)
+                sum += funct.integrate(atomic_int.lower, atomic_int.upper)
 
-        return sum
+        return sum  # type: ignore[return-value]
 
 
 def _generate_samples(
@@ -638,7 +640,7 @@ def _generate_samples(
             f"Set the combination method to 'SUM' or 'MULTIPLY'."
         )
 
-    return x_values, y_values
+    return x_values, y_values  # type: ignore[return-value]
 
 
 def _eval_functs_multiply(x, functs) -> Quantity | float:
@@ -673,15 +675,15 @@ def _eval_functs_multiply(x, functs) -> Quantity | float:
     for funct in functs:
 
         if funct is None:
-            return None
+            return None  # type: ignore[return-value]
         elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
             # int or float
-            result *= funct
+            result *= funct  # type: ignore[assignment]
         else:
             # interpolator (or other callable)
-            result *= funct(x)
+            result *= funct(x)  # type: ignore[operator]
 
-    return result
+    return result  # type: ignore[return-value]
 
 
 def _eval_functs_sum(x, functs) -> Quantity | float:
@@ -716,15 +718,15 @@ def _eval_functs_sum(x, functs) -> Quantity | float:
     for funct in functs:
 
         if funct is None:
-            return None
+            return None  # type: ignore[return-value]
         elif isinstance(funct, numbers.Number) or isinstance(funct, Quantity):
             # int or float
-            result += funct
+            result += funct  # type: ignore[assignment]
         else:
             # interpolator (or other callable)
-            result += funct(x)
+            result += funct(x)  # type: ignore[operator]
 
-    return result
+    return result  # type: ignore[return-value]
 
 
 def _append_math_functions(fx, fy) -> list | None:
@@ -779,7 +781,7 @@ class IntervalDataPlot:  # pragma: no cover
     def __init__(
         self,
         interval_data_dict: dict[str, IntervalData],
-        plot_interval: Interval = None,
+        plot_interval: Interval | None = None,
         apply_default_style: bool = True,
     ) -> None:
 
@@ -794,7 +796,7 @@ class IntervalDataPlot:  # pragma: no cover
     def _populate_plot(
         self,
         interval_data_dict: dict[str, IntervalData],
-        plot_interval: Interval = None,
+        plot_interval: Interval | None = None,
     ) -> None:
         """
         Populates the plot lines using the `IntervalData` objects.
@@ -832,27 +834,27 @@ class IntervalDataPlot:  # pragma: no cover
             x_values = []
             y_values = []
 
-            atomic_tuples = interval_data.as_atomic()
+            atomic_tuples = interval_data.as_atomic()  # type: ignore[union-attr]
             # this is to order the intervals
             atomic_tuples.sort(key=lambda tup: tup[0].upper)
 
-            if interval_data.combination_method == FunctCombinationMethod.MULTIPLY:
+            if interval_data.combination_method == FunctCombinationMethod.MULTIPLY:  # type: ignore[union-attr]
                 # combination method: multiplication
                 for interval, functs in atomic_tuples:
 
                     x_list, y_list = self._prep_mult_data(
-                        functs, interval, interval_data.sample_size
+                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)
                     y_values.extend(y_list)
 
-            elif interval_data.combination_method == FunctCombinationMethod.SUM:
+            elif interval_data.combination_method == FunctCombinationMethod.SUM:  # type: ignore[union-attr]
                 # combination method: summation
                 for interval, functs in atomic_tuples:
 
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, interval_data.sample_size
+                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)
@@ -863,12 +865,12 @@ class IntervalDataPlot:  # pragma: no cover
 
                     if isinstance(functs, list):
                         raise ValueError(
-                            f"Invalid combination method: {interval_data.combination_method}. "
+                            f"Invalid combination method: {interval_data.combination_method}. "  # type: ignore[union-attr]
                             f"Set the combination method to 'SUM' or 'MULTIPLY'."
                         )
 
                     x_list, y_list = self._prep_summed_data(
-                        functs, interval, interval_data.sample_size
+                        functs, interval, interval_data.sample_size  # type: ignore[union-attr]
                     )
 
                     x_values.extend(x_list)
@@ -887,9 +889,9 @@ class IntervalDataPlot:  # pragma: no cover
 
     def set_plot_style(
         self,
-        title: str = None,
-        xlabel: str = None,
-        ylabel: str = None,
+        title: str | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         height: Quantity | float = 10 * u.cm,
         width: Quantity | float = 15 * u.cm,
         legend_off: bool = False,
@@ -935,12 +937,12 @@ class IntervalDataPlot:  # pragma: no cover
 
         with imperial.enable():
             if isinstance(height, Quantity):
-                height = height.to_value(imperial.inch)
+                height = height.to_value(imperial.inch)  # type: ignore[assignment]
             if isinstance(width, Quantity):
-                width = width.to_value(imperial.inch)
+                width = width.to_value(imperial.inch)  # type: ignore[assignment]
 
-        self.fig.set_figheight(height)
-        self.fig.set_figwidth(width)
+        self.fig.set_figheight(height)  # type: ignore[arg-type]
+        self.fig.set_figwidth(width)  # type: ignore[arg-type]
 
     # def show_plot(self):
     #     plt.show()

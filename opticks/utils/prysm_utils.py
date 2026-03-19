@@ -21,16 +21,16 @@ from opticks import u
 
 class Grid:
 
-    x: ndarray = None
+    x: ndarray | None = None
     """Cartesian x coordinate."""
 
-    y: ndarray = None
+    y: ndarray | None = None
     """Cartesian y coordinate."""
 
-    _r: ndarray = None
+    _r: ndarray | None = None
     """Radial coordinate."""
 
-    _t: ndarray = None
+    _t: ndarray | None = None
     """Azimuthal coordinate"""
 
     dx: Quantity
@@ -62,7 +62,7 @@ class Grid:
         self.dx = dx
 
         # Cartesian grid
-        self.x, self.y = make_xy_grid(shape, dx=dx, grid=grid)
+        self.x, self.y = make_xy_grid(shape, dx=dx, grid=grid)  # type: ignore[arg-type]
 
     @classmethod
     def from_size(cls, shape, size: Quantity) -> "Grid":
@@ -106,7 +106,7 @@ class Grid:
         if self._r is None:
             self._r, self._t = cart_to_polar(self.x, self.y)
 
-        return self._r, self._t
+        return self._r, self._t  # type: ignore[return-value]
 
     def cartesian(self) -> tuple[ndarray, ndarray]:
         """Gets the cartesian grid with the given internal sample points.
@@ -116,7 +116,7 @@ class Grid:
         x, y: tuple[ndarray, ndarray]
             tuple of x and y cartesian coordinates, respectively
         """
-        return self.x, self.y
+        return self.x, self.y  # type: ignore[return-value]
 
     @property
     def r(self) -> ndarray:
@@ -126,7 +126,7 @@ class Grid:
         if self._r is None:
             self.polar()
 
-        return self._r
+        return self._r  # type: ignore[return-value]
 
     @property
     def t(self) -> ndarray:
@@ -136,7 +136,7 @@ class Grid:
         if self._t is None:
             self.polar()
 
-        return self._t
+        return self._t  # type: ignore[return-value]
 
     def strip_units(self, units: Unit = Unit("mm")) -> "Grid":
         """Converts the Grid object to the default units.
@@ -164,7 +164,7 @@ class Grid:
             # deep copy internal data
             dx = copy.deepcopy(self.dx)
 
-        return Grid(self.shape, dx)
+        return Grid(self.shape, dx)  # type: ignore[arg-type]
 
     @property
     def has_units(self) -> bool:
@@ -233,15 +233,17 @@ class OptPathDiff:
         r, t = grid.polar()
 
         # reduce to dimensionless
-        rho = (r / ap_radius).decompose()
+        rho = (r / ap_radius).decompose()  # type: ignore[union-attr]
 
         # compute the polynomials (dimensionless)
         # t should be in radians
-        mode = list(zernike_nm_seq(nms, rho.value, t.value))
+        mode = list(zernike_nm_seq(nms, rho.value, t.value))  # type: ignore[union-attr]
+
+        # TODO list[Quantity] is very dubious here, likely a Quantity of lists
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm
-        opd = sum_of_2d_modes(mode, wfe_rms.to_value(u.nm))
+        opd = sum_of_2d_modes(mode, wfe_rms.to_value(u.nm))  # type: ignore[union-attr]
 
         return OptPathDiff(opd * u.nm)
 
@@ -264,7 +266,7 @@ class OptPathDiff:
 
         if self.has_units:
             # we already have units, convert them to the requested ones
-            opd = self.data.to_value(units)
+            opd = self.data.to_value(units)  # type: ignore[union-attr]
         else:
             # deep copy internal data without units
             opd = copy.deepcopy(self.data)

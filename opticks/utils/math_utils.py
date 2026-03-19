@@ -81,8 +81,8 @@ class PPolyWithUnits(PPoly):
         x,
         extrapolate=None,
         axis=0,
-        x_unit: UnitBase | FunctionUnitBase = None,
-        y_unit: UnitBase | FunctionUnitBase = None,
+        x_unit: UnitBase | FunctionUnitBase | None = None,
+        y_unit: UnitBase | FunctionUnitBase | None = None,
     ):
 
         super().__init__(c, x, extrapolate, axis)
@@ -94,8 +94,8 @@ class PPolyWithUnits(PPoly):
     def from_ppoly(
         cls,
         ppoly: type[PPoly],
-        x_unit: UnitBase | FunctionUnitBase = None,
-        y_unit: UnitBase | FunctionUnitBase = None,
+        x_unit: UnitBase | FunctionUnitBase | None = None,
+        y_unit: UnitBase | FunctionUnitBase | None = None,
     ) -> "PPolyWithUnits":
         """Upgrade an existing `PPoly` object (or from a subclass)
         with units.
@@ -124,7 +124,7 @@ class PPolyWithUnits(PPoly):
     def __call__(self, x: float | Quantity, nu=0, extrapolate=None, equivalencies=[]):
 
         # check x unit and generate the unitless version of x
-        x, _ = split_value_and_force_unit(x, self.x_unit, equivalencies=equivalencies)
+        x, _ = split_value_and_force_unit(x, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
 
         # run the method with the unitless version of x
         # and output the result in y_unit
@@ -132,34 +132,34 @@ class PPolyWithUnits(PPoly):
 
     def derivative(self, nu=1) -> "PPolyWithUnits":
 
-        y_unit = self.y_unit / self.x_unit**nu
+        y_unit = self.y_unit / self.x_unit**nu  # type: ignore[operator]
 
         # compute and add the units
-        return PPolyWithUnits.from_ppoly(super().derivative(nu), self.x_unit, y_unit)
+        return PPolyWithUnits.from_ppoly(super().derivative(nu), self.x_unit, y_unit)  # type: ignore[arg-type]
 
     def antiderivative(self, nu=1) -> "PPolyWithUnits":
 
-        y_unit = self.y_unit * self.x_unit**nu
+        y_unit = self.y_unit * self.x_unit**nu  # type: ignore[operator]
 
         # compute and add the units
         return PPolyWithUnits.from_ppoly(
-            super().antiderivative(nu), self.x_unit, y_unit
+            super().antiderivative(nu), self.x_unit, y_unit  # type: ignore[arg-type]
         )
 
     def integrate(self, a, b, extrapolate=None, equivalencies=[]):
 
-        a, _ = split_value_and_force_unit(a, self.x_unit, equivalencies=equivalencies)
-        b, _ = split_value_and_force_unit(b, self.x_unit, equivalencies=equivalencies)
+        a, _ = split_value_and_force_unit(a, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
+        b, _ = split_value_and_force_unit(b, self.x_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
 
-        y_unit = self.y_unit * self.x_unit
+        y_unit = self.y_unit * self.x_unit  # type: ignore[operator]
 
         return Quantity(super().integrate(a, b, extrapolate), y_unit, copy=False)
 
     def roots(self, discontinuity=True, extrapolate=None) -> ndarray:
 
-        return self.solve(0 * self.y_unit, discontinuity, extrapolate)
+        return self.solve(0 * self.y_unit, discontinuity, extrapolate)  # type: ignore[operator]
 
-    def solve(
+    def solve(  # type: ignore[override]
         self,
         y: float | Quantity,
         discontinuity=True,
@@ -167,10 +167,10 @@ class PPolyWithUnits(PPoly):
         equivalencies=[],
     ) -> ndarray:
 
-        y, _ = split_value_and_force_unit(y, self.y_unit, equivalencies=equivalencies)
+        y, _ = split_value_and_force_unit(y, self.y_unit, equivalencies=equivalencies)  # type: ignore[arg-type]
 
         return Quantity(
-            super().solve(y, discontinuity, extrapolate), self.x_unit, copy=False
+            super().solve(y, discontinuity, extrapolate), self.x_unit, copy=False  # type: ignore[arg-type]
         )
 
     def __str__(self) -> str:
@@ -201,8 +201,8 @@ class InterpolatorWithUnits(PPolyWithUnits):
     def __init__(
         self,
         ipol: type[PPoly],
-        x_unit: UnitBase | FunctionUnitBase = None,
-        y_unit: UnitBase | FunctionUnitBase = None,
+        x_unit: UnitBase | FunctionUnitBase | None = None,
+        y_unit: UnitBase | FunctionUnitBase | None = None,
     ):
 
         super().__init__(ipol.c, ipol.x, ipol.extrapolate, ipol.axis, x_unit, y_unit)
@@ -211,8 +211,8 @@ class InterpolatorWithUnits(PPolyWithUnits):
     def from_ipol_method(
         cls,
         ipol_type: InterpolatorWithUnitTypes,
-        x: ndarray[float | Quantity],
-        y: ndarray[float | Quantity],
+        x: Quantity,
+        y: Quantity,
         *args,
         axis=0,
         extrapolate=None,
@@ -257,20 +257,20 @@ class InterpolatorWithUnits(PPolyWithUnits):
         # if Quantity input is used, it should be in the form
         # "[0.0 1.0] meter", not a list of individual Quantity objects.
         # This checks and corrects it.
-        x = quantity_from_list(x)
-        y = quantity_from_list(y)
+        x = quantity_from_list(x)  # type: ignore[arg-type]
+        y = quantity_from_list(y)  # type: ignore[arg-type]
 
         # split the value and the units
-        x, x_unit = split_value_and_unit(x)
-        y, y_unit = split_value_and_unit(y)
+        x, x_unit = split_value_and_unit(x)  # type: ignore[arg-type]
+        y, y_unit = split_value_and_unit(y)  # type: ignore[arg-type]
 
         # Init interpolator with the unitless data
         if ipol_type == InterpolatorWithUnitTypes.AKIMA:
-            ipol = klass(x, y, axis=axis, extrapolate=extrapolate, method="akima")
+            ipol = klass(x, y, axis=axis, extrapolate=extrapolate, method="akima")  # type: ignore[call-arg]
         elif ipol_type == InterpolatorWithUnitTypes.MAKIMA:
-            ipol = klass(x, y, axis=axis, extrapolate=extrapolate, method="makima")
+            ipol = klass(x, y, axis=axis, extrapolate=extrapolate, method="makima")  # type: ignore[call-arg]
         else:
             ipol = klass(x, y, *args, **kwargs)
 
         # assign units to x and y
-        return InterpolatorWithUnits(ipol, x_unit, y_unit)
+        return InterpolatorWithUnits(ipol, x_unit, y_unit)  # type: ignore[arg-type]
