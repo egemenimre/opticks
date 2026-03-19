@@ -22,7 +22,7 @@ authors = [{ name = "Egemen Imre" }]
 
 description = "Models and analysis tools for optical system engineering"
 readme = "README.md"
-license = "GPL-3.0-or-later"
+license = {text = "GPL-3.0-or-later"}
 
 keywords = [
     "optics",
@@ -35,7 +35,6 @@ keywords = [
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
