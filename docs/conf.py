@@ -22,10 +22,10 @@ copyright = "2024-2026, Egemen Imre"
 author = "Egemen Imre"
 
 # Version Info - read dynamically from the package
-from opticks import __version__  # noqa: E402
+from importlib.metadata import version as _get_version
 
-version = __version__
-release = __version__
+version = _get_version("opticks")
+release = version
 
 # -- General configuration ---------------------------------------------------
 # By default, highlight as Python 3.
