@@ -5,7 +5,16 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "opticks"
 version = "0.1.0"
-dependencies = ["numpy", "scipy>=1.13.0", "portion", "astropy", "pydantic>=2.0", "pyyaml", "prysm", "matplotlib"]
+dependencies = [
+    "numpy",
+    "scipy>=1.13.0",
+    "portion",
+    "astropy",
+    "pydantic>=2.0",
+    "pyyaml",
+    "prysm",
+    "matplotlib",
+]
 
 requires-python = ">=3.11"
 
@@ -60,7 +69,7 @@ doc = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "C", "I"]
@@ -72,15 +81,5 @@ known-first-party = ["opticks"]
 [tool.pytest.ini_options]
 
 [tool.coverage.report]
-omit = [
-    "ci-helpers/*",
-    "*/tests/*",
-    "*/plots/*",
-    "*/temp/*",
-    "*__init__.py",
-]
-exclude_lines = [
-    "def __repr__",
-    "def __str__",
-    "pragma: no cover",
-]
+omit = ["ci-helpers/*", "*/tests/*", "*/plots/*", "*/temp/*", "*__init__.py"]
+exclude_lines = ["def __repr__", "def __str__", "pragma: no cover"]
