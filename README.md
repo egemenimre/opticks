@@ -1,8 +1,7 @@
 # opticks
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/egemenimre/opticks/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/egemenimre/opticks/tree/main)
-[![Codacy Quality Badge](https://app.codacy.com/project/badge/Grade/145153ed1dfb4e66b8d78c15ddeca066)](https://app.codacy.com/gh/egemenimre/opticks/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Codacy Coverage Badge](https://app.codacy.com/project/badge/Coverage/145153ed1dfb4e66b8d78c15ddeca066)](https://app.codacy.com/gh/egemenimre/opticks/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![codecov](https://codecov.io/gh/egemenimre/opticks/graph/badge.svg?token=3KRKPXJST3)](https://codecov.io/gh/egemenimre/opticks)
 [![Documentation Status](https://readthedocs.org/projects/opticks/badge/?version=latest)](https://opticks.readthedocs.io/en/latest/?badge=latest)
 
 Models and analysis tools for optical system engineering.

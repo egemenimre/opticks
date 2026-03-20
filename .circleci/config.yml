@@ -2,11 +2,11 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@14.1.0
+  codecov: codecov/codecov@5.0.3
 
 jobs:
 
-  codacy-coverage-report:
+  codecov-coverage-report:
 
     docker:
       - image: cimg/python:3.13
@@ -21,9 +21,8 @@ jobs:
             coverage run --source opticks -m pytest
             coverage xml
             coverage report -m
-      - coverage-reporter/send_report:
-          coverage-reports: coverage.xml
-          project-token: $CODACY_PROJECT_TOKEN
+      - codecov/upload:
+          file: coverage.xml
 
 
   tests:
@@ -77,4 +76,4 @@ workflows:
               python-version: ["3.11", "3.12", "3.13", "3.14"]
   coverage:
     jobs:
-      - codacy-coverage-report
+      - codecov-coverage-report
