@@ -27,7 +27,7 @@ jobs:
 
   tests:
 
-    parallelism: 2
+    # parallelism: 2
 
     parameters:
       python-version:
