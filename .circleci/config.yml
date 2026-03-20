@@ -22,7 +22,7 @@ jobs:
             coverage xml
             coverage report -m
       - codecov/upload:
-          file: coverage.xml
+          files: coverage.xml
 
 
   tests:
