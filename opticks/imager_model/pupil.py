@@ -25,7 +25,7 @@ class WvlRef(Enum):
 
     FIRST = "first"
     LAST = "last"
-    MID = "mid" # middle element of the array
+    MID = "mid"  # middle element of the array
     AVERAGE = "average"
 
     def resolve(self, wavelengths: Quantity) -> Quantity:
