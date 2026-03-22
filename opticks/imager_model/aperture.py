@@ -15,10 +15,10 @@ from opticks.utils.prysm_utils import Grid
 
 
 class Aperture:
-    grid: Grid | None = None
+    grid: Grid
     """Grid object associated with the aperture"""
 
-    def __init__(self, data: ndarray, grid: Grid | None = None) -> None:
+    def __init__(self, data: ndarray, grid: Grid) -> None:
         """Aperture class.
 
         Holds the Aperture data as defined by `prysm`. The aperture data is an
