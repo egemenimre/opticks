@@ -6,204 +6,16 @@
 
 import numpy as np
 from astropy.units import Quantity
-from numpy import ndarray
 from prysm._richdata import RichData
-from prysm.fttools import pad2d
-from prysm.geometry import circle
-from prysm.polynomials import sum_of_2d_modes
-from prysm.propagation import Wavefront
 from pydantic import Field
 
 from opticks import u
+from opticks.contrast_model.mtf import MTF_Model_1D
+from opticks.imager_model.aperture import Aperture
 from opticks.imager_model.imager_component import ImagerComponent
+from opticks.imager_model.pupil import PupilFunction, WvlRef
 from opticks.utils.parser_helpers import PositivePydanticQty
-from opticks.utils.prysm_utils import Grid, OptPathDiff
-from opticks.utils.unit_utils import split_value_and_force_unit
-
-
-class Aperture:
-    grid: Grid | None = None
-    """Grid object associated with the aperture"""
-
-    def __init__(self, data: ndarray, grid: Grid | None = None) -> None:
-        """Aperture class.
-
-        Holds the Aperture data as defined by `prysm`.
-        The aperture data is an ndarray mask of `bool` or
-        0 and 1 (or anything in between).
-
-        Parameters
-        ----------
-        data : ndarray
-            aperture data
-        grid : Grid
-            Grid object associated with the aperture
-        """
-        self.data = data
-        self.grid = grid
-
-    @classmethod
-    def circle_aperture(
-        cls,
-        aperture_diam: Quantity,
-        samples,
-        with_units=True,
-    ) -> "Aperture":
-        """Circle aperture model.
-
-        This is valid for many if not most refractive optics.
-
-        This is a thin wrapper around the aperture building
-        procedure from `prysm`.
-
-        The output is an Aperture object containing `ndarray`
-        of bools, therefore the unit input
-        is not important for the aperture generation.
-
-        Parameters
-        ----------
-        aperture_diam : Quantity
-            aperture diameter in mm
-        samples : int or tuple of int
-            number of samples per dimension.  If a scalar value, broadcast to
-            both dimensions.  Order is numpy axis convention, (row, col)
-        with_units : bool, optional
-            Grid returned with units (in mm and radians)
-
-        Returns
-        -------
-        aperture: Aperture
-            Aperture mask object
-        """
-
-        # aperture radius
-        aperture_radius = aperture_diam / 2.0
-
-        # generate the square grid in polar coords
-        grid = Grid.from_size(samples, aperture_diam)
-        r, t = grid.polar()
-
-        # generate aperture (circle mask applied to the square grid)
-        aperture = circle(aperture_radius, r)
-
-        # strip units if needed
-        if not with_units:
-            grid = grid.strip_units(u.mm)
-
-        return Aperture(aperture, grid)
-
-    @classmethod
-    def circle_aperture_with_obscuration(
-        cls,
-        aperture_diam: Quantity,
-        obscuration_ratio: float,
-        samples,
-        with_units=True,
-    ) -> "Aperture":
-        """Circle aperture model with circular centre obscuration.
-
-        This is valid for many reflective telescopes. The obscuration
-        is usually the secondary mirror.
-
-        This is a thin wrapper around the aperture building
-        procedure from `prysm`.
-
-        The output is an Aperture object containing `ndarray`
-        of bools, therefore the unit input
-        is not important for the aperture generation.
-
-        Parameters
-        ----------
-        aperture_diam : Quantity
-            aperture diameter in mm
-        obscuration_ratio: float
-            obscuration ratio (between 0 and 1)
-        samples : int or tuple of int
-            number of samples per dimension.  If a scalar value, broadcast to
-            both dimensions.  Order is numpy axis convention, (row, col)
-        with_units : bool, optional
-            Grid returned with units (in mm and radians)
-
-        Returns
-        -------
-        aperture: Aperture
-            Aperture mask object
-        """
-
-        # aperture radius
-        aperture_radius = aperture_diam / 2.0
-
-        # generate the square grid in polar coords
-        grid = Grid.from_size(samples, aperture_diam)
-        r, t = grid.polar()
-
-        # generate full aperture (circle mask applied to the square grid)
-        full_aperture = circle(aperture_radius, r)
-
-        # generate circular centre obscuration
-        obscuration = circle(aperture_radius * obscuration_ratio, r)
-
-        # apply full aperture minus obscuration as the mask
-        aperture = full_aperture ^ obscuration  # or full_aperture & ~obscuration
-
-        # can also use floats of 0 and 1 instead of bool
-        # this also enables varying the amount of light through the aperture
-        # aperture = aperture.astype(float)
-
-        # strip units if needed
-        if not with_units:
-            grid = grid.strip_units(u.mm)
-
-        return Aperture(aperture, grid)
-
-    def scale_for_norm_sum_psf(self) -> "Aperture":
-        """Generates a new, scaled Aperture that results in a
-        Point Spread Function (PSF) that has a sum of 1.0.
-
-        The aperture data (`data`) is divided by
-        `sqrt(data.sum())`.
-
-        """
-
-        ap_data = self.data
-
-        # scale for PSF sum = 1.0
-        aperture_unity_sum = ap_data / np.sqrt(ap_data.sum())
-
-        return Aperture(aperture_unity_sum, self.grid)
-
-    def scale_for_norm_peak_psf(self, Q: float, Q_pad: float = 1) -> "Aperture":
-        """Generates a new, scaled Aperture that results in a
-        Point Spread Function (PSF) that has a peak of 1.0.
-
-        `Q_pad` is used to pad the aperture if needed.
-        It is passed on to the underlying `pad2d`.
-
-        The aperture data (`data`) is multiplied by
-        `Q x Q_pad x sqrt(data.size) / data.sum()`.
-
-        Parameters
-        ----------
-        Q : float
-            Q factor used in scaling pupil samples to psf samples
-        Q_pad : float, optional
-            padding factor, by default 1
-
-        Returns
-        -------
-        Aperture
-            New Aperture object with scaled data
-        """
-
-        ap_data = self.data
-
-        # scale for PSF sum = 1.0
-        aperture_padded = pad2d(ap_data, Q=Q_pad)  # type: ignore[arg-type]
-        aperture_unity_peak = aperture_padded * (
-            Q_pad * Q * np.sqrt(ap_data.size) / ap_data.sum()
-        )
-
-        return Aperture(aperture_unity_peak, self.grid)
+from opticks.utils.prysm_utils import OptPathDiff
 
 
 class Optics(ImagerComponent):
@@ -217,7 +29,7 @@ class Optics(ImagerComponent):
     image_diam_on_focal_plane: PositivePydanticQty
 
     # Non-serialized state (set after init, not from YAML)
-    pupils: list = Field(default_factory=list, exclude=True)
+    pupil_functs: dict[str, PupilFunction] = Field(default_factory=dict, exclude=True)
     aperture_dx: Quantity | None = Field(default=None, exclude=True)
     aperture: Aperture | None = Field(default=None, exclude=True)
 
@@ -230,7 +42,7 @@ class Optics(ImagerComponent):
 
         The aperture model is as defined by `prysm`, it contains an `ndarray` grid of
         `True` and `False` data, where `True` allows light through. It can also be
-        an `ndarray` grid of 0 and 1 (and possibly anything in between).
+        an `ndarray` grid of 0 and 1 (and anything in between).
 
         If `None`, a new circular aperture is defined using the aperture diameter
         of the optics and the `samples` parameter (for one side of the square grid).
@@ -257,7 +69,7 @@ class Optics(ImagerComponent):
                 self.aperture_diameter, samples, with_units
             )
         else:
-            # aperture function defined, use it
+            # aperture function defined by the User, set it
             self.aperture = aperture
 
         # reset the sample size to the actual sample size
@@ -266,103 +78,232 @@ class Optics(ImagerComponent):
         # compute aperture sample distance
         self.aperture_dx = (self.aperture_diameter / samples).to(u.mm)
 
-    def add_pupil_func(self, wavelength, opd: OptPathDiff | None = None):
-        """Adds a pupil function.
-
-        A pupil function combines amplitude with phase information
-        to form a wavefront.
-
-        Note that the pupil function is valid for a single point
-        on the image frame and for a single wavelength (monochromatic).
-        One such functions for each wavelength should be evaluated and
-        then properly summed to yield the polychromatic PSF.
+    def add_mono_pupil_function(
+        self,
+        name: str,
+        wavelength: Quantity,
+        opd: OptPathDiff | None = None,
+    ) -> PupilFunction:
+        """Create a monochromatic PupilFunction and register it.
 
         Parameters
         ----------
+        name : str
+            identifier for this pupil function
         wavelength : Quantity
-            wavelength of light with units of microns
+            wavelength of light (in microns)
         opd : OptPathDiff, optional
-            array containing the optical path error in nm
-            if None, assumed zero
+            optical path difference (in nm), or None for zero phase
+
+        Returns
+        -------
+        PupilFunction
+            the created PupilFunction for convenience
         """
+        if self.aperture is None or self.aperture_dx is None:
+            raise ValueError(
+                "Aperture model must be set before adding pupil functions. "
+                "Call set_aperture_model() first."
+            )
 
-        # strip units for the Wavefront as it cannot handle units well
-        if opd:
-            opd_data = opd.strip_units(u.nm).data
-        else:
-            opd_data = None
-
-        # Generate the pupil function (no units)
-        pupil = Wavefront.from_amp_and_phase(
-            self.aperture.data,  # type: ignore[union-attr]  # amplitudes
-            phase=opd_data,  # float ndarray in nm
-            wavelength=wavelength.to_value(u.um),
-            dx=self.aperture_dx.to_value(u.mm),  # type: ignore[union-attr]
+        pf = PupilFunction.monochromatic(
+            wavelength,
+            opd,
+            self.aperture,
+            self.aperture_dx,
+            self.focal_length,
         )
+        self.pupil_functs[name] = pf
+        return pf
 
-        # add to the list of pupil functions
-        self.pupils.append(pupil)
-
-    def psf(
+    def add_poly_pupil_function(
         self,
-        wvl_ref: Quantity,
+        name: str,
+        wavelengths: Quantity,
+        opds: list[OptPathDiff | None],
+        spectral_weights: np.ndarray | None = None,
+    ) -> PupilFunction:
+        """Create a polychromatic PupilFunction and register it.
+
+        Parameters
+        ----------
+        name : str
+            identifier for this pupil function
+        wavelengths : Quantity
+            wavelengths array (in microns)
+        opds : list[OptPathDiff | None]
+            list of optical path differences (in nm), one per wavelength
+        spectral_weights : np.ndarray, optional
+            spectral weight of each wavelength, by default uniform
+
+        Returns
+        -------
+        PupilFunction
+            the created PupilFunction for convenience
+        """
+        if self.aperture is None or self.aperture_dx is None:
+            raise ValueError(
+                "Aperture model must be set before adding pupil functions. "
+                "Call set_aperture_model() first."
+            )
+
+        pf = PupilFunction.polychromatic(
+            wavelengths,
+            opds,
+            self.aperture,
+            self.aperture_dx,
+            self.focal_length,
+            spectral_weights,
+        )
+        self.pupil_functs[name] = pf
+        return pf
+
+    def remove_pupil_function(self, name: str) -> None:
+        """Remove a named PupilFunction.
+
+        Parameters
+        ----------
+        name : str
+            identifier of the pupil function to remove
+        """
+        del self.pupil_functs[name]
+
+    def clear_pupil_functs(self) -> None:
+        """Remove all PupilFunctions."""
+        self.pupil_functs.clear()
+
+    def get_pupil_function(self, name: str) -> PupilFunction:
+        """Retrieve a named PupilFunction.
+
+        Parameters
+        ----------
+        name : str
+            identifier of the pupil function
+
+        Returns
+        -------
+        PupilFunction
+            the requested PupilFunction
+        """
+        return self.pupil_functs[name]
+
+    def compute_psf(
+        self,
+        pupil_name: str,
         psf_dx: Quantity,
         psf_samples: int = 512,
-        spectral_weights: np.ndarray | None = None,
-        with_units=True,
+        wvl_ref: WvlRef | None = None,
+        with_units: bool = True,
     ) -> RichData:
-        """Computes the PSF for a single point on the Image Plane.
-
-        The function can handle monochromatic or polychromatic PSF
-        computations. The PSF or Image Plane is resampled to
-        the user defined grid.
-
-        The spectral weights array should have the same number of elements
-        as the number of Pupil Functions. If no weighting is defined,
-        a uniform weighting is assumed.
-
-        The operation can be fairly expensive, therefore it is advised
-        to keep the output PSF stored.
+        """Compute PSF for the named PupilFunction (caches + returns).
 
         Parameters
         ----------
-        wvl_ref : Quantity
-            reference wavelength (in microns)
+        pupil_name : str
+            identifier of the pupil function
         psf_dx : Quantity
-            sample distance of the output PSF Plane grid (in microns)
+            sample distance of the output PSF plane grid (in microns)
         psf_samples : int, optional
-            number of samples in the output plane.
-            If int, interpreted as square else interpreted as (x,y),
-            which is the reverse of numpy's (y, x) row major ordering.
-            By default 512
-        spectral_weights : np.ndarray, optional
-            spectral weight of each wavelength, by default None
+            number of samples in the output plane, by default 512
+        wvl_ref : WvlRef, optional
+            reference wavelength selector for output metadata
         with_units : bool, optional
             output the PSF with or without units, by default True
 
         Returns
         -------
         RichData
-            PSF model with or without units
+            PSF model
         """
-
-        focal_length = self.focal_length
-
-        if not spectral_weights:
-            # set uniform weights if no weights defined
-            spectral_weights = np.ones_like(self.pupils)
-
-        # compute the PSF (no units via wraps)
-        psf = _compute_psf(
-            self.pupils, focal_length, wvl_ref, psf_dx, psf_samples, spectral_weights
+        return self.pupil_functs[pupil_name].compute_psf(
+            psf_dx, psf_samples, wvl_ref, with_units
         )
 
-        # return the PSF with or without units
-        if with_units:
-            # pupil to PSF plane means dx is switched from mm to um
-            return RichData(psf.data, psf.dx * u.um, psf.wavelength * u.um)
-        else:
-            return psf
+    def psf(self, pupil_name: str) -> RichData:
+        """Return cached PSF for the named PupilFunction.
+
+        Parameters
+        ----------
+        pupil_name : str
+            identifier of the pupil function
+
+        Returns
+        -------
+        RichData
+            cached PSF model
+
+        Raises
+        ------
+        ValueError
+            if compute_psf() has not been called yet
+        """
+        pf = self.pupil_functs[pupil_name]
+
+        if pf._psf is None:
+            raise ValueError(
+                f"PSF has not been computed yet for {pupil_name}."
+                "Call compute_psf() with the desired parameters first."
+            )
+        return pf.psf
+
+    def mtf(self, pupil_name: str) -> RichData:
+        """Return MTF derived from cached PSF for the named PupilFunction.
+
+        Lazily computed on first access; cached until PSF is recomputed.
+
+        Parameters
+        ----------
+        pupil_name : str
+            identifier of the pupil function
+
+        Returns
+        -------
+        RichData
+            MTF model
+
+        Raises
+        ------
+        ValueError
+            if compute_psf() has not been called yet
+        """
+        pf = self.pupil_functs[pupil_name]
+
+        if pf._psf is None:
+            raise ValueError(
+                f"PSF has not been computed yet for {pupil_name}. "
+                "Call compute_psf() with the desired parameters first and then call mtf()."
+            )
+        return pf.mtf
+
+    def to_MTF_Model_1D(self, pupil_name: str, slice: str) -> MTF_Model_1D:
+        """Convert the cached 2D MTF to a 1D MTF model for the named PupilFunction.
+
+        Parameters
+        ----------
+        pupil_name : str
+            identifier of the pupil function
+        slice : str
+            slice type (e.g., "x", "y", "azavg")
+
+        Returns
+        -------
+        MTF_Model_1D
+            1D MTF model
+
+        Raises
+        ------
+        ValueError
+            if compute_psf() has not been called yet
+        """
+        pf = self.pupil_functs[pupil_name]
+
+        if pf._psf is None:
+            raise ValueError(
+                f"PSF has not been computed yet for {pupil_name}. "
+                "Call compute_psf() with the desired parameters first and then call mtf()."
+            )
+
+        return pf.to_MTF_Model_1D(slice)
 
     @property
     def f_number(self) -> float:
@@ -428,75 +369,3 @@ class Optics(ImagerComponent):
         """
         # perfect incoherent optics
         return (1.0 * u.cy) / (ref_wavelength * self.f_number).to(u.mm, copy=False)  # type: ignore[union-attr]
-
-
-def _compute_psf(
-    pupils: list[Wavefront],
-    focal_length: float | Quantity,
-    wvl: float | Quantity,
-    psf_dx: float | Quantity,
-    psf_samples: int,
-    spectral_weights: ndarray,
-) -> RichData:
-    """Computes the PSF for a single point on the Image Plane.
-
-    The function can handle monochromatic or polychromatic PSF
-    computations. The PSF or Image Plane is resampled to
-    the user defined grid.
-
-    The spectral weights array should have the same number of elements
-    as the number of Pupil Functions.
-
-    The operation can be fairly expensive, therefore it is advised
-    to keep the output PSF stored.
-
-    Parameters
-    ----------
-    pupils : list[Wavefront]
-        list of Pupil functions or Wavefronts
-    focal_length : float | Quantity
-        focal length in mm
-    wvl : float | Quantity
-        reference wavelength (in microns)
-    psf_dx : float | Quantity
-        sample distance of the output PSF Plane grid (in microns)
-    psf_samples : int
-        number of samples in the output plane.
-        If int, interpreted as square else interpreted as (x,y),
-        which is the reverse of numpy's (y, x) row major ordering.
-    spectral_weights : np.ndarray
-        spectral weight of each wavelength
-
-    Returns
-    -------
-    RichData
-        PSF model (without units)
-    """
-
-    focal_length_val, _ = split_value_and_force_unit(focal_length, u.mm)
-    wvl_val, _ = split_value_and_force_unit(wvl, u.um)
-    psf_dx_val, _ = split_value_and_force_unit(psf_dx, u.um)
-
-    psf_components = []
-
-    # focus all WF objects and compute the monochromatic PSF
-    for pupil in pupils:
-        # complex field in the plane of the PSF (no unit support)
-        # Note: focusing changes aperture sampling,
-        # and is a function of wavelength. Therefore we use fixed sampling
-        # for multiple wavelengths.
-        coherent_psf = pupil.focus_fixed_sampling(
-            focal_length_val, psf_dx_val, psf_samples
-        )
-        psf_data = coherent_psf.intensity.data
-        # sum of intensities, wvls are incoherent to each other
-        psf_components.append(psf_data)
-
-    # Create psf array via summation (no unit support)
-    psf_data = sum_of_2d_modes(psf_components, spectral_weights)
-
-    # Add scaling and wavelength information
-    # pupil to psf plane means dx is switched from mm to um
-    psf = RichData(psf_data, psf_dx_val, wvl_val)
-
-    return psf
