@@ -18,7 +18,6 @@ from prysm._richdata import RichData
 from prysm.otf import mtf_from_psf
 
 from opticks import u
-from opticks.imager_model.optics import Optics
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.prysm_utils import richdata_with_units
 
@@ -27,6 +26,8 @@ class MTF_Model_1D:
     def __init__(self, id: str, mtf_value_func) -> None:
         """
         Modulation Transfer Function (MTF) Model in 1D.
+
+        Usually this is not called by the User. There are other constructors instead.
 
         Parameters
         ----------
@@ -108,8 +109,10 @@ class MTF_Model_1D:
         return MTF_Model_1D(id, value_func)
 
     @staticmethod
-    # @u.quantity_input(wavelength="length")
-    def ideal_optics(wavelength: Quantity, optics: Optics) -> "MTF_Model_1D":
+    def ideal_optics(
+        spatial_cutoff_freq: Quantity,
+        wavelength: Quantity | None = None,
+    ) -> "MTF_Model_1D":
         """
         Ideal optical MTF model.
 
@@ -117,10 +120,11 @@ class MTF_Model_1D:
 
         Parameters
         ----------
-        wavelength : Quantity | ArrayLike[Quantity]
-            Wavelength at which MTF is computed
-        optics: Optics
-            Optics model (to compute the spatial cut-off frequency)
+        spatial_cutoff_freq : Quantity
+            Spatial cutoff frequency (in cycles/mm).
+            Can be computed via `Optics.spatial_cutoff_freq(wavelength)`.
+        wavelength : Quantity, optional
+            Wavelength (used only for the model id string)
 
         Returns
         -------
@@ -128,11 +132,12 @@ class MTF_Model_1D:
             MTF model
         """
 
-        # set the spatial cutoff frequency
-        spatial_cutoff_freq = optics.spatial_cutoff_freq(wavelength)
-
         # set the id
-        id = f"Ideal optical MTF at {wavelength}"
+        id = (
+            f"Ideal optical MTF at {wavelength}"
+            if wavelength is not None
+            else "Ideal optical MTF"
+        )
 
         # set the value function (with the fixed spatial cutoff frequency)
         def value_func(input_line_freq):
@@ -142,9 +147,9 @@ class MTF_Model_1D:
 
     @staticmethod
     def emp_model_aberrated_optics(
-        wavelength: Quantity,
+        spatial_cutoff_freq: Quantity,
         w_rms: float,
-        optics: Optics,
+        wavelength: Quantity | None = None,
     ) -> "MTF_Model_1D":
         """
         Aberrated optical MTF model with an empirical model.
@@ -160,12 +165,13 @@ class MTF_Model_1D:
 
         Parameters
         ----------
-        wavelength : Quantity | ArrayLike[Quantity]
-            Wavelength at which MTF is computed
+        spatial_cutoff_freq : Quantity
+            Spatial cutoff frequency (in cycles/mm).
+            Can be computed via `Optics.spatial_cutoff_freq(wavelength)`.
         w_rms : float
             RMS of the total wavefront error (in wavelengths)
-        optics: Optics
-            Optics model (to compute the spatial cutoff frequency)
+        wavelength : Quantity, optional
+            Wavelength (used only for the model id string)
 
         Returns
         -------
@@ -173,11 +179,12 @@ class MTF_Model_1D:
             MTF model
         """
 
-        # set the spatial cutoff frequency
-        spatial_cutoff_freq = optics.spatial_cutoff_freq(wavelength)
-
         # set the id
-        id = f"Aberrated optical MTF at {wavelength} (W_RMS = {w_rms})"
+        id = (
+            f"Aberrated optical MTF at {wavelength} (W_RMS = {w_rms})"
+            if wavelength is not None
+            else f"Aberrated optical MTF (W_RMS = {w_rms})"
+        )
 
         # set the value function (with the fixed spatial cutoff frequency and w_rms)
         def value_func(input_line_freq):
@@ -189,15 +196,13 @@ class MTF_Model_1D:
     def from_mtf_2d(mtf_2d: RichData, slice: str) -> "MTF_Model_1D":
         """Converts the 2D MTF into a 1D MTF Model object.
 
-        The `prysm` MTF object produces the data in 2D,
-        as the contrast transfer may differ in different directions.
-        This method extracts a slice (usually in x or y directions)
-        and generates an `MTF_Model_1D` object.
+        The `prysm` MTF object produces the data in 2D, as the contrast transfer
+        may differ in different directions. This method extracts a slice (usually
+        in x or y directions) and generates an `MTF_Model_1D` object.
 
-        Possible slice strings are `x`, `y`, `azavg`, `azavmedian`,
-        `azmin`, `azpv`, `azvar`, `azstd`. The first two are simply
-        slices in the x and y axes. The remaining are different
-        ways of sampling the data in the azimuthal direction.
+        Possible slice strings are `x`, `y`, `azavg`, `azavmedian`, `azmin`, `azpv`,
+        `azvar`, `azstd`. The first two are simply slices in the x and y axes.
+        The remaining are different ways of sampling the data in the azimuthal direction.
 
         Parameters
         ----------
@@ -720,7 +725,7 @@ def _jitter_mtf(
     return _force_return_float(mtf_value)
 
 
-def psf_to_mtf(psf: RichData, with_units=False) -> RichData:
+def _psf_to_mtf(psf: RichData, with_units=False) -> RichData:
     """
     Computes the MTF.
 

@@ -12,7 +12,7 @@ To put {py:class}`.MTF_Model_1D` into use, the following simply generates an Ide
 
 ```python
 from opticks import u
-from opticks.imager_model.imager import Optics
+from opticks.imager_model.optics import Optics
 
 optics = Optics.from_yaml_file("optics_file.yaml")
 wvl = 650 * u.nm
@@ -41,12 +41,12 @@ The MTF associated with real optical systems are more complex and are usually de
 
 For this, [`prysm`](https://github.com/brandondube/prysm/) is used as the Wavefront calculation backend and some wrappers provided by `opticks`. The methodology is as follows:
 
-1. We define an aperture (conveniently through the {py:class}`.ApertureFactory`), though `prysm` can also be used. See the tutorial [here](../tutorials/aperture.ipynb) for an example on defining a complex aperture.
-2. We then attach the aperture to an {py:class}`.Optics` object.
-3. For each wavelength, we form one Pupil Function (essentially a Wavefront with an Amplitude and a Phase Error) and attach it to the {py:class}`.Optics` object.
-4. We call the {py:meth}`.Optics.psf` to compute the PSF. The result is a `prysm` `RichData` object. It is possible to plot this 2D PSF using the `RichData.plot2d` method.
-5. We call {py:func}`.psf_to_mtf` to convert the 2D PSF into 2D MTF. The result is also a `prysm` `RichData` object.
-6. Finally we call {py:meth}`.MTF_Model_1D.emp_model_aberrated_optics` with the direction of the slice, for example in "x" or "y" direction. This yields the 1D MTF Model.
+1. We define an aperture (conveniently through the {py:class}`.Aperture`), though `prysm` can also be used. See the tutorial [here](../tutorials/aperture.ipynb) for an example on defining a complex aperture.
+2. We then attach the aperture to an {py:class}`.Optics` object via {py:meth}`.Optics.set_aperture_model`.
+3. For each wavelength, we form one Pupil Function (essentially a Wavefront with an Amplitude and a Phase Error) and attach it to the {py:class}`.Optics` object via {py:meth}`.Optics.add_mono_pupil_function` or {py:meth}`.Optics.add_poly_pupil_function`.
+4. We call {py:meth}`.Optics.compute_psf` to compute the PSF. The result is a `prysm` `RichData` object. It is possible to plot this 2D PSF using the `RichData.plot2d` method.
+5. We call {py:meth}`.Optics.mtf` to retrieve the 2D MTF (lazily computed from the cached PSF). The result is also a `prysm` `RichData` object.
+6. Finally we call {py:meth}`.Optics.to_MTF_Model_1D` (or {py:meth}`.MTF_Model_1D.from_mtf_2d`) with the direction of the slice, for example in "x" or "y" direction. This yields the 1D MTF Model.
 
 This process is illustrated in an [example notebook](../examples/optics_aperture_psf.ipynb).
 

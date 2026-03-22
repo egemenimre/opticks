@@ -10,6 +10,7 @@ Package for prysm integration utilities and helpers.
 
 import copy
 
+import numpy as np
 from astropy.units import Quantity, Unit
 from numpy import ndarray
 from prysm._richdata import RichData
@@ -235,7 +236,7 @@ class OptPathDiff:
 
         # compute the polynomials (dimensionless)
         # t should be in radians
-        mode = list(zernike_nm_seq(nms, rho.value, t.value))  # type: ignore[union-attr]
+        mode = np.asarray(list(zernike_nm_seq(nms, rho.value, t.value)))  # type: ignore[union-attr]
 
         # monochromatic OPD with multiple aberrations
         # wfe_rms and opd units are should be in nm

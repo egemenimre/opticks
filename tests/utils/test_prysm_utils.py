@@ -32,7 +32,7 @@ class TestPrysmUtils:
         r_aber = r / r_aper
 
         nms = [ansi_j_to_nm(j) for j in range(0, 13)]
-        basis = list(zernike_nm_seq(nms, r_aber, t))
+        basis = np.asarray(list(zernike_nm_seq(nms, r_aber, t)))
 
         # set a "reproducible" random engine
         seed = 1

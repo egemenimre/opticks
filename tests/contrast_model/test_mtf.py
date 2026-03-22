@@ -111,7 +111,8 @@ class TestMTF:
         truth = 0.5196720931409163
 
         # Generate the MTF model and values
-        mtf_model = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(self.ref_wavelength)
+        mtf_model = MTF_Model_1D.ideal_optics(spatial_cutoff_freq, self.ref_wavelength)
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
 
@@ -126,8 +127,9 @@ class TestMTF:
 
         # Generate the MTF model and values
         w_rms = 0.05
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(self.ref_wavelength)
         mtf_model = MTF_Model_1D.emp_model_aberrated_optics(
-            self.ref_wavelength, w_rms, optics
+            spatial_cutoff_freq, w_rms, self.ref_wavelength
         )
 
         mtf_value = mtf_model.mtf_value(self.input_line_freq)
@@ -198,7 +200,10 @@ class TestMTF:
         channel: Channel = detector.channels["pan"]
 
         # Generate the MTF model and values
-        mtf_model_1 = MTF_Model_1D.ideal_optics(self.ref_wavelength, optics)
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(self.ref_wavelength)
+        mtf_model_1 = MTF_Model_1D.ideal_optics(
+            spatial_cutoff_freq, self.ref_wavelength
+        )
         mtf_model_2 = MTF_Model_1D.detector_sampling(channel.pixel_pitch())
 
         mtf_model = MTF_Model_1D.combined(mtf_model_1, mtf_model_2)

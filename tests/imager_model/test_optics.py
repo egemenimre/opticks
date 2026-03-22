@@ -16,6 +16,7 @@ from prysm.geometry import circle
 from prysm.propagation import focus
 
 from opticks import u
+from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.imager_model.optics import Aperture, Optics
 from opticks.utils.prysm_utils import OptPathDiff
 from tests import process_paths
@@ -136,13 +137,13 @@ class TestOptics:
 
         ref_wvl = 500 * u.nm
 
-        optics.add_pupil_func(ref_wvl, None)
+        optics.add_mono_pupil_function("test", ref_wvl)
 
         Q = 2
         psf_dx: Quantity = ref_wvl.to(u.um) * optics.f_number / Q  # type: ignore[operator]
 
         psf_samples = pup_samples * Q
-        psf = optics.psf(ref_wvl, psf_dx, psf_samples=psf_samples)
+        psf = optics.compute_psf("test", psf_dx, psf_samples=psf_samples)
 
         # unity sum
         optics_psf_unity_sum = Optics.from_yaml_text(yaml_text)
@@ -150,10 +151,10 @@ class TestOptics:
         aperture_unity_sum = aperture.scale_for_norm_sum_psf()
         optics_psf_unity_sum.set_aperture_model(aperture_unity_sum)
 
-        optics_psf_unity_sum.add_pupil_func(ref_wvl, None)
+        optics_psf_unity_sum.add_mono_pupil_function("test", ref_wvl)
 
-        psf_unity_sum = optics_psf_unity_sum.psf(
-            ref_wvl, psf_dx, psf_samples=psf_samples
+        psf_unity_sum = optics_psf_unity_sum.compute_psf(
+            "test", psf_dx, psf_samples=psf_samples
         )
 
         # unity peak
@@ -163,10 +164,10 @@ class TestOptics:
         aperture_unity_peak = aperture.scale_for_norm_peak_psf(Q, Q_pad)
         optics_psf_unity_peak.set_aperture_model(aperture_unity_peak)
 
-        optics_psf_unity_peak.add_pupil_func(ref_wvl, None)
+        optics_psf_unity_peak.add_mono_pupil_function("test", ref_wvl)
 
-        psf_unity_peak = optics_psf_unity_peak.psf(
-            ref_wvl, psf_dx, psf_samples=psf_samples
+        psf_unity_peak = optics_psf_unity_peak.compute_psf(
+            "test", psf_dx, psf_samples=psf_samples
         )
 
         # # verification
@@ -235,7 +236,9 @@ class TestOptics:
             )  # sum of intensities, wvls are incoherent to each other
 
         # psf is just an array
-        psf_poly_prysm = polynomials.sum_of_2d_modes(components, spectral_weights)
+        psf_poly_prysm = polynomials.sum_of_2d_modes(
+            np.asarray(components), spectral_weights
+        )
         # until we enrich it
         psf_poly_prysm = _richdata.RichData(psf_poly_prysm, res_el, wvl0)
 
@@ -259,29 +262,61 @@ class TestOptics:
         opd = OptPathDiff(phs * u.nm)
 
         # generate and add the Wavefront or Pupil function (mono)
-        optics.add_pupil_func(wvl0 * u.um, opd)
+        optics.add_mono_pupil_function("mono", wvl0 * u.um, opd)
 
         # compute monochromatic PSF
-        psf_mono = optics.psf(
-            wvl0 * u.um, res_el * u.um, res, spectral_weights=None, with_units=True
-        )
+        psf_mono = optics.compute_psf("mono", res_el * u.um, res, with_units=True)
 
         # polychromatic psf
-
-        # reset pupil functs
-        optics.pupils = []
-
-        # reuse the same opd
-        for wvl in wvls:
-            optics.add_pupil_func(wvl * u.um, opd)
+        optics.add_poly_pupil_function(
+            "poly",
+            Quantity([wvl * u.um for wvl in wvls]),
+            [opd] * len(wvls),
+        )
 
         # compute polychromatic PSF
-        psf_poly = optics.psf(
-            wvl0 * u.um, res_el * u.um, res, spectral_weights=None, with_units=True
-        )
+        psf_poly = optics.compute_psf("poly", res_el * u.um, res, with_units=True)
 
         # verification
         np.testing.assert_allclose(psf_mono.data, psf_mono_prysm.data, rtol=1e-10)
         np.testing.assert_allclose(psf_mono.dx, psf_mono_prysm.dx * u.um, rtol=1e-10)
         np.testing.assert_allclose(psf_poly.data, psf_poly_prysm.data, rtol=1e-10)
         np.testing.assert_allclose(psf_poly.dx, psf_poly_prysm.dx * u.um, rtol=1e-10)
+
+    def test_to_MTF_Model_1D(self):
+        """Test to_MTF_Model_1D on PupilFunction and Optics."""
+
+        # set up optics with aperture and pupil function
+        yaml_text = """
+        name: MTF 1D Test
+        focal_length: 150 mm
+        aperture_diameter: 37.5 mm
+        image_diam_on_focal_plane: 10 mm"""
+
+        optics = Optics.from_yaml_text(yaml_text)
+        aperture = Aperture.circle_aperture(
+            optics.aperture_diameter, 128, with_units=True
+        )
+        optics.set_aperture_model(aperture)
+        optics.add_mono_pupil_function("mono", 0.55 * u.um, None)
+
+        # should raise before PSF is computed
+        with pytest.raises(ValueError):
+            optics.pupil_functs["mono"].to_MTF_Model_1D("x")
+
+        # compute PSF
+        optics.compute_psf("mono", 5.0 * u.um, 256, with_units=True)
+
+        # PupilFunction.to_MTF_Model_1D
+        mtf_1d = optics.pupil_functs["mono"].to_MTF_Model_1D("x")
+        assert isinstance(mtf_1d, MTF_Model_1D)
+
+        # Optics.to_MTF_Model_1D
+        mtf_1d_optics = optics.to_MTF_Model_1D("mono", "x")
+        assert isinstance(mtf_1d_optics, MTF_Model_1D)
+
+        # both should produce the same MTF values
+        test_freq = np.linspace(0, 50, 10) * u.cy / u.mm
+        np.testing.assert_array_equal(
+            mtf_1d.mtf_value(test_freq), mtf_1d_optics.mtf_value(test_freq)
+        )
