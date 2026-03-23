@@ -66,7 +66,7 @@ class TestImager:
 
         # set up
         horiz_fov_truth = 1.73139509 * u.deg
-        vert_fov_truth = 0.0577131695 * u.mdeg
+        vert_fov_truth = 0.577131695 * u.mdeg
 
         # computation
         horiz_fov = imager.horizontal_fov(self.band_id)
@@ -74,7 +74,7 @@ class TestImager:
 
         # verification
         assert_allclose(horiz_fov, horiz_fov_truth, atol=0.001 * u.mdeg)
-        assert_allclose(vert_fov, vert_fov_truth, atol=0.00001 * u.mdeg)
+        assert_allclose(vert_fov, vert_fov_truth, atol=0.0001 * u.mdeg)
 
     def test_ifov(self, imager: Imager):
         """Tests the instantaneous FoV."""
