@@ -30,6 +30,7 @@ class Channel(BaseModel):
     vertical_pixels: PositiveInt
     binning: int = 1
     tdi_stages: int = 1
+    read_blocks: PositiveInt = 1
     cuton_wvl: PositivePydanticQty
     cutoff_wvl: PositivePydanticQty
 
@@ -144,13 +145,17 @@ class Channel(BaseModel):
         return (self.horizontal_pixels / binning * u.pixel).to("Mpixel")  # type: ignore[return-value]
 
     def pix_read_rate(
-        self, frame_rate: Quantity, with_binning: bool = True, with_tdi: bool = False
+        self,
+        frame_rate: Quantity,
+        with_binning: bool = True,
+        with_tdi: bool = False,
+        with_read_blocks: bool = True,
     ) -> Quantity:
         r"""
         Pixel read rate.
 
         Computed as:
-            - Pushbroom type: `horiz pix (binned) x TDI stages x line rate`
+            - Pushbroom type: `horiz pix (binned) x TDI stages x read blocks x line rate`
             - Full frame type: `horiz pix (binned) x vert pix (binned) x frame rate`
 
         Parameters
@@ -161,6 +166,8 @@ class Channel(BaseModel):
             Return the value with binning or not
         with_tdi : bool
             Return the value with TDI or not (valid for pushbroom only)
+        with_read_blocks : bool
+            Return the value with read blocks or not (valid for pushbroom only)
 
         Returns
         -------
@@ -171,9 +178,14 @@ class Channel(BaseModel):
 
         binning = self.binning if with_binning else 1
 
+        read_blocks = self.read_blocks if with_read_blocks else 1
+
         if self._detector_type == DetectorType.PUSHBROOM:
             pix_read_rate = (
-                self.pixel_count_line(with_binning) * tdi * (frame_rate / binning)
+                self.pixel_count_line(with_binning)
+                * tdi
+                * read_blocks
+                * (frame_rate / binning)
             )
         elif self._detector_type == DetectorType.FULL_FRAME:
             pix_read_rate = self.pixel_count_frame(with_binning) * (
@@ -327,12 +339,13 @@ class Detector(ImagerComponent):
         band_id: str | Iterable[str],
         with_binning: bool = True,
         with_tdi: bool = True,
+        with_read_blocks: bool = True,
     ) -> Quantity:
         """
         Pixel read rate.
 
         Computed as:
-         - Pushbroom type: `horiz pix (binned) x TDI stages x line rate`
+         - Pushbroom type: `horiz pix (binned) x TDI stages x read blocks x line rate`
          - Full frame type: `horiz pix (binned) x vert pix (binned) x frame rate`
 
         If a list of channels is given, then  the returned result is the sum of all
@@ -346,6 +359,8 @@ class Detector(ImagerComponent):
             Return the value with binning or not
         with_tdi : bool
             Return the value with TDI or not (valid for pushbroom only)
+        with_read_blocks : bool
+            Return the value with read blocks or not (valid for pushbroom only)
 
         Returns
         -------
@@ -366,6 +381,7 @@ class Detector(ImagerComponent):
                 timings.frame_rate,  # type: ignore[arg-type]
                 with_binning,
                 with_tdi,
+                with_read_blocks,
             )
         else:
             # there are multiple channels, sum the values
@@ -376,6 +392,7 @@ class Detector(ImagerComponent):
                     timings.frame_rate,  # type: ignore[arg-type]
                     with_binning,
                     with_tdi,
+                    with_read_blocks,
                 )
                 pix_read_rate += pix_read_rate_single_chan
 

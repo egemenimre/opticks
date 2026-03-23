@@ -188,7 +188,10 @@ class Imager:
         """
         Computes the full field of view in the vertical direction.
 
-         Used pixels only.
+        For a pushbroom detector, this nominally corresponds to "read blocks"
+        (to compensate for the slow detector readout rate) multiplied
+        by TDI stages. For a "full-frame" detector, this corresponds to the
+        entire detector area in the vertical direction.
 
         Parameters
         ----------
@@ -217,7 +220,7 @@ class Imager:
 
     def ifov(self, band_id: str, with_binning=True) -> Quantity:
         """
-        Computes the average instantaneous field of view
+        Computes the average instantaneous field of view per effective pixel
         (works in vertical and horizontal).
 
         The IFoV is computed simply as the FoV divided by the number of
@@ -277,6 +280,7 @@ class Imager:
         band_id: str | Iterable[str],
         with_binning: bool = True,
         with_compression: bool = True,
+        with_read_blocks: bool = True,
     ) -> Quantity:
         """
         Data write rate with or without compression.
@@ -298,6 +302,8 @@ class Imager:
             Return the value with binning or not
         with_compression : bool
             Return the value with compression or not
+        with_read_blocks : bool
+            Return the value with read blocks or not (valid for pushbroom only)
 
         Returns
         -------
@@ -309,7 +315,9 @@ class Imager:
 
         # data rate after encoding
         enc_data_rate = (
-            self.detector.pix_read_rate(band_id, with_binning, with_tdi)
+            self.detector.pix_read_rate(
+                band_id, with_binning, with_tdi, with_read_blocks
+            )
             * self.rw_electronics.pixel_encoding  # type: ignore[union-attr]
         )
 
