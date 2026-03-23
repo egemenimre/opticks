@@ -13,7 +13,7 @@ Computed as:
 
 - Pushbroom type detector (with binning if applicable):
 
-    $$\text{horizontal pixels (binned)} \times \text{TDI stages} \times \text{line rate}$$
+    $$\text{horizontal pixels (binned)} \times \text{TDI stages} \times \text{read blocks} \times \text{line rate}$$
 
 - Full frame type detector (with binning if applicable):
 
@@ -21,7 +21,9 @@ Computed as:
 
 The computation above can be modified for the unbinned pixels, depending on where (before or after binning) the pixel read rate is evaluated.
 
-Note that the unused pixels are also read, this assumes that the detector does not have ROI functionality.
+For pushbroom detectors, `read blocks` (default 1) enables block reading, where the detector reads multiple lines per line period to output data at a higher rate.
+
+Note that the unused pixels may also be read, this assumes that the detector does not have ROI functionality.
 
 ## Data Write Rate
 

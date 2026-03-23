@@ -17,6 +17,7 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 450 nm
       cutoff_wvl: 530 nm
 
@@ -26,6 +27,7 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 510 nm
       cutoff_wvl: 590 nm
 
@@ -35,6 +37,7 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 620 nm
       cutoff_wvl: 700 nm
 
@@ -44,6 +47,7 @@ channels:
       vertical_pixels: 1
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 775 nm
       cutoff_wvl: 915 nm
 

@@ -27,6 +27,19 @@ class TestDetector:
 
         return Detector.from_yaml_file(file_path)
 
+    @pytest.fixture(scope="class")
+    def block_detector(self) -> Detector:
+        """Detector with block read functionality."""
+
+        file_directory = Path("sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        file_path = Path("block_test_pan_detector.yaml")
+
+        # different test environments work with different paths
+        file_path = process_paths(file_path, file_directory, alt_file_directory)
+
+        return Detector.from_yaml_file(file_path)
+
     def test_det_read_rate_all_bands(self, detector):
         """Tests the detector read rate."""
 
@@ -97,6 +110,7 @@ class TestDetector:
             assert ch_reloaded.vertical_pixels == channel.vertical_pixels
             assert ch_reloaded.binning == channel.binning
             assert ch_reloaded.tdi_stages == channel.tdi_stages
+            assert ch_reloaded.read_blocks == channel.read_blocks
             assert isclose(ch_reloaded.cuton_wvl, channel.cuton_wvl)
             assert isclose(ch_reloaded.cutoff_wvl, channel.cutoff_wvl)
 
@@ -133,5 +147,39 @@ class TestDetector:
             assert ch_reloaded.vertical_pixels == channel.vertical_pixels
             assert ch_reloaded.binning == channel.binning
             assert ch_reloaded.tdi_stages == channel.tdi_stages
+            assert ch_reloaded.read_blocks == channel.read_blocks
             assert isclose(ch_reloaded.cuton_wvl, channel.cuton_wvl)
             assert isclose(ch_reloaded.cutoff_wvl, channel.cutoff_wvl)
+
+    def test_block_read_rate_with_read_blocks(self, block_detector):
+        """Tests that read_blocks multiplies the pixel read rate."""
+
+        band_id = "pan"
+
+        # read_blocks=4, frame_rate=2452.9 Hz
+        # 30000 * 4 * 2452.9 = 294.348 Mpix/s (same as original pan with read_blocks=1)
+        truth = 294.348 * Unit("megapixel / second")
+
+        pix_read_rate = block_detector.pix_read_rate(
+            band_id, with_binning=True, with_tdi=False, with_read_blocks=True
+        )
+
+        np.testing.assert_allclose(
+            pix_read_rate, truth, atol=0.00000001 * Unit("megapixel / second")
+        )
+
+    def test_block_read_rate_without_read_blocks(self, block_detector):
+        """Tests the pixel read rate with read_blocks disabled."""
+
+        band_id = "pan"
+
+        # with_read_blocks=False: 30000 * 1 * 2452.9 = 73.587 Mpix/s
+        truth = 73.587 * Unit("megapixel / second")
+
+        pix_read_rate = block_detector.pix_read_rate(
+            band_id, with_binning=True, with_tdi=False, with_read_blocks=False
+        )
+
+        np.testing.assert_allclose(
+            pix_read_rate, truth, atol=0.00000001 * Unit("megapixel / second")
+        )
