@@ -15,36 +15,40 @@ channels:
     b0_blue:
       name: B0 blue
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 4
+      vertical_pixels: 1 # tdi_stages x read_blocks
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 450 nm
       cutoff_wvl: 530 nm
 
     b1_green:
       name: B1 green
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 4
+      vertical_pixels: 1 # tdi_stages x read_blocks
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 510 nm
       cutoff_wvl: 590 nm
 
     b2_red:
       name: B2 red
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 4
+      vertical_pixels: 1 # tdi_stages x read_blocks
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 620 nm
       cutoff_wvl: 700 nm
 
     b3_nir:
       name: B3 NIR
       horizontal_pixels: 7500 # exact value not known
-      vertical_pixels: 4
+      vertical_pixels: 1 # tdi_stages x read_blocks
       binning: 1
       tdi_stages: 1 # no TDI in MS
+      read_blocks: 1
       cuton_wvl: 775 nm
       cutoff_wvl: 915 nm
 
