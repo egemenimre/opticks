@@ -18,6 +18,10 @@ from prysm._richdata import RichData
 from prysm.otf import mtf_from_psf
 
 from opticks import u
+from opticks.contrast_model.diffusion_mtf import (
+    detector_diffusion_mtf,
+    validate_diffusion_params,
+)
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.prysm_utils import richdata_with_units
 
@@ -422,6 +426,179 @@ class MTF_Model_1D:
             return mtf_value
 
         return MTF_Model_1D(id, value_func)
+
+    @u.quantity_input(
+        diffusion_length="length",
+        field_free_depth="length",
+        depletion_depth="length",
+        surface_recomb_velocity="speed",
+    )
+    @staticmethod
+    def detector_diffusion(
+        model,
+        absorption_coeff: Quantity,
+        diffusion_length: Quantity,
+        field_free_depth: Quantity | None = None,
+        depletion_depth: Quantity | None = None,
+        surface_recomb_velocity: Quantity | None = None,
+        diffusion_coeff: Quantity | None = None,
+    ):
+        """
+        Detector diffusion MTF model (Crowell & Labuda 1969).
+
+        Computes the diffusion-limited MTF for a given detector geometry and
+        boundary conditions. Use one of the five simplified model variants
+        (BSI-1/2/3, FSI-1/2) matching your detector type.
+
+        Parameters
+        ----------
+        model : DetectorDiffusionModel
+            Diffusion model variant (geometry + boundary conditions)
+        absorption_coeff : Quantity["1/length"]
+            Optical absorption coefficient (e.g., in 1/µm or 1/cm)
+        diffusion_length : Quantity["length"]
+            Minority carrier diffusion length L_o
+        field_free_depth : Quantity["length"], optional
+            Field-free (bulk) region depth L_a. Required for BSI-1/2/3, FSI-1.
+        depletion_depth : Quantity["length"], optional
+            Depletion region depth L_b (BSI) or L_D (FSI). Required for
+            BSI-1, BSI-2, FSI-1, FSI-2.
+        surface_recomb_velocity : Quantity["speed"], optional
+            Surface recombination velocity S. Required for BSI-3 only.
+        diffusion_coeff : Quantity, optional
+            Minority carrier diffusion coefficient D (provide in cm²/s).
+            Required for BSI-3 only.
+
+        Returns
+        -------
+        MTF_Model_1D
+            Diffusion MTF model
+        """
+        # validate forbidden/required parameters per model
+        validate_diffusion_params(
+            model,
+            field_free_depth,
+            depletion_depth,
+            surface_recomb_velocity,
+            diffusion_coeff,
+        )
+
+        # convert to internal float units (µm, µm⁻¹)
+        alpha = absorption_coeff.to(1 / u.um).value
+        L_o = diffusion_length.to(u.um).value
+        L_a = field_free_depth.to(u.um).value if field_free_depth is not None else None
+        depth = depletion_depth.to(u.um).value if depletion_depth is not None else None
+        s_over_d = (
+            (surface_recomb_velocity / diffusion_coeff).decompose().to(1 / u.um).value
+            if surface_recomb_velocity is not None
+            else None
+        )
+
+        id_str = (
+            f"Detector Diffusion MTF ({model}): "
+            f"alpha={alpha:.4g}/µm, L_o={L_o:.4g}µm"
+            + (f", L_a={L_a:.4g}µm" if L_a is not None else "")
+            + (f", depth={depth:.4g}µm" if depth is not None else "")
+            + (f", s/d={s_over_d:.4g}/µm" if s_over_d is not None else "")
+        )
+
+        def value_func(input_line_freq):
+            return detector_diffusion_mtf(
+                input_line_freq.to(u.cy / u.mm).value,
+                model,
+                alpha,
+                L_o,
+                L_a,
+                depth,
+                s_over_d,
+            )
+
+        return MTF_Model_1D(id_str, value_func)
+
+    @u.quantity_input(
+        diffusion_length="length",
+        field_free_depth="length",
+        depletion_depth="length",
+        surface_recomb_velocity="speed",
+    )
+    @staticmethod
+    def detector_diffusion_preset(
+        preset,
+        absorption_coeff: Quantity,
+        diffusion_length: Quantity | None = None,
+        field_free_depth: Quantity | None = None,
+        depletion_depth: Quantity | None = None,
+        surface_recomb_velocity: Quantity | None = None,
+        diffusion_coeff: Quantity | None = None,
+    ):
+        """
+        Detector diffusion MTF model from a predefined detector category preset.
+
+        Looks up default parameters for the preset, then applies any supplied
+        overrides. Raises ``ValueError`` if an override is incompatible with
+        the preset's model (e.g., supplying ``surface_recomb_velocity`` for a
+        BSI-1 preset).
+
+        Parameters
+        ----------
+        preset : DetectorDiffusionPreset
+            Detector category preset
+        absorption_coeff : Quantity["1/length"]
+            Optical absorption coefficient
+        diffusion_length : Quantity["length"], optional
+            Override for the preset diffusion length L_o
+        field_free_depth : Quantity["length"], optional
+            Override for the preset field-free depth L_a
+        depletion_depth : Quantity["length"], optional
+            Override for the preset depletion/substrate depth
+        surface_recomb_velocity : Quantity["speed"], optional
+            Override for the preset surface recombination velocity (BSI-3 only)
+        diffusion_coeff : Quantity, optional
+            Override for the preset diffusion coefficient (BSI-3 only)
+
+        Returns
+        -------
+        MTF_Model_1D
+            Diffusion MTF model
+        """
+        model = preset.model
+
+        # validate overrides against the preset's model
+        overrides = {
+            "field_free_depth": field_free_depth,
+            "depletion_depth": depletion_depth,
+            "surface_recomb_velocity": surface_recomb_velocity,
+            "diffusion_coeff": diffusion_coeff,
+        }
+        for param_name, value in overrides.items():
+            if value is not None and param_name not in model.required_params:
+                raise ValueError(
+                    f"Parameter '{param_name}' is not used by model {model} "
+                    f"(preset {preset}). Remove it or choose a different preset."
+                )
+
+        # merge overrides into defaults (user-supplied wins)
+        merged = dict(preset.params)
+        if diffusion_length is not None:
+            merged["diffusion_length"] = diffusion_length
+        if field_free_depth is not None:
+            merged["field_free_depth"] = field_free_depth
+        if depletion_depth is not None:
+            merged["depletion_depth"] = depletion_depth
+        if surface_recomb_velocity is not None:
+            merged["surface_recomb_velocity"] = surface_recomb_velocity
+        if diffusion_coeff is not None:
+            merged["diffusion_coeff"] = diffusion_coeff
+
+        return MTF_Model_1D.detector_diffusion(
+            model=model,
+            absorption_coeff=absorption_coeff,
+            diffusion_length=merged["diffusion_length"],
+            field_free_depth=merged.get("field_free_depth"),
+            depletion_depth=merged.get("depletion_depth"),
+            surface_recomb_velocity=merged.get("surface_recomb_velocity"),
+            diffusion_coeff=merged.get("diffusion_coeff"),
+        )
 
 
 def _force_return_float(mtf_value):

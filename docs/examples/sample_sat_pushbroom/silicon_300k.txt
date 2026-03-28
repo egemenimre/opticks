@@ -1,0 +1,18 @@
+# Silicon absorption coefficient at 300 K
+# Source: Green (2008), "Self-consistent optical parameters of intrinsic silicon
+#         at 300 K including temperature coefficients"
+# wavelength range: 400–1000 nm (visible and near-infrared)
+wavelength (nm)  alpha (1/um)
+400              5.0
+450              2.78
+500              1.0
+550              0.63
+600              0.40
+650              0.27
+700              0.19
+750              0.13
+800              0.089
+850              0.058
+900              0.036
+950              0.019
+1000             0.010

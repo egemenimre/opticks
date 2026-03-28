@@ -12,18 +12,20 @@ models/imager_geom
 models/data_chain
 ```
 
-## Imaging Performance Models
+## Imaging Performance Models: Sharpness and Contrast
 
 ```{toctree}
 ---
 maxdepth: 1
 ---
-models/sharpness_pt1
-models/sharpness_pt2
-models/sharpness_pt3
-models/sharpness_pt4
-models/mtf_scenarios
-models/opticks_mtf
+models/sharpness/sharpness_pt1
+models/sharpness/sharpness_pt2
+models/sharpness/sharpness_pt3
+models/sharpness/sharpness_pt4
+models/sharpness/mtf_scenarios
+models/sharpness/opticks_mtf
+models/sharpness/detector_diffusion_derivation.ipynb
+models/sharpness/detector_diffusion_mtf.ipynb
 ```
 
 ## Under the Hood: Miscellaneous Models

@@ -1,0 +1,36 @@
+# Sample Pushbroom Imager: Pléiades PAN (with sensor_params for testing)
+# -----------------------------------------------------------------------
+
+# Pléiades Detector (e2v CCD98-50)
+name: Pléiades PAN Detector
+
+detector_type: pushbroom
+pixel_pitch: 13 um
+horizontal_pixels: 30000
+vertical_pixels: 10 # tdi_stages x read_blocks
+
+# PAN 480-820 nm
+
+channels:
+  pan:
+    name: PAN
+    horizontal_pixels: 30000 # exact value not known
+    vertical_pixels: 10 # tdi_stages x read_blocks
+    binning: 1
+    tdi_stages: 10 # TBC, selectable 7 to 20 in 5 steps
+    read_blocks: 1
+    cuton_wvl: 480 nm
+    cutoff_wvl: 820 nm
+
+timings:
+  frame_rate: 9811.6 Hz
+  integration_duration: 0.03 ms
+
+# Image sensor physical parameters (e2v CCD98-50, estimated)
+sensor_params:
+  diffusion_model: bsi_1
+  diffusion_length: 75 um
+  field_free_depth: 7 um
+  depletion_depth: 7 um
+  absorption_data:
+    file: tests/imager_model/sat_pushbroom_data/silicon_300k.txt

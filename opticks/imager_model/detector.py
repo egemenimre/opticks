@@ -6,12 +6,27 @@
 
 from collections.abc import Iterable
 from enum import StrEnum
+from pathlib import Path
+from typing import Self
 
-from astropy.units import Quantity
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt, PrivateAttr
+import numpy as np
+from astropy.units import Quantity, Unit
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PositiveInt,
+    PrivateAttr,
+    model_validator,
+)
 
 from opticks import u
+from opticks.contrast_model.diffusion_mtf import (
+    DetectorDiffusionModel,
+    DetectorDiffusionPreset,
+)
 from opticks.imager_model.imager_component import ImagerComponent
+from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.parser_helpers import PositivePydanticQty, PydanticQty
 
 
@@ -252,6 +267,138 @@ class Noise(BaseModel):
     temporal_dark_noise: PydanticQty | None = None
 
 
+class AbsorptionData(BaseModel):
+    """Reference to an external absorption coefficient data file."""
+
+    file: str
+    csv_separator: str | None = None
+
+
+class SensorParams(BaseModel):
+    """Image sensor physical parameters (diffusion MTF, CTE, crosstalk)."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    # Diffusion model selection (mutually exclusive)
+    diffusion_model: str | None = None
+    diffusion_preset: str | None = None
+
+    # Diffusion geometry params (required when using diffusion_model,
+    # overrides when using preset)
+    diffusion_length: PositivePydanticQty | None = None
+    field_free_depth: PositivePydanticQty | None = None
+    depletion_depth: PositivePydanticQty | None = None
+    surface_recomb_velocity: PydanticQty | None = None
+    diffusion_coeff: PydanticQty | None = None
+
+    # Absorption data file (relative to cwd)
+    absorption_data: AbsorptionData | None = None
+
+    # Loaded interpolator (private, not serialized)
+    _absorption_ipol: InterpolatorWithUnits | None = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def _check_mutually_exclusive(self) -> Self:
+        if self.diffusion_model is not None and self.diffusion_preset is not None:
+            raise ValueError(
+                "diffusion_model and diffusion_preset are mutually exclusive. "
+                "Supply only one."
+            )
+        return self
+
+    def load_absorption_data(self) -> None:
+        """Load absorption coefficient data from the external file.
+
+        Resolves the file path relative to the current working directory.
+        The file is self-describing: comment lines start with ``#``,
+        the first non-comment line is the header declaring column names
+        and units (e.g. ``wavelength (nm)  alpha (1/um)``),
+        and subsequent lines are data rows.
+        """
+        if self.absorption_data is None:
+            raise ValueError("No absorption_data configured in sensor_params.")
+
+        file_path = Path.cwd() / self.absorption_data.file
+        sep = self.absorption_data.csv_separator
+
+        wavelengths: list[float] = []
+        alphas: list[float] = []
+        x_unit: Unit | None = None
+        y_unit: Unit | None = None
+
+        with open(file_path) as f:
+            for line in f:
+                stripped = line.strip()
+                # skip empty lines and comments
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if x_unit is None:
+                    # first non-comment line is the header
+                    x_unit, y_unit = _parse_header_units(stripped, sep)
+                else:
+                    # data row
+                    parts = stripped.split(sep) if sep else stripped.split()
+                    wavelengths.append(float(parts[0].strip()))
+                    alphas.append(float(parts[1].strip()))
+
+        x_qty = np.array(wavelengths) * x_unit
+        y_qty = np.array(alphas) * y_unit
+
+        self._absorption_ipol = InterpolatorWithUnits.from_ipol_method(
+            InterpolatorWithUnitTypes.PCHIP, x_qty, y_qty
+        )
+
+    def get_absorption_coeff(self, wavelength: Quantity) -> Quantity:
+        """Return the absorption coefficient at the given wavelength.
+
+        Parameters
+        ----------
+        wavelength : Quantity
+            Wavelength at which to interpolate α.
+
+        Returns
+        -------
+        Quantity
+            Absorption coefficient with units from the data file.
+        """
+        if self._absorption_ipol is None:
+            raise ValueError(
+                "Absorption data not loaded. Call load_absorption_data() first."
+            )
+        return self._absorption_ipol(wavelength)
+
+
+def _parse_header_units(header_line: str, sep: str | None) -> tuple[Unit, Unit]:
+    """Extract units from a self-describing header line.
+
+    Expects two columns with units in parentheses,
+    e.g. ``wavelength (nm)  alpha (1/um)`` or ``wavelength (nm), alpha (1/um)``.
+    """
+    parts = header_line.split(sep) if sep else header_line.split()
+
+    # Reassemble tokens into two column groups based on parenthesised units.
+    # Each column ends when we find a token containing ')'.
+    columns: list[str] = []
+    current_tokens: list[str] = []
+    for token in parts:
+        current_tokens.append(token.strip())
+        if ")" in token:
+            columns.append(" ".join(current_tokens))
+            current_tokens = []
+    if current_tokens:
+        columns.append(" ".join(current_tokens))
+
+    if len(columns) < 2:
+        raise ValueError(f"Cannot parse two column groups from header: '{header_line}'")
+
+    def _extract_unit(col: str) -> Unit:
+        start = col.index("(")
+        end = col.index(")")
+        return Unit(col[start + 1 : end])
+
+    return _extract_unit(columns[0]), _extract_unit(columns[1])
+
+
 class Detector(ImagerComponent):
     """
     Class containing generic Detector parameters.
@@ -268,6 +415,7 @@ class Detector(ImagerComponent):
     full_well_capacity: PydanticQty | None = None
     noise: Noise | None = None
     timings: Timings
+    sensor_params: SensorParams | None = None
 
     def model_post_init(self, __context):
         """Initialises derived parameters after Pydantic validation.
@@ -430,3 +578,85 @@ class Detector(ImagerComponent):
         """
 
         return [self.channels[band_id] for band_id in band_ids]
+
+    def get_diffusion_mtf_1d(self, wavelength: Quantity):
+        """Generate diffusion MTF model for this detector at the given wavelength.
+
+        The diffusion MTF is isotropic (same in ALT and ACT directions).
+
+        Looks up the absorption coefficient from the sensor_params absorption
+        table, then delegates to ``MTF_Model_1D.detector_diffusion()`` or
+        ``MTF_Model_1D.detector_diffusion_preset()``.
+
+        Parameters
+        ----------
+        wavelength : Quantity
+            Wavelength at which to compute the diffusion MTF.
+
+        Returns
+        -------
+        MTF_Model_1D
+            Diffusion MTF model.
+
+        Raises
+        ------
+        ValueError
+            If ``sensor_params`` or ``absorption_data`` is not configured.
+        """
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        sp = self.sensor_params
+        if sp is None:
+            raise ValueError(
+                "sensor_params is not configured on this Detector. "
+                "Add a sensor_params block to the detector YAML."
+            )
+
+        alpha = sp.get_absorption_coeff(wavelength)
+
+        if sp.diffusion_model is not None:
+            model = next(
+                (m for m in DetectorDiffusionModel if m.label == sp.diffusion_model),
+                None,
+            )
+            if model is None:
+                raise ValueError(
+                    f"Unknown diffusion_model '{sp.diffusion_model}'. "
+                    f"Valid values: {[m.label for m in DetectorDiffusionModel]}"
+                )
+            if sp.diffusion_length is None:
+                raise ValueError(
+                    "diffusion_length is required when using diffusion_model."
+                )
+            return MTF_Model_1D.detector_diffusion(
+                model,
+                absorption_coeff=alpha,
+                diffusion_length=sp.diffusion_length,
+                field_free_depth=sp.field_free_depth,
+                depletion_depth=sp.depletion_depth,
+                surface_recomb_velocity=sp.surface_recomb_velocity,
+                diffusion_coeff=sp.diffusion_coeff,
+            )
+        elif sp.diffusion_preset is not None:
+            preset = next(
+                (p for p in DetectorDiffusionPreset if p.label == sp.diffusion_preset),
+                None,
+            )
+            if preset is None:
+                raise ValueError(
+                    f"Unknown diffusion_preset '{sp.diffusion_preset}'. "
+                    f"Valid values: {[p.label for p in DetectorDiffusionPreset]}"
+                )
+            return MTF_Model_1D.detector_diffusion_preset(
+                preset,
+                absorption_coeff=alpha,
+                diffusion_length=sp.diffusion_length,
+                field_free_depth=sp.field_free_depth,
+                depletion_depth=sp.depletion_depth,
+                surface_recomb_velocity=sp.surface_recomb_velocity,
+                diffusion_coeff=sp.diffusion_coeff,
+            )
+        else:
+            raise ValueError(
+                "Neither diffusion_model nor diffusion_preset is set in sensor_params."
+            )

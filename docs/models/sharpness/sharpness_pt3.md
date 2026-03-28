@@ -91,7 +91,7 @@ Drift/Smear is the more general form of the Motion Blur. Motion Blur deals with 
 
 The basic equations are the same as those in Motion Blur, though this time the causes are different. And, unlike Motion Blur, the blur extent direction does not have to be in the direction of the platform relative motion with respect to the scene.
 
-$$\text{MTF}_\text{mot blur}(f) = \frac{\sin(\pi d p f)}{\pi p f} = \text{sinc}(d p f)$$
+$$\text{MTF}_\text{mot blur}(f) = \frac{\sin(\pi d p f)}{\pi d p f} = \text{sinc}(d p f)$$
 
 where $d$ is the blur or drift extent, expressed in pixel ratio. In this case, the blur extent should be computed in along-track and across-track axes separately, summing all the sources that introduce a drift rate over the integration time. Each disturbance is assigned a rotation/translation rate and a rotation/translation axis and, multiplying with the exposure time, the total blur extent on the image plane is computed.
 
