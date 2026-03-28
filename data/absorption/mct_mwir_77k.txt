@@ -1,0 +1,10 @@
+# HgCdTe (MCT) MWIR absorption coefficient at 77 K
+# Source: Rogalski (2019), Chu (1994)
+# Composition: x ~ 0.30, cutoff ~ 5 um
+# wavelength range: 2.0-4.8 um
+wavelength (um)  alpha (1/um)
+2.0              1.5
+3.0              0.8
+4.0              0.5
+4.5              0.3
+4.8              0.15

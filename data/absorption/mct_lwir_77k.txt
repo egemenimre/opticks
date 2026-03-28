@@ -1,0 +1,10 @@
+# HgCdTe (MCT) LWIR absorption coefficient at 77 K
+# Source: Rogalski (2019), Chu (1994)
+# Composition: x ~ 0.22, cutoff ~ 12 um
+# wavelength range: 5.0-11.5 um
+wavelength (um)  alpha (1/um)
+5.0              1.0
+8.0              0.5
+10.0             0.3
+11.0             0.2
+11.5             0.1
