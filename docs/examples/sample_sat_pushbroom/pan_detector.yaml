@@ -44,4 +44,4 @@ sensor_params:
   field_free_depth: 7 um     # estimated, 5-10 um range
   depletion_depth: 7 um      # estimated, 5-10 um range
   absorption_data:
-    file: docs/examples/sample_sat_pushbroom/silicon_300k.txt
+    file: data/absorption/silicon_300k.txt

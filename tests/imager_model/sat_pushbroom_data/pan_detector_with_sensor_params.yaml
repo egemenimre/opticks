@@ -33,4 +33,4 @@ sensor_params:
   field_free_depth: 7 um
   depletion_depth: 7 um
   absorption_data:
-    file: tests/imager_model/sat_pushbroom_data/silicon_300k.txt
+    file: data/absorption/silicon_300k.txt

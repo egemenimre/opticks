@@ -24,4 +24,4 @@ timings:
 sensor_params:
   diffusion_preset: scientific_ccd
   absorption_data:
-    file: tests/imager_model/sat_pushbroom_data/silicon_300k.txt
+    file: data/absorption/silicon_300k.txt

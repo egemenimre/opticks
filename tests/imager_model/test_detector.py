@@ -215,17 +215,17 @@ class TestSensorParams:
     def test_absorption_coeff_at_known_wavelength(self, detector):
         """get_absorption_coeff returns the tabulated value at an exact data point."""
 
-        # 650 nm → 0.27 1/um exactly as tabulated
+        # 650 nm → 0.279 1/um exactly as tabulated (Green 2008, Table 1)
         alpha = detector.sensor_params.get_absorption_coeff(650 * u.nm)
-        np.testing.assert_allclose(alpha.to(1 / u.um).value, 0.27, rtol=1e-4)
+        np.testing.assert_allclose(alpha.to(1 / u.um).value, 0.279, rtol=1e-4)
 
     def test_absorption_coeff_interpolated(self, detector):
         """get_absorption_coeff interpolates between tabulated points."""
 
-        # 625 nm is between 600 (0.40) and 650 (0.27) — should be between them
+        # 625 nm is between 620 (0.352) and 630 (0.328) — should be between them
         alpha = detector.sensor_params.get_absorption_coeff(625 * u.nm)
         alpha_val = alpha.to(1 / u.um).value
-        assert 0.27 < alpha_val < 0.40
+        assert 0.328 < alpha_val < 0.352
 
     def test_get_diffusion_mtf_1d_returns_model(self, detector):
         """get_diffusion_mtf_1d returns a usable MTF_Model_1D at a given wavelength."""
