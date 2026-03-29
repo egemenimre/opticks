@@ -293,7 +293,7 @@ The topic of sharpness and contrast performance is continued [here](sharpness_pt
 
 [^3]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
 
-[^4]: Carrier Diffusion, Quantum Efficiency, and Modulation Transfer Function in Real-Time Imagers; D. H. Seib; IEEE Transactions on Electron Devices, Vol. 21, No. 3, 1974.
+[^4]: Carrier diffusion degradation of modulation transfer function in charge coupled imagers; D. H. Seib; IEEE Transactions on Electron Devices, Vol. 21, No. 3, 1974.
 
 [^5]: Modulation Transfer Function in Optical and Electro-Optical Systems, 2nd Ed.; G. D. Boreman; SPIE Tutorial Texts, 2001.
 
@@ -306,5 +306,3 @@ The topic of sharpness and contrast performance is continued [here](sharpness_pt
 [^9]: Charge Transfer Efficiency in Proton Damaged CCDs; T. Hardy, R. Murowinski, M. J. Deen; IEEE Transactions on Nuclear Science, Vol. 45, No. 2, 1998.
 
 [^10]: The Silicon Diode Array Camera Tube; M. H. Crowell, E. F. Labuda; The Bell System Technical Journal, Vol. 48, No. 5, pp. 1481–1528, 1969.
-
-[^11]: Transport in photo-conductors—I: Focal plane processing; D. J. Day, T. J. Shepherd; Solid-State Electronics, Vol. 25, No. 8, pp. 707–712, 1982.
