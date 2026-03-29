@@ -1,0 +1,32 @@
+# Test detector with a binned channel for sampling MTF tests
+name: Binned Test Detector
+
+detector_type: pushbroom
+pixel_pitch: 10 um
+horizontal_pixels: 1000
+vertical_pixels: 1
+
+channels:
+  native:
+    name: Native
+    horizontal_pixels: 1000
+    vertical_pixels: 1
+    binning: 1
+    tdi_stages: 1
+    read_blocks: 1
+    cuton_wvl: 450 nm
+    cutoff_wvl: 900 nm
+
+  binned_4x:
+    name: Binned 4x
+    horizontal_pixels: 1000
+    vertical_pixels: 1
+    binning: 4
+    tdi_stages: 1
+    read_blocks: 1
+    cuton_wvl: 450 nm
+    cutoff_wvl: 900 nm
+
+timings:
+  frame_rate: 1000 Hz
+  integration_duration: 0.5 ms

@@ -25,6 +25,7 @@ from opticks.contrast_model.diffusion_mtf import (
     DetectorDiffusionModel,
     DetectorDiffusionPreset,
 )
+from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.parser_helpers import PositivePydanticQty, PydanticQty
@@ -579,7 +580,7 @@ class Detector(ImagerComponent):
 
         return [self.channels[band_id] for band_id in band_ids]
 
-    def get_diffusion_mtf_1d(self, wavelength: Quantity):
+    def get_diffusion_mtf_1d(self, wavelength: Quantity) -> MTF_Model_1D:
         """Generate diffusion MTF model for this detector at the given wavelength.
 
         The diffusion MTF is isotropic (same in ALT and ACT directions).
@@ -660,3 +661,31 @@ class Detector(ImagerComponent):
             raise ValueError(
                 "Neither diffusion_model nor diffusion_preset is set in sensor_params."
             )
+
+    def get_det_sampling_mtf_1d(self, channel_id: str | None = None) -> MTF_Model_1D:
+        """Generate detector sampling MTF model for this detector.
+
+        The sampling MTF is a sinc function of the effective pixel pitch.
+        If a channel ID is supplied, the channel's effective pitch (native pitch
+        × binning factor) is used. If no channel is supplied, the native
+        detector pixel pitch is used.
+
+        Parameters
+        ----------
+        channel_id : str, optional
+            Channel identifier. If provided, the channel's effective pixel pitch
+            (accounting for binning) is used. If ``None``, the native detector
+            pixel pitch is used.
+
+        Returns
+        -------
+        MTF_Model_1D
+            Detector sampling MTF model.
+        """
+
+        if channel_id is not None:
+            pixel_pitch = self.get_channel(channel_id).pixel_pitch(with_binning=True)
+        else:
+            pixel_pitch = self.pixel_pitch
+
+        return MTF_Model_1D.detector_sampling(pixel_pitch)

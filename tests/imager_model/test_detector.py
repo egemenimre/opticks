@@ -327,3 +327,62 @@ class TestSensorParams:
                 diffusion_model="bsi_1",
                 diffusion_preset="scientific_ccd",
             )
+
+
+class TestDetectorSamplingMTF:
+    @pytest.fixture(scope="class")
+    def ms_detector(self) -> Detector:
+        file_directory = Path("sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        file_path = process_paths(
+            Path("ms_detector.yaml"), file_directory, alt_file_directory
+        )
+        return Detector.from_yaml_file(file_path)
+
+    @pytest.fixture(scope="class")
+    def binned_detector(self) -> Detector:
+        file_directory = Path("sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        file_path = process_paths(
+            Path("binned_test_detector.yaml"), file_directory, alt_file_directory
+        )
+        return Detector.from_yaml_file(file_path)
+
+    def test_get_det_sampling_mtf_1d_no_channel(self, ms_detector):
+        """No channel supplied → uses native detector pixel pitch."""
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        mtf_model = ms_detector.get_det_sampling_mtf_1d()
+        assert isinstance(mtf_model, MTF_Model_1D)
+
+    def test_get_det_sampling_mtf_1d_with_channel(self, ms_detector):
+        """Channel supplied → returns MTF_Model_1D using channel effective pitch."""
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        mtf_model = ms_detector.get_det_sampling_mtf_1d("b0_blue")
+        assert isinstance(mtf_model, MTF_Model_1D)
+
+    def test_get_det_sampling_mtf_1d_values_in_range(self, ms_detector):
+        """Sampling MTF values are in [0, 1] up to Nyquist."""
+        mtf_model = ms_detector.get_det_sampling_mtf_1d("b0_blue")
+        nyquist = ms_detector.get_channel("b0_blue").nyquist_freq().value
+        freq = np.linspace(0, nyquist, 50) * u.cy / u.mm
+        mtf_vals = mtf_model.mtf_value(freq)
+
+        assert np.all(mtf_vals >= 0)
+        assert np.all(mtf_vals <= 1)
+
+    def test_get_det_sampling_mtf_1d_binning_changes_pitch(self, binned_detector):
+        """Binned channel uses effective pitch (native × binning), giving lower MTF at same freq."""
+        freq = 20 * u.cy / u.mm
+
+        mtf_native = binned_detector.get_det_sampling_mtf_1d("native").mtf_value(freq)
+        mtf_binned = binned_detector.get_det_sampling_mtf_1d("binned_4x").mtf_value(
+            freq
+        )
+        mtf_no_channel = binned_detector.get_det_sampling_mtf_1d().mtf_value(freq)
+
+        # binned channel (40 µm pitch) drops faster than native (10 µm pitch)
+        assert mtf_binned < mtf_native
+        # no channel uses native pitch
+        np.testing.assert_allclose(mtf_no_channel, mtf_native, rtol=1e-9)
