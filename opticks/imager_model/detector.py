@@ -450,11 +450,15 @@ class Detector(ImagerComponent):
             channel._det_pixel_pitch = self.pixel_pitch
             # is binned
             channel.is_binned = False if channel.binning == 1 else True
-            # line/frame duration (with binning)
-            channel.frame_duration = timings.frame_duration * channel.binning  # type: ignore[operator]
-            # line/frame rate (with binning)
-            channel.frame_rate = timings.frame_rate / channel.binning  # type: ignore[operator]
-            # total exposure duration (with binning)
+            # line/frame duration (with binning and read blocks)
+            channel.frame_duration = (
+                timings.frame_duration * channel.binning / channel.read_blocks  # type: ignore[operator]
+            )  # type: ignore[operator]
+            # line/frame rate (with binning read blocks)
+            channel.frame_rate = (
+                timings.frame_rate / channel.binning * channel.read_blocks  # type: ignore[operator]
+            )  # type: ignore[operator]
+            # total exposure duration (with binning and blocks)
             channel.integration_duration = (
                 timings.integration_duration * channel.binning  # type: ignore[operator]
             )
