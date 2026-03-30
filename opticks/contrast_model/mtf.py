@@ -18,7 +18,7 @@ from prysm._richdata import RichData
 from prysm.otf import mtf_from_psf
 
 from opticks import u
-from opticks.contrast_model.diffusion_mtf import (
+from opticks.contrast_model.detector_mtf import (
     detector_diffusion_mtf,
     validate_diffusion_params,
 )

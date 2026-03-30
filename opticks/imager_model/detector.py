@@ -21,7 +21,7 @@ from pydantic import (
 )
 
 from opticks import u
-from opticks.contrast_model.diffusion_mtf import (
+from opticks.contrast_model.detector_mtf import (
     DetectorDiffusionModel,
     DetectorDiffusionPreset,
 )

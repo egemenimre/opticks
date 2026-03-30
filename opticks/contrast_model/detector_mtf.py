@@ -4,9 +4,10 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 """
-Detector diffusion MTF models based on Crowell & Labuda (1969).
+Detector-level MTF models (diffusion, CTE, crosstalk, etc.).
 
-Five simplified cases covering BSI and FSI detector geometries,
+Currently includes diffusion MTF based on Crowell & Labuda (1969)
+with five simplified cases covering BSI and FSI detector geometries,
 plus preset parameter sets for common detector categories.
 """
 

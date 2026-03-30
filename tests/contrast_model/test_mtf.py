@@ -17,7 +17,7 @@ from prysm.polynomials import zernike_nm
 from prysm.propagation import Wavefront
 
 from opticks import u
-from opticks.contrast_model.diffusion_mtf import (
+from opticks.contrast_model.detector_mtf import (
     DetectorDiffusionModel,
     DetectorDiffusionPreset,
 )
