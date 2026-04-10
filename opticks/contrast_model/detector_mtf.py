@@ -162,9 +162,9 @@ def _check_mtf_range(mtf_array: NDArray[np.float64], model_id: str) -> None:
         max_val = np.max(mtf_array)
         min_val = np.min(mtf_array)
         raise ValueError(
-            f"Diffusion MTF out of range [0, 1] for model '{model_id}': "
+            f"MTF out of range [0, 1] for model '{model_id}': "
             f"min={min_val:.6g}, max={max_val:.6g}. "
-            f"Check physical parameters (e.g. depletion depth, diffusion length)."
+            f"Check physical parameters."
         )
 
 
@@ -316,3 +316,96 @@ def detector_diffusion_mtf(
 
     scalar_input = np.ndim(input_line_freq_cy_mm) == 0
     return float(mtf[0]) if scalar_input else mtf
+
+
+# ---------- crosstalk MTF (center pixel, 8 neighbours) ----------
+# Pure numpy, frequency in cy/mm, pitch in mm.
+
+
+def validate_crosstalk_params(xs: float, xd: float) -> None:
+    """Validate crosstalk coefficients for the center-pixel model.
+
+    Parameters
+    ----------
+    xs : float
+        Side-neighbour crosstalk coefficient (dimensionless fraction).
+    xd : float
+        Diagonal-neighbour crosstalk coefficient (dimensionless fraction).
+    """
+    if xs < 0:
+        raise ValueError(f"crosstalk_xs must be >= 0, got {xs}.")
+    if xd < 0:
+        raise ValueError(f"crosstalk_xd must be >= 0, got {xd}.")
+    if 4 * xs + 4 * xd >= 1:
+        raise ValueError(
+            f"Kernel center weight (1 - 4*xs - 4*xd) must be positive. "
+            f"Got xs={xs}, xd={xd} => 4*xs + 4*xd = {4 * xs + 4 * xd:.6g} >= 1."
+        )
+
+
+def _crosstalk_center_mtf_2d(
+    fx: NDArray[np.float64],
+    fy: NDArray[np.float64],
+    xs: float,
+    xd: float,
+    p: float,
+) -> NDArray[np.float64]:
+    """Center-pixel (8-neighbour) crosstalk MTF.
+
+    The transfer function is real-valued for the symmetric center kernel::
+
+        H(fx, fy) = (1 - 4Xs - 4Xd)
+                   + 2Xs cos(2π fx P) + 2Xs cos(2π fy P)
+                   + 4Xd cos(2π fx P) cos(2π fy P)
+
+    Parameters
+    ----------
+    fx, fy : NDArray
+        Spatial frequencies in cy/mm.
+    xs : float
+        Side-neighbour crosstalk coefficient.
+    xd : float
+        Diagonal-neighbour crosstalk coefficient.
+    p : float
+        Pixel pitch in mm.
+    """
+    cos_x = np.cos(2 * np.pi * fx * p)
+    cos_y = np.cos(2 * np.pi * fy * p)
+    return (1 - 4 * xs - 4 * xd) + 2 * xs * (cos_x + cos_y) + 4 * xd * cos_x * cos_y
+
+
+def detector_crosstalk_mtf(
+    fx_cy_mm: float | NDArray[np.float64],
+    fy_cy_mm: float | NDArray[np.float64],
+    xs: float,
+    xd: float,
+    p_mm: float,
+) -> float | NDArray[np.float64]:
+    """Compute center-pixel crosstalk MTF at arbitrary 2D frequencies.
+
+    All lengths in mm, frequency in cy/mm.
+    Returns MTF = H(fx, fy) (real-valued for the symmetric center kernel).
+    """
+    fx = np.atleast_1d(np.asarray(fx_cy_mm, dtype=float))
+    fy = np.atleast_1d(np.asarray(fy_cy_mm, dtype=float))
+    mtf = _crosstalk_center_mtf_2d(fx, fy, xs, xd, p_mm)
+
+    _check_mtf_range(mtf, f"crosstalk (xs={xs}, xd={xd})")
+
+    scalar_input = np.ndim(fx_cy_mm) == 0 and np.ndim(fy_cy_mm) == 0
+    return float(mtf[0]) if scalar_input else mtf
+
+
+def detector_crosstalk_mtf_1d(
+    input_line_freq_cy_mm: float | NDArray[np.float64],
+    xs: float,
+    xd: float,
+    p_mm: float,
+) -> float | NDArray[np.float64]:
+    """1D slice of the center-pixel crosstalk MTF (fy = 0).
+
+    Equivalent to ``1 - 2(Xs + 2Xd)(1 - cos(2π f P))``.
+    When ``xd = 0`` this reduces to the classical nearest-neighbour formula
+    ``1 - 2Xs(1 - cos(2π f P))``.
+    """
+    return detector_crosstalk_mtf(input_line_freq_cy_mm, 0.0, xs, xd, p_mm)

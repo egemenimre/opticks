@@ -450,3 +450,100 @@ class TestMTF:
                 depletion_depth=0.001 * u.um,  # unrealistically small → eta0 < 0
             )
             mtf_model.mtf_value(100 * u.cy / u.mm)
+
+    # --- Detector crosstalk MTF tests ---
+
+    def test_mtf_crosstalk_center(self):
+        """Tests center-pixel crosstalk MTF with side and diagonal coupling."""
+        # Analytic 1D formula: 1 - 2*(Xs + 2*Xd)*(1 - cos(2*pi*f*p))
+        # evaluated at Xs=0.03, Xd=0.005, p=13 um, f=30 cy/mm.
+        truth = 0.858358940577937
+
+        mtf_model = MTF_Model_1D.detector_crosstalk(
+            pixel_pitch=13 * u.um,
+            crosstalk_xs=0.03,
+            crosstalk_xd=0.005,
+        )
+
+        assert mtf_model.mtf_value(30 * u.cy / u.mm) == pytest.approx(truth, 1e-9)
+
+    def test_mtf_crosstalk_xd_zero_matches_1d(self):
+        """When xd=0, the model matches 1 - 2*Xs*(1 - cos(2*pi*f*p))."""
+        xs = 0.03
+        pitch = 13 * u.um
+        p_mm = pitch.to(u.mm).value  # pyright: ignore[reportAttributeAccessIssue]
+        freqs = np.array([10, 20, 30, 38.46]) * u.cy / u.mm
+
+        mtf_model = MTF_Model_1D.detector_crosstalk(
+            pixel_pitch=pitch,
+            crosstalk_xs=xs,
+        )
+
+        expected = 1 - 2 * xs * (1 - np.cos(2 * np.pi * freqs.value * p_mm))
+        result = mtf_model.mtf_value(freqs)
+        assert_allclose(result, expected, rtol=1e-12)
+
+    def test_mtf_crosstalk_at_zero_freq(self):
+        """Crosstalk MTF is 1.0 at zero frequency (signal conserved)."""
+        mtf_model = MTF_Model_1D.detector_crosstalk(
+            pixel_pitch=13 * u.um,
+            crosstalk_xs=0.03,
+            crosstalk_xd=0.005,
+        )
+
+        assert mtf_model.mtf_value(0 * u.cy / u.mm) == pytest.approx(1.0)
+
+    def test_mtf_crosstalk_at_nyquist(self):
+        """At Nyquist (f=1/2p), MTF = 1 - 4*(Xs + 2*Xd)."""
+        xs, xd = 0.03, 0.005
+        pitch = 13 * u.um
+        f_ny = 1 / (2 * pitch.to(u.mm).value) * u.cy / u.mm  # pyright: ignore[reportAttributeAccessIssue]
+
+        mtf_model = MTF_Model_1D.detector_crosstalk(
+            pixel_pitch=pitch,
+            crosstalk_xs=xs,
+            crosstalk_xd=xd,
+        )
+
+        expected = 1 - 4 * (xs + 2 * xd)
+        assert mtf_model.mtf_value(f_ny) == pytest.approx(expected, 1e-12)
+
+    def test_mtf_crosstalk_in_range(self):
+        """Crosstalk MTF stays in [0, 1] for typical detector parameters."""
+        freqs = np.linspace(0, 40, 100) * u.cy / u.mm
+
+        mtf_model = MTF_Model_1D.detector_crosstalk(
+            pixel_pitch=13 * u.um,
+            crosstalk_xs=0.04,
+            crosstalk_xd=0.01,
+        )
+
+        result = mtf_model.mtf_value(freqs)
+        assert np.all(result >= 0)
+        assert np.all(result <= 1)
+
+    def test_mtf_crosstalk_invalid_negative_xs(self):
+        """Negative xs raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_crosstalk(
+                pixel_pitch=13 * u.um,
+                crosstalk_xs=-0.01,
+            )
+
+    def test_mtf_crosstalk_invalid_negative_xd(self):
+        """Negative xd raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_crosstalk(
+                pixel_pitch=13 * u.um,
+                crosstalk_xs=0.03,
+                crosstalk_xd=-0.01,
+            )
+
+    def test_mtf_crosstalk_excessive_coupling(self):
+        """Excessive coupling (4*xs + 4*xd >= 1) raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_crosstalk(
+                pixel_pitch=13 * u.um,
+                crosstalk_xs=0.2,
+                crosstalk_xd=0.1,
+            )

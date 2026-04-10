@@ -292,6 +292,10 @@ class SensorParams(BaseModel):
     surface_recomb_velocity: PydanticQty | None = None
     diffusion_coeff: PydanticQty | None = None
 
+    # Crosstalk coefficients (dimensionless fractions)
+    crosstalk_xs: float | None = None
+    crosstalk_xd: float | None = None
+
     # Absorption data file (relative to cwd)
     absorption_data: AbsorptionData | None = None
 
@@ -693,3 +697,49 @@ class Detector(ImagerComponent):
             pixel_pitch = self.pixel_pitch
 
         return MTF_Model_1D.detector_sampling(pixel_pitch)
+
+    def get_crosstalk_mtf_1d(self, channel_id: str | None = None) -> MTF_Model_1D:
+        """Generate crosstalk MTF model for this detector.
+
+        Uses the crosstalk coefficients from ``sensor_params`` and the pixel
+        pitch (optionally adjusted for binning via *channel_id*).
+
+        Parameters
+        ----------
+        channel_id : str, optional
+            Channel identifier. If provided, the channel's effective pixel
+            pitch (accounting for binning) is used. If ``None``, the native
+            detector pixel pitch is used.
+
+        Returns
+        -------
+        MTF_Model_1D
+            Crosstalk MTF model.
+
+        Raises
+        ------
+        ValueError
+            If ``sensor_params`` or ``crosstalk_xs`` is not configured.
+        """
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        sp = self.sensor_params
+        if sp is None:
+            raise ValueError(
+                "sensor_params is not configured on this Detector. "
+                "Add a sensor_params block to the detector YAML."
+            )
+        if sp.crosstalk_xs is None:
+            raise ValueError(
+                "crosstalk_xs is not set in sensor_params. "
+                "Add crosstalk_xs to the sensor_params block."
+            )
+
+        if channel_id is not None:
+            pixel_pitch = self.get_channel(channel_id).pixel_pitch(with_binning=True)
+        else:
+            pixel_pitch = self.pixel_pitch
+
+        xd = sp.crosstalk_xd if sp.crosstalk_xd is not None else 0.0
+
+        return MTF_Model_1D.detector_crosstalk(pixel_pitch, sp.crosstalk_xs, xd)

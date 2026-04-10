@@ -19,7 +19,9 @@ from prysm.otf import mtf_from_psf
 
 from opticks import u
 from opticks.contrast_model.detector_mtf import (
+    detector_crosstalk_mtf_1d,
     detector_diffusion_mtf,
+    validate_crosstalk_params,
     validate_diffusion_params,
 )
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
@@ -599,6 +601,61 @@ class MTF_Model_1D:
             surface_recomb_velocity=merged.get("surface_recomb_velocity"),
             diffusion_coeff=merged.get("diffusion_coeff"),
         )
+
+    @staticmethod
+    def detector_crosstalk(
+        pixel_pitch: Quantity,
+        crosstalk_xs: float,
+        crosstalk_xd: float = 0.0,
+    ) -> "MTF_Model_1D":
+        """
+        Detector crosstalk MTF model (center pixel, 8 neighbours).
+
+        Computes the MTF due to nearest-neighbour charge sharing using
+        the discrete kernel model with separate side and diagonal
+        crosstalk coefficients.
+
+        The 1D MTF (fy=0 slice) is:
+        ``MTF(f) = 1 - 2(Xs + 2Xd)(1 - cos(2π f P))``
+
+        When ``crosstalk_xd = 0``, this reduces to the classical
+        nearest-neighbour formula ``MTF(f) = 1 - 2Xs(1 - cos(2π f P))``.
+
+        Parameters
+        ----------
+        pixel_pitch : Quantity["length"]
+            Pixel pitch
+        crosstalk_xs : float
+            Side-neighbour crosstalk coefficient (dimensionless fraction,
+            e.g. 0.03 for 3%).
+        crosstalk_xd : float, optional
+            Diagonal-neighbour crosstalk coefficient (dimensionless fraction,
+            e.g. 0.005 for 0.5%). Default is 0.0 (no diagonal crosstalk).
+
+        Returns
+        -------
+        MTF_Model_1D
+            Crosstalk MTF model
+        """
+        validate_crosstalk_params(crosstalk_xs, crosstalk_xd)
+
+        p_mm = pixel_pitch.to(u.mm).value
+
+        id_str = (
+            f"Detector Crosstalk MTF: "
+            f"Xs={crosstalk_xs:.4g}, Xd={crosstalk_xd:.4g}, "
+            f"pitch={pixel_pitch}"
+        )
+
+        def value_func(input_line_freq):
+            return detector_crosstalk_mtf_1d(
+                input_line_freq.to(u.cy / u.mm).value,
+                crosstalk_xs,
+                crosstalk_xd,
+                p_mm,
+            )
+
+        return MTF_Model_1D(id_str, value_func)
 
 
 def _force_return_float(mtf_value):

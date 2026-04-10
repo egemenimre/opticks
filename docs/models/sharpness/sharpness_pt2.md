@@ -44,7 +44,7 @@ $$\text{MTF}_\text{aberr opt}(f) = \text{MTF}_\text{ideal opt}(f) \times \text{A
 
 Multiplying the ATF value with the ideal optical MTF, we can reach a more realistic MTF with the aberrations. As the $W_{RMS}$ value increases, the ATF value decreases and the resulting MTF also decreases, corresponding to a degradation in image quality.
 
-Some sample fabrication tolerances are given [here](https://www.telescope-optics.net/fabrication.htm). For example, surface roughness for Commercial Optics can be a single wavelength (Peak-to-Valley), whereas for Precision Optics it could be about quarter of a wavelength and for High Precision Optics it could be as low as 5% of a wavelength. Satellite imagers would also be as high as 5% of a wavelength.
+A $W_{RMS} = 1/14$ is likely a good starting point to model manufacturing errors [^11]. Some [sample fabrication tolerances are given here](https://www.telescope-optics.net/fabrication.htm). For example, surface roughness for Commercial Optics can be a single wavelength (Peak-to-Valley), whereas for Precision Optics it could be about quarter of a wavelength and for High Precision Optics it could be as low as 5% of a wavelength. Satellite imagers would also be as high as 5% of a wavelength.
 
 ## Detector MTF Models
 
@@ -178,20 +178,43 @@ The net effect is that a point source illuminating a single pixel produces a res
 
 #### Nearest-Neighbour Crosstalk Model
 
-For a 1D nearest-neighbour crosstalk model[^7], where a fraction $\alpha$ of the signal leaks into each of the two adjacent pixels:
+The crosstalk model uses the **Discrete Impulse Response** method[^7]. A unit signal (1) is generated in the target pixel, and a fraction of that charge leaks to its available neighbours. We define separate coefficients for the two types of neighbour:
 
-$$\text{MTF}_\text{xtalk}(f) = 1 - 2\alpha\left(1 - \cos(2\pi f p)\right)$$
+- $X_s$: crosstalk to a **side** (edge-adjacent) neighbour
+- $X_d$: crosstalk to a **diagonal** (corner-adjacent) neighbour
 
-where $p$ is the pixel pitch and $\alpha$ is the crosstalk coefficient (dimensionless). This model has the property that:
+For a centre pixel with 8 neighbours (4 side, 4 diagonal), the discrete kernel is:
+
+$$
+\begin{bmatrix}
+X_d & X_s & X_d \\
+X_s & (1 - 4X_s - 4X_d) & X_s \\
+X_d & X_s & X_d
+\end{bmatrix}
+$$
+
+The kernel sums to unity (signal is conserved). Its 2D Discrete Fourier Transform gives the transfer function:
+
+$$H(f_x, f_y) = (1 - 4X_s - 4X_d) + 2X_s \cos(2\pi f_x p) + 2X_s \cos(2\pi f_y p) + 4X_d \cos(2\pi f_x p)\cos(2\pi f_y p)$$
+
+where $p$ is the pixel pitch, $f_x$ and $f_y$ are the spatial frequencies in the two detector axes, and $X_s$ and $X_d$ are dimensionless fractions. Because the kernel is symmetric, $H$ is real-valued and equals the MTF directly.
+
+Taking a 1D slice along one axis ($f_y = 0$) yields:
+
+$$\text{MTF}_\text{xtalk}(f) = 1 - 2(X_s + 2X_d)\left(1 - \cos(2\pi f p)\right)$$
+
+When diagonal crosstalk is negligible ($X_d = 0$), this reduces to the classical formula $\text{MTF}_\text{xtalk}(f) = 1 - 2X_s(1 - \cos(2\pi f p))$.
+
+This model has the property that:
 
 - At zero frequency ($f = 0$): MTF = 1 (signal is conserved, just redistributed)
-- At Nyquist ($f = f_{ny} = 1/2p$): $\text{MTF} = 1 - 4\alpha$ (maximum degradation, where the pattern alternates every pixel)
+- At Nyquist ($f = f_{ny} = 1/2p$): $\text{MTF} = 1 - 4(X_s + 2X_d)$ (maximum degradation, where the pattern alternates every pixel)
 
-The constraint $\alpha < 0.25$ is required for the MTF to remain non-negative at Nyquist. In practice, $\alpha$ values above 0.1 would indicate a severely compromised detector.
+The constraint $4X_s + 4X_d < 1$ is required for the kernel centre weight to remain positive. In practice, typical values for a high-performance detector are $X_s$ = 1%–4% and $X_d$ = 0.2%–1%.
 
 #### Crosstalk Across Detector Types
 
-| Detector Type | Typical $\alpha$ | Primary Mechanism | Notes |
+| Detector Type | Typical $X_s$ | Primary Mechanism | Notes |
 | --- | --- | --- | --- |
 | CCD (visible) | 0.01–0.03 | Electrical | Well-controlled in modern designs |
 | BSI CMOS (visible) | 0.01–0.05 | Optical + Electrical | Optical crosstalk increases at small pitch (<2 µm)[^5] |
@@ -206,13 +229,13 @@ The diffusion MTF and the electrical component of crosstalk MTF describe the **s
 
 - **Diffusion MTF** is a continuous, physics-based model. It uses the material diffusion length $L_d$ as its parameter and does not reference pixel boundaries. It models the full spatial spread of the charge cloud, including long-range tails that can extend over multiple pixels.
 
-- **Crosstalk MTF** is a discrete, measurement-based model. It uses the inter-pixel coupling coefficient $\alpha$ as its parameter, typically obtained from detector characterisation data. It captures only the nearest-neighbour signal sharing and does not model the shape of the underlying spread.
+- **Crosstalk MTF** is a discrete, measurement-based model. It uses the inter-pixel coupling coefficients $X_s$ and $X_d$ as its parameters, typically obtained from detector characterisation data. It captures only the nearest-neighbour signal sharing and does not model the shape of the underlying spread.
 
 Because of this shared physical origin, **the two should not be blindly multiplied** in an MTF budget when the crosstalk is predominantly electrical. Doing so would double-count the same effect. The recommended approach is:
 
 - If material properties are known (diffusion length), use **diffusion MTF alone** for the electrical component.
 - If only measured inter-pixel coupling data is available, use **crosstalk MTF alone**.
-- If both optical and electrical crosstalk are significant (e.g., small-pitch BSI CMOS), the diffusion MTF can be used for the electrical component and the crosstalk MTF for the **optical component only**, with $\alpha$ representing only the optical coupling fraction.
+- If both optical and electrical crosstalk are significant (e.g., small-pitch BSI CMOS), the diffusion MTF can be used for the electrical component and the crosstalk MTF for the **optical component only**, with $X_s$ representing only the optical coupling fraction.
 
 ### CTE (Charge Transfer Efficiency) MTF
 
@@ -264,7 +287,7 @@ For pushbroom (line scanner) detectors, the along-track (ALT) and across-track (
 
 - **Diffusion MTF**: The lateral diffusion of charge carriers is an **isotropic** process in the semiconductor — carriers spread equally in all directions. The diffusion MTF is therefore the same in both ALT and ACT for a given spatial frequency. However, because the Nyquist frequencies may differ between ALT and ACT (due to different effective pixel sizes), the relative impact of diffusion at each direction's Nyquist will differ.
 
-- **Crosstalk MTF**: Like diffusion, the nearest-neighbour coupling is generally **isotropic** for square pixels. However, for rectangular pixels or detectors with asymmetric structures (e.g., transfer gates or bus lines running in one direction), the crosstalk coefficient $\alpha$ can differ between ALT and ACT.
+- **Crosstalk MTF**: Like diffusion, the nearest-neighbour coupling is generally **isotropic** for square pixels. However, for rectangular pixels or detectors with asymmetric structures (e.g., transfer gates or bus lines running in one direction), the crosstalk coefficients $X_s$ and $X_d$ can differ between ALT and ACT.
 
 - **CTE MTF**: This is **inherently directional**. Charge is transferred along one specific axis — typically along the column (ALT direction for a pushbroom) for the parallel register, and along the row (ACT direction) for the serial register. Each direction has a different number of transfers and potentially different CTE values. For a TDI (Time Delay Integration) CCD, the parallel CTE applies in the ALT direction with $N$ equal to the number of TDI stages times the number of phases.
 
@@ -306,3 +329,5 @@ The topic of sharpness and contrast performance is continued [here](sharpness_pt
 [^9]: Charge Transfer Efficiency in Proton Damaged CCDs; T. Hardy, R. Murowinski, M. J. Deen; IEEE Transactions on Nuclear Science, Vol. 45, No. 2, 1998.
 
 [^10]: The Silicon Diode Array Camera Tube; M. H. Crowell, E. F. Labuda; The Bell System Technical Journal, Vol. 48, No. 5, pp. 1481–1528, 1969.
+
+[^11]: CMOS/CCD sensors and camera systems; G. C. Holst, T.S. Lomheim; JCD publishing, SPIE, 2nd ed., 2011.
