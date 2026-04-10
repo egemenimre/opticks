@@ -1,6 +1,6 @@
 # Static Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt1.md).
+The topic of sharpness and contrast performance is [continued from here](sharpness_pt1.md).
 
 ## Optical MTF
 
@@ -50,7 +50,7 @@ A $W_{RMS} = 1/14$ is likely a good starting point to model manufacturing errors
 
 ### Detector Sampling MTF
 
-Each detector pixel performs spatial averaging of the incident irradiance over its active area. More precisely, the scene irradiance is integrated with the detector's spatial responsivity function (which, for a uniform pixel, is a rectangle function of width equal to the pixel pitch). In the spatial domain this is a convolution, and in the frequency domain it becomes a multiplication with the Fourier transform of the rectangle — the sinc function[^3] (See also [here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf)):
+Each detector pixel performs spatial averaging of the incident irradiance over its active area. More precisely, the scene irradiance is integrated with the detector's spatial responsivity function (which, for a uniform pixel, is a rectangle function of width equal to the pixel pitch). In the spatial domain this is a convolution, and in the frequency domain it becomes a multiplication with the Fourier transform of the rectangle — the sinc function[^3] (See also [the information here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf)):
 
 $$\text{MTF}_\text{det sampling}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
@@ -308,7 +308,7 @@ For visible-wavelength systems, the detector sampling MTF typically dominates, w
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt3.md).
+The topic of sharpness and contrast performance is [continued here](sharpness_pt3.md).
 
 [^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
