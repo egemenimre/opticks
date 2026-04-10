@@ -639,8 +639,6 @@ class MTF_Model_1D:
         """
         validate_crosstalk_params(crosstalk_xs, crosstalk_xd)
 
-        p_mm = pixel_pitch.to(u.mm).value
-
         id_str = (
             f"Detector Crosstalk MTF: "
             f"Xs={crosstalk_xs:.4g}, Xd={crosstalk_xd:.4g}, "
@@ -649,10 +647,10 @@ class MTF_Model_1D:
 
         def value_func(input_line_freq):
             return detector_crosstalk_mtf_1d(
-                input_line_freq.to(u.cy / u.mm).value,
+                input_line_freq,
                 crosstalk_xs,
                 crosstalk_xd,
-                p_mm,
+                pixel_pitch,
             )
 
         return MTF_Model_1D(id_str, value_func)
