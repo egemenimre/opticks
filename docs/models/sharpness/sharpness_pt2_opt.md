@@ -44,7 +44,7 @@ $$\text{MTF}_\text{aberr opt}(f) = \text{MTF}_\text{ideal opt}(f) \times \text{A
 
 Multiplying the ATF value with the ideal optical MTF, we can reach a more realistic MTF with the aberrations. As the $W_{RMS}$ value increases, the ATF value decreases and the resulting MTF also decreases, corresponding to a degradation in image quality.
 
-A $W_{RMS} = 1/14$ is likely a good starting point to model manufacturing errors [^11]. Some [sample fabrication tolerances are given here](https://www.telescope-optics.net/fabrication.htm). For example, surface roughness for Commercial Optics can be a single wavelength (Peak-to-Valley), whereas for Precision Optics it could be about quarter of a wavelength and for High Precision Optics it could be as low as 5% of a wavelength. Satellite imagers would also be as high as 5% of a wavelength.
+A $W_{RMS} = 1/14$ is likely a good starting point to model manufacturing errors [^3]. Some [sample fabrication tolerances are given here](https://www.telescope-optics.net/fabrication.htm). For example, surface roughness for Commercial Optics can be a single wavelength (Peak-to-Valley), whereas for Precision Optics it could be about quarter of a wavelength and for High Precision Optics it could be as low as 5% of a wavelength. Satellite imagers would also be as high as 5% of a wavelength.
 
 ---
 
@@ -54,4 +54,4 @@ The topic of sharpness and contrast performance is [continued here](sharpness_pt
 
 [^2]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
 
-[^11]: CMOS/CCD sensors and camera systems; G. C. Holst, T.S. Lomheim; JCD publishing, SPIE, 2nd ed., 2011.
+[^3]: CMOS/CCD sensors and camera systems; G. C. Holst, T.S. Lomheim; JCD publishing, SPIE, 2nd ed., 2011.
