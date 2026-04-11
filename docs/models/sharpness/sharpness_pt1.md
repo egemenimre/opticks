@@ -46,7 +46,7 @@ It should also be noted that, MTF is different for every single point on the ima
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt2.md).
+The topic of sharpness and contrast performance is continued [here](sharpness_pt2_opt.md).
 
 [^1]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
 

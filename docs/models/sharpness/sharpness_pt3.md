@@ -1,6 +1,6 @@
 # Dynamic Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt2.md).
+The topic of sharpness and contrast performance is continued from [here](sharpness_pt2_det.md).
 
 ## Overview
 

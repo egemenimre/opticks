@@ -19,7 +19,8 @@ models/data_chain
 maxdepth: 1
 ---
 models/sharpness/sharpness_pt1
-models/sharpness/sharpness_pt2
+models/sharpness/sharpness_pt2_opt
+models/sharpness/sharpness_pt2_det
 models/sharpness/sharpness_pt3
 models/sharpness/sharpness_pt4
 models/sharpness/mtf_scenarios
