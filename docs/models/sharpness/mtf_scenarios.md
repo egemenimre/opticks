@@ -8,9 +8,14 @@ While it does depend on the problem, the usual scopes for the MTF computation ca
 
 Imager MTF (as tested in the lab):
 
-- Optics (Aberrated)
-- Detector Sampling
-- Detector Diffusion
+- Optics
+  - Diffraction
+  - Aberrations
+  - Off-Axis
+- Detector
+  - Detector Sampling
+  - Detector Diffusion
+  - Cross-talk
 - Cryocoolers, shutters and similar vibration sources on the Imager
 
 This is usually the requirement (or its breakdown) towards the Imager Supplier. Each item can be directly measured or at least derived via lab measurements. The total Imager MTF is the combination of these items.
@@ -43,9 +48,11 @@ The MTF computation is tailored for the problem at hand. For example the Hubble 
 As an example, for a high-resolution Earth Observation satellite operating in VNIR, employing with a TDI-capable line scanner, the following blurring sources will require a separate MTF item in the overall MTF computation (or the MTF budget).
 
 - Imager MTF
-  - Optics (Aberrated)
+  - Optics (Diffraction and aberrations)
   - Detector Sampling
   - Detector Diffusion
+  - Detector Cross-talk
+  - Charge Transfer Efficiency (for CCD)
   - No drift/smear or jitter due to cryocoolers or shutter mechanisms assumed
   
 - Platform MTF
