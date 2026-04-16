@@ -27,6 +27,9 @@ The following MTF types are supported:
 - Aberrated Optics with Empirical Model ({py:meth}`.MTF_Model_1D.emp_model_aberrated_optics`): Aberrated optics with an empirical model for aberrations
 - Slicing an External 2D MTF ({py:meth}`.MTF_Model_1D.from_mtf_2d`): This is in a sense similar to External Data, but acts as the bridge between more detailed (aberrated) optical models from `prysm`
 - Detector Sampling ({py:meth}`.MTF_Model_1D.detector_sampling`): Detector sampling MTF model
+- Detector Diffusion ({py:meth}`.MTF_Model_1D.detector_diffusion`): Carrier diffusion MTF model (Crowell & Labuda 1969), with five geometry/boundary variants
+- Detector Diffusion Preset ({py:meth}`.MTF_Model_1D.detector_diffusion_preset`): Detector diffusion MTF from a predefined detector category (BSI CCD, BSI sCMOS, BSI IR FPA, FSI CMOS, FSI CCD)
+- Detector Crosstalk ({py:meth}`.MTF_Model_1D.detector_crosstalk`): Nearest-neighbour crosstalk MTF model with separate side and diagonal coupling coefficients
 - Motion Blur ({py:meth}`.MTF_Model_1D.motion_blur`): Motion blur MTF model
 - Drift/Smear ({py:meth}`.MTF_Model_1D.smear`): Drift/Smear MTF model, the more generalised form of motion blur
 - Jitter ({py:meth}`.MTF_Model_1D.jitter`): Jitter MTF model
@@ -34,6 +37,68 @@ The following MTF types are supported:
 - Fixed ({py:meth}`.MTF_Model_1D.fixed`): MTF model for a fixed MTF value for the entire spatial domain, used for crude modelling of disturbances and imperfections
 
 The full [System MTF example](../examples/sat_mtf_budget.ipynb) illustrates the use of almost all of them. "Slicing an External 2D MTF" is explained in the next section, as it enables detailed Wavefront models to be incorporated.
+
+## Detector Diffusion and Crosstalk MTF
+
+### Detector Diffusion MTF
+
+The detector diffusion MTF models lateral carrier diffusion in the semiconductor substrate. The underlying physics and model derivation are explained in [Detector MTF](sharpness_pt2_det.md). Five model variants are available, corresponding to different detector geometries and boundary conditions: BSI-1 (scientific CCD), BSI-2 (sCMOS), BSI-3 (IR FPA), FSI-1 (consumer CMOS), and FSI-2 (bulk CCD). These map to the `DetectorDiffusionModel` enum.
+
+For full control over model parameters, use {py:meth}`.MTF_Model_1D.detector_diffusion` directly:
+
+```python
+from opticks import u
+from opticks.contrast_model.mtf import MTF_Model_1D
+from opticks.contrast_model.detector_mtf import DetectorDiffusionModel
+
+# Silicon absorption coefficient at 850 nm (~NIR)
+alpha = 0.065 / u.um
+
+# BSI-2 (sCMOS): field-free depth L_a and depletion depth L_b required
+mtf_diffusion = MTF_Model_1D.detector_diffusion(
+    model=DetectorDiffusionModel.BSI_2,
+    absorption_coeff=alpha,
+    diffusion_length=1.5 * u.um,
+    field_free_depth=5.0 * u.um,
+    depletion_depth=1.5 * u.um,
+)
+```
+
+For common detector categories, use {py:meth}`.MTF_Model_1D.detector_diffusion_preset`, which looks up default parameters and allows overrides:
+
+```python
+from opticks.contrast_model.detector_mtf import DetectorDiffusionPreset
+
+# FSI CCD preset with a custom diffusion length override
+mtf_diffusion = MTF_Model_1D.detector_diffusion_preset(
+    preset=DetectorDiffusionPreset.FSI_CCD,
+    absorption_coeff=0.21 / u.um,      # red channel (~650 nm)
+    diffusion_length=3.0 * u.um,       # override preset default
+)
+```
+
+The absorption coefficient is wavelength-dependent (shorter wavelengths are absorbed nearer the surface, longer wavelengths penetrate deeper). The diffusion MTF should therefore be computed separately for each spectral channel. A [model derivation notebook](misc/detector_diffusion_derivation.ipynb) and a [numerical examples notebook](misc/detector_diffusion_mtf.ipynb) with real detector parameters are available.
+
+### Detector Crosstalk MTF
+
+The crosstalk MTF models nearest-neighbour charge sharing using a discrete kernel with side ($X_s$) and diagonal ($X_d$) coupling coefficients. The 1D MTF slice is:
+
+$$\text{MTF}_\text{xtalk}(f) = 1 - 2(X_s + 2X_d)(1 - \cos(2\pi f p))$$
+
+```python
+# 3% side crosstalk, 0.5% diagonal crosstalk, 5 µm pitch
+mtf_crosstalk = MTF_Model_1D.detector_crosstalk(
+    pixel_pitch=5 * u.um,
+    crosstalk_xs=0.03,
+    crosstalk_xd=0.005,
+)
+```
+
+When only side crosstalk is relevant (the common case), omit `crosstalk_xd` or pass 0.
+
+```{note}
+The diffusion MTF and the electrical component of crosstalk describe the same underlying physics. Do not multiply them in an MTF budget unless the crosstalk coefficient refers to optical crosstalk only. See [Detector MTF](sharpness_pt2_det.md) for guidance.
+```
 
 ## Point Spread Functions and Optics MTF
 
@@ -49,6 +114,36 @@ For this, [`prysm`](https://github.com/brandondube/prysm/) is used as the Wavefr
 6. Finally we call {py:meth}`.Optics.to_MTF_Model_1D` (or {py:meth}`.MTF_Model_1D.from_mtf_2d`) with the direction of the slice, for example in "x" or "y" direction. This yields the 1D MTF Model.
 
 This process is illustrated in an [example notebook](../examples/optics_aperture_psf.ipynb).
+
+## Off-Axis / Field-Dependent MTF
+
+The PSF and MTF computed above apply to a single point on the image plane. Off-axis pixels see different — and generally worse — wavefront errors due to field-dependent aberrations (coma, astigmatism, field curvature). The [theory and modelling tiers](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf) are discussed in the optics MTF documentation.
+
+`opticks` supports three paths for computing field-dependent MTF:
+
+**Tier A — Measurements / ray-trace data.** Ingest per-field MTF curves via {py:meth}`.MTF_Model_1D.external_data`, or per-field Zernike coefficients via {py:meth}`.OptPathDiff.from_zernike` and {py:meth}`.Optics.add_mono_pupil_function`. The user registers one pupil function per field point using a naming convention like `f"field_{hx:.2f}_{hy:.2f}"` — `Optics.pupil_functs` already supports multiple named entries.
+
+**Tier B — Analytical Seidel + prysm PSF.** Use {py:meth}`.FieldAberrationModel.to_zernikes` to get the Zernike vector at any field point, then follow the standard `OptPathDiff.from_zernike` → `add_mono_pupil_function` → `compute_psf` pipeline.
+
+**Tier C — Analytical Seidel + empirical ATF (fastest).** Use {py:meth}`.Optics.field_mtf_model_1d` for a one-call path that computes $W_{\mathrm{rms}}(H)$ from the Seidel model and feeds it into the ATF:
+
+```python
+from opticks import u
+from opticks.contrast_model.optics_mtf import FieldAberrationModel
+
+# define Seidel coefficients (in waves, at the edge of the field)
+field_model = FieldAberrationModel.from_waves(
+    w040=0.02, w131_edge=0.08, w222_edge=0.05, w220_edge=0.03,
+    reference_wavelength=650 * u.nm,
+)
+
+wvl = 650 * u.nm
+
+# MTF at on-axis (h=0), mid-field (h=0.5), and edge (h=1.0)
+mtf_on_axis = optics.field_mtf_model_1d(field_model, h=0.0, wavelength=wvl)
+mtf_mid     = optics.field_mtf_model_1d(field_model, h=0.5, wavelength=wvl)
+mtf_edge    = optics.field_mtf_model_1d(field_model, h=1.0, wavelength=wvl)
+```
 
 ## Combining MTF Models
 

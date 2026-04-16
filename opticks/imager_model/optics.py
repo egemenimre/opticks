@@ -11,6 +11,7 @@ from pydantic import Field
 
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
+from opticks.contrast_model.optics_mtf import FieldAberrationModel
 from opticks.imager_model.aperture import Aperture
 from opticks.imager_model.imager_component import ImagerComponent
 from opticks.imager_model.pupil import PupilFunction, WvlRef
@@ -304,6 +305,40 @@ class Optics(ImagerComponent):
             )
 
         return pf.to_MTF_Model_1D(slice)
+
+    @u.quantity_input(wavelength="length")
+    def field_mtf_model_1d(
+        self,
+        field_model: FieldAberrationModel,
+        h: float,
+        wavelength: Quantity,
+    ) -> MTF_Model_1D:
+        """Aberrated 1D MTF at normalised field position *h* (Tier B path).
+
+        Uses the Seidel model to compute the total RMS WFE at the given
+        field position and feeds it into the empirical ATF model.
+
+        Parameters
+        ----------
+        field_model : FieldAberrationModel
+            Seidel coefficient set
+        h : float
+            Normalised radial field coordinate (0 = on-axis, 1 = edge)
+        wavelength : Quantity["length"]
+            Wavelength for the MTF computation
+
+        Returns
+        -------
+        MTF_Model_1D
+            Aberrated 1D MTF model at the given field position
+        """
+        w_rms_waves = field_model.w_rms_waves(h, wavelength)
+        spatial_cutoff = self.spatial_cutoff_freq(wavelength)
+        return MTF_Model_1D.emp_model_aberrated_optics(
+            spatial_cutoff,
+            w_rms=w_rms_waves,
+            wavelength=wavelength,
+        )
 
     @property
     def f_number(self) -> float:

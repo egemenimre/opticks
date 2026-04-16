@@ -8,9 +8,14 @@ While it does depend on the problem, the usual scopes for the MTF computation ca
 
 Imager MTF (as tested in the lab):
 
-- Optics (Aberrated)
-- Detector Sampling
-- Detector Diffusion
+- Optics
+  - Diffraction
+  - Aberrations
+  - Off-Axis (field-dependent aberrations: coma, astigmatism, field curvature — see [field dependence of the optical MTF](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf))
+- Detector
+  - Detector Sampling
+  - Detector Diffusion
+  - Cross-talk
 - Cryocoolers, shutters and similar vibration sources on the Imager
 
 This is usually the requirement (or its breakdown) towards the Imager Supplier. Each item can be directly measured or at least derived via lab measurements. The total Imager MTF is the combination of these items.
@@ -43,9 +48,11 @@ The MTF computation is tailored for the problem at hand. For example the Hubble 
 As an example, for a high-resolution Earth Observation satellite operating in VNIR, employing with a TDI-capable line scanner, the following blurring sources will require a separate MTF item in the overall MTF computation (or the MTF budget).
 
 - Imager MTF
-  - Optics (Aberrated)
+  - Optics (Diffraction and aberrations)
   - Detector Sampling
   - Detector Diffusion
+  - Detector Cross-talk
+  - Charge Transfer Efficiency (for CCD)
   - No drift/smear or jitter due to cryocoolers or shutter mechanisms assumed
   
 - Platform MTF
@@ -64,4 +71,4 @@ As an example, for a high-resolution Earth Observation satellite operating in VN
 
   It should be noted that, many of the Platform MTF contributors for a single exposure (or a single image acquisition of the TDI column) are small enough to be ignored for a high resolution satellite. A 70 cm GSD would correspond to about 0.1 ms line rate (or maximum theoretical exposure duration), during which many of the dynamics are too slow to be of significant concern. Nevertheless, a quick check is recommended for all the items, either in terms of quantity (e.g., drift rate times the exposure duration in terms of pixels) or frequency, where the frequency of the disturbance is significantly smaller than the line rate frequency and it acts not as a drift but as a bias, without introducing a blurring. In this example with the 70 cm GSD and 10 stage-TDI, a single acquisition is at 10000 Hz (0.1 ms) and the total TDI column is at 1000 Hz (1 ms). This is way too fast for most "low frequency-high amplitude" disturbances to cause an appreciable blurring. The higher frequency effects (primarily high acceleration jerks) may cause blurring, and only the "very high frequency-very low amplitude" jitter will feature in the images.
 
-  A full example is given [here](../examples/sat_mtf_budget.ipynb).
+  A full example is given [in the link](../examples/sat_mtf_budget.ipynb).

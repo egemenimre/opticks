@@ -6,7 +6,7 @@ The topic of sharpness and contrast performance is [continued from here](sharpne
 
 ### Detector Sampling MTF
 
-Each detector pixel performs spatial averaging of the incident irradiance over its active area. More precisely, the scene irradiance is integrated with the detector's spatial responsivity function (which, for a uniform pixel, is a rectangle function of width equal to the pixel pitch). In the spatial domain this is a convolution, and in the frequency domain it becomes a multiplication with the Fourier transform of the rectangle — the sinc function[^3] (See also [the information here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf)):
+Each detector pixel performs spatial averaging of the incident irradiance over its active area. More precisely, the scene irradiance is integrated with the detector's spatial responsivity function (which, for a uniform pixel, is a rectangle function of width equal to the pixel pitch). In the spatial domain this is a convolution, and in the frequency domain it becomes a multiplication with the Fourier transform of the rectangle — the sinc function[^1] (See also [the information here](https://spie.org/publications/spie-publication-resources/optipedia-free-optics-information/tt52_21_detector_footprint_mtf)):
 
 $$\text{MTF}_\text{det sampling}(f) = \frac{\sin(\pi p f)}{\pi p f} = \text{sinc}(p f)$$
 
@@ -29,9 +29,9 @@ When photons are absorbed in the detector substrate, they generate charge carrie
 
 The extent of this effect depends on the detector material and architecture:
 
-- **CCD detectors**: Moderate diffusion effect. In front-illuminated CCDs, carriers generated deep in the substrate (from longer wavelength photons, particularly in the red and near-IR) have to diffuse further to reach the depletion region, leading to a wavelength-dependent MTF loss[^5]. Back-illuminated CCDs can have worse diffusion MTF unless thinned, as carriers generated near the back surface must traverse the full substrate thickness.
+- **CCD detectors**: Moderate diffusion effect. In front-illuminated CCDs, carriers generated deep in the substrate (from longer wavelength photons, particularly in the red and near-IR) have to diffuse further to reach the depletion region, leading to a wavelength-dependent MTF loss[^2]. Back-illuminated CCDs can have worse diffusion MTF unless thinned, as carriers generated near the back surface must traverse the full substrate thickness.
 
-- **CMOS detectors**: Generally smaller diffusion effect than CCDs, and modern designs incorporate several architectural features that further reduce it[^5]:
+- **CMOS detectors**: Generally smaller diffusion effect than CCDs, and modern designs incorporate several architectural features that further reduce it[^2]:
   - **Thin epitaxial layers** (often <10 µm) limit the lateral diffusion distance.
   - **Deep Trench Isolation (DTI)**: Physical SiO2 barriers etched between pixels (typically 3–4 µm deep) that block lateral carrier diffusion at the pixel boundary. DTI effectively eliminates electrical crosstalk in well-isolated designs and is standard in modern small-pitch sensors.
   - **Pinned Photodiodes (PPD)**: The depletion structure extends deeper into the substrate and can be over-depleted, increasing carrier drift velocity and reducing the time (and distance) carriers diffuse before collection.
@@ -39,13 +39,13 @@ The extent of this effect depends on the detector material and architecture:
 
   The combination of these features means that diffusion MTF is often a secondary concern for visible-wavelength CMOS imagers. However, at longer wavelengths (NIR, >800 nm), photons penetrate deeper and the diffusion effect increases — CMOS MTF at 850 nm can be significantly lower than at visible wavelengths.
 
-- **Infrared detectors (HgCdTe, InSb)**: Diffusion is a **dominant** MTF contributor. These detectors typically have thick absorber layers (to achieve sufficient quantum efficiency at long wavelengths) and relatively large diffusion lengths. In HgCdTe detectors, the minority carrier diffusion length can be tens of micrometres — comparable to or larger than the pixel pitch — making lateral diffusion the primary MTF-limiting mechanism in many IR focal plane arrays[^6]. This gets more important as the pixel pitch gets smaller. InSb detectors (covering 1–5.5 µm) face similar challenges. The effect worsens at longer wavelengths where thicker absorbers are required.
+- **Infrared detectors (HgCdTe, InSb)**: Diffusion is a **dominant** MTF contributor. These detectors typically have thick absorber layers (to achieve sufficient quantum efficiency at long wavelengths) and relatively large diffusion lengths. In HgCdTe detectors, the minority carrier diffusion length can be tens of micrometres — comparable to or larger than the pixel pitch — making lateral diffusion the primary MTF-limiting mechanism in many IR focal plane arrays[^3]. This gets more important as the pixel pitch gets smaller. InSb detectors (covering 1–5.5 µm) face similar challenges. The effect worsens at longer wavelengths where thicker absorbers are required.
 
 #### Diffusion MTF Model
 
 ##### General Model — Crowell & Labuda (1969)
 
-The most general analytical diffusion MTF model was derived by Crowell & Labuda[^10] for the silicon diode array camera tube. Their Eq. (5) gives the quantum efficiency as a function of spatial frequency $k$ (here written as $f$ in cycles/length), accounting for surface recombination velocity $S$, back-surface reflectivity $R$, and a finite substrate.
+The most general analytical diffusion MTF model was derived by Crowell & Labuda[^4] for the silicon diode array camera tube. Their Eq. (5) gives the quantum efficiency as a function of spatial frequency $k$ (here written as $f$ in cycles/length), accounting for surface recombination velocity $S$, back-surface reflectivity $R$, and a finite substrate.
 
 In the C&L geometry, light enters the **field-free region** first (from the illuminated surface at $x = 0$), passes through the field-free region of thickness $L_a$, and is collected at the **depletion region** boundary at $x = L_a$. The substrate back surface is at $x = L_b$, so the depletion region width is $L_b - L_a$.
 
@@ -90,7 +90,7 @@ The general C&L equation is simplified for five practically important cases by a
 | **BSI-2** | BSI | Scientific sCMOS | $S = 0$, finite $L_b$ | Perfectly passivated back surface; carriers reflect back toward junction | Gpixel GSENSE400BSI |
 | **BSI-3** | BSI | IR FPA | $L_b \to \infty$, general $S$ | Thick substrate; finite surface recombination | Teledyne H2RG (MCT) |
 | **FSI-1** | FSI | Consumer CMOS | Dead far surface, finite $L_a$ | Light enters depletion first; finite field-free bulk | Sony IMX174 |
-| **FSI-2** | FSI | Bulk CCD | Dead far surface, $L_a \to \infty$ | Semi-infinite bulk; equivalent to the Seib[^4] / Fiete[^7] model | Generic FSI CCD |
+| **FSI-2** | FSI | Bulk CCD | Dead far surface, $L_a \to \infty$ | Semi-infinite bulk; equivalent to the Seib[^5] / Fiete[^6] model | Generic FSI CCD |
 
 **BSI geometry** ($L_a$ = field-free depth, $L_b$ = depletion depth): light enters the field-free region first (from the back surface), diffuses to the depletion edge at $x = L_a$, and the depletion layer extends from $L_a$ to $L_b$.
 
@@ -124,7 +124,7 @@ Note that the model is isotropic — the diffusion MTF is the same in the ALT an
 
 ### Detector Crosstalk MTF
 
-Crosstalk occurs when signal generated by a photon in one pixel leaks into adjacent pixels. There are two distinct mechanisms[^5][^7]:
+Crosstalk occurs when signal generated by a photon in one pixel leaks into adjacent pixels. There are two distinct mechanisms[^2][^6]:
 
 - **Electrical crosstalk**: Photogenerated charge carriers diffuse laterally in the substrate and are collected by a neighbouring pixel's depletion region. This is closely related to the diffusion effect discussed above, but treated here as an inter-pixel coupling rather than a continuous spread. It is the dominant crosstalk mechanism in most detectors.
 
@@ -134,7 +134,7 @@ The net effect is that a point source illuminating a single pixel produces a res
 
 #### Nearest-Neighbour Crosstalk Model
 
-The crosstalk model uses the **Discrete Impulse Response** method[^7]. A unit signal (1) is generated in the target pixel, and a fraction of that charge leaks to its available neighbours. We define separate coefficients for the two types of neighbour:
+The crosstalk model uses the **Discrete Impulse Response** method[^6]. A unit signal (1) is generated in the target pixel, and a fraction of that charge leaks to its available neighbours. We define separate coefficients for the two types of neighbour:
 
 - $X_s$: crosstalk to a **side** (edge-adjacent) neighbour
 - $X_d$: crosstalk to a **diagonal** (corner-adjacent) neighbour
@@ -173,15 +173,15 @@ The constraint $4X_s + 4X_d < 1$ is required for the kernel centre weight to rem
 | Detector Type | Typical $X_s$ | Primary Mechanism | Notes |
 | --- | --- | --- | --- |
 | CCD (visible) | 0.01–0.03 | Electrical | Well-controlled in modern designs |
-| BSI CMOS (visible) | 0.01–0.05 | Optical + Electrical | Optical crosstalk increases at small pitch (<2 µm)[^5] |
-| HgCdTe (IR) | 0.02–0.10 | Electrical | Lateral diffusion in thick absorber; **can be dominant** MTF limiter[^6] |
+| BSI CMOS (visible) | 0.01–0.05 | Optical + Electrical | Optical crosstalk increases at small pitch (<2 µm)[^2] |
+| HgCdTe (IR) | 0.02–0.10 | Electrical | Lateral diffusion in thick absorber; **can be dominant** MTF limiter[^3] |
 | InSb (IR) | 0.02–0.08 | Electrical | Similar to HgCdTe; depends on pixel pitch vs. diffusion length |
 
-For HgCdTe detectors, crosstalk can reduce the total system MTF by over 30% at the 50% MTF frequency[^6]. Ion implantation guard-ring structures around each pixel can suppress electrical crosstalk, and this is a common design mitigation in modern IR focal plane arrays.
+For HgCdTe detectors, crosstalk can reduce the total system MTF by over 30% at the 50% MTF frequency[^3]. Ion implantation guard-ring structures around each pixel can suppress electrical crosstalk, and this is a common design mitigation in modern IR focal plane arrays.
 
 #### Relationship Between Diffusion and Crosstalk
 
-The diffusion MTF and the electrical component of crosstalk MTF describe the **same underlying physics** — lateral movement of charge carriers in the substrate — but model it at different levels of abstraction[^5][^6]:
+The diffusion MTF and the electrical component of crosstalk MTF describe the **same underlying physics** — lateral movement of charge carriers in the substrate — but model it at different levels of abstraction[^2][^3]:
 
 - **Diffusion MTF** is a continuous, physics-based model. It uses the material diffusion length $L_d$ as its parameter and does not reference pixel boundaries. It models the full spatial spread of the charge cloud, including long-range tails that can extend over multiple pixels.
 
@@ -199,7 +199,7 @@ This section applies **only to CCD detectors** and is not relevant for CMOS or i
 
 In a CCD, the accumulated charge in each pixel is read out by sequentially transferring it through neighbouring pixels towards the output amplifier. Each transfer is not perfectly efficient — a small fraction of the charge is left behind in traps within the silicon (and released later, into the wrong pixel).
 
-This *charge transfer inefficiency* (CTI = $1 - \varepsilon$, where $\varepsilon$ is the CTE) causes a directional smearing of the image along the transfer direction, which is similar to motion blur in the transfer direction. The effect is cumulative: pixels further from the readout register undergo more transfers and suffer more degradation. For a CCD with $n$ columns, the last pixel to be read out experiences $n$ transfers (or $n \times n_\text{phases}$ for a multi-phase CCD). The standard model[^8] for the resulting MTF is:
+This *charge transfer inefficiency* (CTI = $1 - \varepsilon$, where $\varepsilon$ is the CTE) causes a directional smearing of the image along the transfer direction, which is similar to motion blur in the transfer direction. The effect is cumulative: pixels further from the readout register undergo more transfers and suffer more degradation. For a CCD with $n$ columns, the last pixel to be read out experiences $n$ transfers (or $n \times n_\text{phases}$ for a multi-phase CCD). The standard model[^7] for the resulting MTF is:
 
 $$\text{MTF}_\text{CTE}(f) = \exp\left(-N(1-\varepsilon)\left(1 - \cos\left(2 \pi fp\right)\right)\right)$$
 
@@ -212,13 +212,13 @@ where:
 
 It is also possible to convert the equation to Nyquist frequency, where $f_{ny}= 1 / 2p$.
 
-Note that, Boreman [^5] uses a reversed terminology, where $\varepsilon$ is the fractional charge left behind at each transfer, or CTI as defined here.
+Note that, Boreman [^2] uses a reversed terminology, where $\varepsilon$ is the fractional charge left behind at each transfer, or CTI as defined here.
 
 At zero frequency ($f = 0$), the cosine term equals 1 and the MTF is unity — charge is conserved overall. The worst degradation occurs at the Nyquist frequency, where the cosine term equals $-1$, giving $\text{MTF} = \exp(-2N(1-\varepsilon))$.
 
 #### CTE Values and Impact
 
-Modern scientific CCDs achieve very high CTE values[^8]:
+Modern scientific CCDs achieve very high CTE values[^7]:
 
 | Application | Typical CTE | CTI ($1-\varepsilon$) |
 | --- | --- | --- |
@@ -231,7 +231,7 @@ Three-phase CCDs have significantly higher CTE than two-phase CCDs.
 
 While CTI values appear tiny, the cumulative effect over thousands of transfers is significant. For example, a 4096-pixel CCD with 3-phase architecture and $\varepsilon = 0.99999$ undergoes $N = 4096 \times 3 = 12288$ transfers for the furthest pixel. At the Nyquist frequency: $\text{MTF} = \exp(-2 \times 12288 \times 10^{-5}) = \exp(-0.246) \approx 0.78$. Also note that the CTI values are different in horizontal and vertical directions.
 
-Radiation damage in space progressively degrades CTE by creating charge traps in the silicon lattice[^9]. This is a major concern for long-duration space missions (e.g., the [Hubble Space Telescope ACS/WFC](https://hst-docs.stsci.edu/wfc3ihb/chapter-5-wfc3-detector-characteristics-and-performance/5-4-wfc3-ccd-characteristics-and-performance/#id-5.4WFC3CCDCharacteristicsandPerformance-cte5.4.11ChargeTransferEfficiency) suffered from degradation and required dedicated CTE correction algorithms after years in orbit).
+Radiation damage in space progressively degrades CTE by creating charge traps in the silicon lattice[^8]. This is a major concern for long-duration space missions (e.g., the [Hubble Space Telescope ACS/WFC](https://hst-docs.stsci.edu/wfc3ihb/chapter-5-wfc3-detector-characteristics-and-performance/5-4-wfc3-ccd-characteristics-and-performance/#id-5.4WFC3CCDCharacteristicsandPerformance-cte5.4.11ChargeTransferEfficiency) suffered from degradation and required dedicated CTE correction algorithms after years in orbit).
 
 CMOS detectors do not suffer from MTF degradation due to CTE because each pixel has its own amplifier and is read out individually — there is no charge transfer between pixels.
 
@@ -266,20 +266,18 @@ For visible-wavelength systems, the detector sampling MTF typically dominates, w
 
 The topic of sharpness and contrast performance is [continued here](sharpness_pt3.md).
 
-[^3]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
+[^1]: A System Engineering Approach to Imaging; N. S. Kopeika; SPIE Press, 1998.
 
-[^4]: Carrier diffusion degradation of modulation transfer function in charge coupled imagers; D. H. Seib; IEEE Transactions on Electron Devices, Vol. 21, No. 3, 1974.
+[^2]: Modulation Transfer Function in Optical and Electro-Optical Systems, 2nd Ed.; G. D. Boreman; SPIE Tutorial Texts, 2001.
 
-[^5]: Modulation Transfer Function in Optical and Electro-Optical Systems, 2nd Ed.; G. D. Boreman; SPIE Tutorial Texts, 2001.
+[^3]: Electro-Optical Imaging System Performance, 6th Ed.; G. C. Holst; SPIE Press, 2017.
 
-[^6]: Electro-Optical Imaging System Performance, 6th Ed.; G. C. Holst; SPIE Press, 2017.
+[^4]: The Silicon Diode Array Camera Tube; M. H. Crowell, E. F. Labuda; The Bell System Technical Journal, Vol. 48, No. 5, pp. 1481–1528, 1969.
 
-[^7]: Modeling the Imaging Chain of Digital Cameras; R. D. Fiete; SPIE Tutorial Texts, 2010.
+[^5]: Carrier diffusion degradation of modulation transfer function in charge coupled imagers; D. H. Seib; IEEE Transactions on Electron Devices, Vol. 21, No. 3, 1974.
 
-[^8]: Scientific Charge-Coupled Devices; J. R. Janesick; SPIE Press, 2001.
+[^6]: Modeling the Imaging Chain of Digital Cameras; R. D. Fiete; SPIE Tutorial Texts, 2010.
 
-[^9]: Charge Transfer Efficiency in Proton Damaged CCDs; T. Hardy, R. Murowinski, M. J. Deen; IEEE Transactions on Nuclear Science, Vol. 45, No. 2, 1998.
+[^7]: Scientific Charge-Coupled Devices; J. R. Janesick; SPIE Press, 2001.
 
-[^10]: The Silicon Diode Array Camera Tube; M. H. Crowell, E. F. Labuda; The Bell System Technical Journal, Vol. 48, No. 5, pp. 1481–1528, 1969.
-
-[^11]: CMOS/CCD sensors and camera systems; G. C. Holst, T.S. Lomheim; JCD publishing, SPIE, 2nd ed., 2011.
+[^8]: Charge Transfer Efficiency in Proton Damaged CCDs; T. Hardy, R. Murowinski, M. J. Deen; IEEE Transactions on Nuclear Science, Vol. 45, No. 2, 1998.

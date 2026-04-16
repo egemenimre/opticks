@@ -42,11 +42,11 @@ $$ Q = \frac {\lambda F_\#}{ \text{pix pitch}}  $$
 
 It is desirable to have the Q value between 1 and 2. Below 1, the images are undersampled. Beyond 2, the image may become too blurry. The emphasis on *theoretically* should be noted, as the equation does not take into account optics defects like defocussing or surface imperfections. Nor does it take into account the real-world effects that cause blurring, such as vibrations.
 
-It should also be noted that, MTF is different for every single point on the image plane (for example focus is usually less towards the edges). Furthermore, its value can be different for different directions, particularly when the lens is not axially symmetric. For example, optical imperfections may vary in tangential and sagittal directions or motion blur will result in lower MTF in the direction of the motion. The methodology discussed here is valid for a single point on the image plane and takes into account "cuts" of this 3D MTF surface in the vertical and horizontal directions.
+It should also be noted that, MTF is different for every single point on the image plane (for example focus is usually worse towards the edges, due to field curvature and other field-dependent aberrations — see the [field dependence discussion](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf) for a full treatment). Furthermore, its value can be different for different directions, particularly when the lens is not axially symmetric. For example, optical imperfections may vary in tangential and sagittal directions or motion blur will result in lower MTF in the direction of the motion. The methodology discussed here is valid for a single point on the image plane and takes into account "cuts" of this 3D MTF surface in the vertical and horizontal directions.
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt2_opt.md).
+The topic of sharpness and contrast performance is [continued here](sharpness_pt2_opt.md).
 
 [^1]: The Art and Science of Optical Design; R. R. Shannon; Cambridge University Press; 1997.
 

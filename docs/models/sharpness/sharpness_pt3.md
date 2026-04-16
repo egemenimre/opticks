@@ -1,6 +1,6 @@
 # Dynamic Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt2_det.md).
+The topic of sharpness and contrast performance is [continued from here](sharpness_pt2_det.md).
 
 ## Overview
 
@@ -30,7 +30,7 @@ The discussion above is valid for most usecases, where single images are generat
 
 Continuing from the example above with the 10 ms exposure duration, if we introduce a 5 stage TDI, then the imager should stay stable not only for just the 10 ms exposure duration, but also within the 50 ms total TDI column duration. The jitter and drift/smear within this total TDI column duration will also introduce a loss in sharpness.
 
-When computing the *total* MTF for the system, all the relevant contributors should be combined and must be then multiplied with the Static or Imager MTF. Therefore all the contributors should be thought together and trade-offs will have to be considered for the overall Imaging System, including the Imager and the Platform that the Imager is mounted on. As an example, the following are some practical considerations when designing an Imaging System:
+When computing the *total* MTF for the system, all the relevant contributors should be combined and must be then multiplied with the Static or Imager MTF. The optics MTF component used in this multiplication should also account for the field position — the optical MTF at the edge of the field is lower than at the centre due to [field-dependent aberrations](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf). Therefore all the contributors should be thought together and trade-offs will have to be considered for the overall Imaging System, including the Imager and the Platform that the Imager is mounted on. As an example, the following are some practical considerations when designing an Imaging System:
 
 - Using an excellent imager on an unstabilised platform may result in mediocre image quality.
 - Using a detector with better Quantum Efficiency (or optics with better transmission) may result in shorter exposure durations and/or TDI stages, resulting in better image sharpness.
@@ -137,7 +137,7 @@ Finally, if some of the images are more blurry than others (for example due to "
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt4.md).
+The topic of sharpness and contrast performance is [continued here](sharpness_pt4.md).
 
 [^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
