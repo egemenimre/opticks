@@ -15,7 +15,6 @@ from astropy.units import Quantity, imperial
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 from prysm._richdata import RichData
-from prysm.otf import mtf_from_psf
 
 from opticks import u
 from opticks.contrast_model.detector_mtf import (
@@ -24,8 +23,11 @@ from opticks.contrast_model.detector_mtf import (
     validate_crosstalk_params,
     validate_diffusion_params,
 )
+from opticks.contrast_model.optics_mtf import (
+    _aberrated_optical_mtf,
+    _ideal_optical_mtf,
+)
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
-from opticks.utils.prysm_utils import richdata_with_units
 
 
 class MTF_Model_1D:
@@ -154,7 +156,7 @@ class MTF_Model_1D:
     @staticmethod
     def emp_model_aberrated_optics(
         spatial_cutoff_freq: Quantity,
-        w_rms: float,
+        w_rms: float | np.ndarray,
         wavelength: Quantity | None = None,
     ) -> "MTF_Model_1D":
         """
@@ -174,7 +176,7 @@ class MTF_Model_1D:
         spatial_cutoff_freq : Quantity
             Spatial cutoff frequency (in cycles/mm).
             Can be computed via `Optics.spatial_cutoff_freq(wavelength)`.
-        w_rms : float
+        w_rms : float or ndarray
             RMS of the total wavefront error (in wavelengths)
         wavelength : Quantity, optional
             Wavelength (used only for the model id string)
@@ -721,125 +723,6 @@ def _external_data_mtf(
     return _force_return_float(mtf_value)
 
 
-def _ideal_optical_mtf(
-    input_line_freq: Quantity, spatial_cutoff_freq: Quantity
-) -> float | NDArray[np.float64]:
-    """
-    Ideal optical MTF for the given input line frequency.
-
-    Assumes uniformly illuminated circular aperture, no significant aberrations.
-
-    Returns the MTF value between 0 and 1.
-
-    Parameters
-    ----------
-    input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in cycles/mm)
-    spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in cycles/mm)
-
-    Returns
-    -------
-    float | NDArray[np.float64]
-        MTF value between 0 and 1
-    """
-
-    # normalised optical frequency
-    nu = input_line_freq / spatial_cutoff_freq
-    # This is the alternative formulation
-    # psi = np.arccos(f_ov_fc)
-    # mtf_ideal_optical = 2/np.pi * (psi-np.cos(psi)*np.sin(psi))
-
-    with u.set_enabled_equivalencies(u.dimensionless_angles()):
-        mtf_value = 2 / np.pi * (np.arccos(nu) - nu * np.sqrt(1 - nu**2))
-
-    # force return float
-    return _force_return_float(mtf_value)
-
-
-def _aberrated_optical_mtf(
-    input_line_freq: Quantity,
-    spatial_cutoff_freq: Quantity,
-    w_rms: float,
-) -> float | NDArray[np.float64]:
-    """
-    Aberrated optical MTF for the given input line frequency.
-
-    Assumes an empirical aberration model for the overall
-    RMS Wavefront Error.
-
-    Returns the MTF value (usually between 0 and 1, though can be negative).
-
-    Parameters
-    ----------
-    input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in cycles/mm)
-    spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in cycles/mm)
-    w_rms : float
-        RMS of the total wavefront error (in wavelengths)
-
-    Returns
-    -------
-    float | NDArray[np.float64]
-        MTF value (usually between 0 and 1, though can be negative).
-    """
-
-    # ideal mtf
-    mtf_ideal = _ideal_optical_mtf(input_line_freq, spatial_cutoff_freq)
-
-    # aberration transfer factor
-    atf = _aberration_transfer_factor(input_line_freq, spatial_cutoff_freq, w_rms)
-
-    mtf_value = mtf_ideal * atf
-
-    # force return float
-    return _force_return_float(mtf_value)
-
-
-def _aberration_transfer_factor(
-    input_line_freq: Quantity,
-    spatial_cutoff_freq: Quantity,
-    w_rms: float,
-) -> float | NDArray[np.float64]:
-    """
-    Aberration Transfer Factor (ATF) for the given input line frequency.
-
-    Computes an empirical model for the optical aberrations, such that:
-    MTF_true = MTF_ideal x ATF. See Shannon's The Art and Science of Optical
-    Design for more information.
-
-    The `w_rms` value corresponds to the RMS of the total wavefront error,
-    or how much the actual wavefront deviates from the ideal wavefront.
-    The unit of this deviation is the multiple wavelengths (such as 0.15 x lambda).
-
-    Returns the ATF value (usually between 0 and 1, though can be negative).
-
-    Parameters
-    ----------
-    input_line_freq: Quantity | ArrayLike[Quantity]
-        Input line frequency (in cycles/mm)
-    spatial_cutoff_freq: Quantity
-        Spatial cutoff frequency (in cycles/mm)
-    w_rms : float
-        RMS of the total wavefront error (in wavelengths)
-
-    Returns
-    -------
-    float | NDArray[np.float64]
-        ATF value (<1)
-    """
-
-    # normalised optical frequency
-    nu = input_line_freq / spatial_cutoff_freq
-
-    # compute ATF
-    mtf_value = 1 - ((w_rms / 0.18) ** 2 * (1 - 4 * (nu - 0.5) ** 2))
-
-    # force return float
-    return _force_return_float(mtf_value)
-
-
 @u.quantity_input(pixel_pitch="length")
 def _detector_sampling_mtf(
     input_line_freq: Quantity, pixel_pitch: Quantity
@@ -955,54 +838,6 @@ def _jitter_mtf(
 
     # force return float
     return _force_return_float(mtf_value)
-
-
-def _psf_to_mtf(psf: RichData, with_units=False) -> RichData:
-    """
-    Computes the MTF.
-
-    This is the Modulation Transfer Function for the PSF.
-
-    `prysm` does not work with units, but MTF with units
-    can be generated when the method is called `with_units=True`.
-
-    Parameters
-    ----------
-    psf: RichData
-        PSF data
-    with_units : bool, optional
-        create the MTF with units
-
-    Returns
-    -------
-    RichData
-        Modulation Transfer Function (MTF) with spacing in cy/mm
-    """
-
-    if isinstance(psf.dx, Quantity):
-        # psf has units, create one without for safety
-        psf_copy = RichData(psf.data, psf.dx.to_value(u.um), None)
-
-        mtf = mtf_from_psf(psf_copy)
-
-        if psf.wavelength is not None:
-            mtf.wavelength = psf.wavelength.to_value(u.um)
-    else:
-        # psf does not have units, create mtf directly
-        mtf = mtf_from_psf(psf)
-
-        if psf.wavelength is not None:
-            mtf.wavelength = psf.wavelength
-
-    # the resulting mtf is guaranteed to be without units
-    # output dx in cy/mm
-
-    if with_units:
-        # add units to MTF
-        return richdata_with_units(mtf, dx_units=u.cy / u.mm)
-    else:
-        # mtf returned without units
-        return mtf
 
 
 class MTF_Plot_1D:  # pragma: no cover
