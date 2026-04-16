@@ -4,7 +4,7 @@
 
 ## Generating Basic MTF Models
 
-The Modulation Transfer Function (MTF) is useful to define the sharpness of the system. In most cases, multiple MTF contributors are computed and then combined to yield the "System MTF". A full example to build a System MTF is given [here](../examples/sat_mtf_budget.ipynb).
+The Modulation Transfer Function (MTF) is useful to define the sharpness of the system. In most cases, multiple MTF contributors are computed and then combined to yield the "System MTF". A full example to build a System MTF is [given here](../examples/sat_mtf_budget.ipynb).
 
 In `opticks`, each MTF contributor is modelled by an {py:class}`.MTF_Model_1D` object. It should be noted that, in reality the MTF is a 2D surface defined for each wavelength (monochromatic) or a combination of wavelengths (polychromatic) and also for each point on the image plane. This {py:class}`.MTF_Model_1D` definition is just a 1D slice in x or y directions, defined for a single point on the image plane. Therefore the optical MTF will be different for the centre of the optical axis or at the edge.
 
@@ -106,7 +106,7 @@ The MTF associated with real optical systems are more complex and are usually de
 
 For this, [`prysm`](https://github.com/brandondube/prysm/) is used as the Wavefront calculation backend and some wrappers provided by `opticks`. The methodology is as follows:
 
-1. We define an aperture (conveniently through the {py:class}`.Aperture`), though `prysm` can also be used. See the tutorial [here](../tutorials/aperture.ipynb) for an example on defining a complex aperture.
+1. We define an aperture (conveniently through the {py:class}`.Aperture`), though `prysm` can also be used. See the [tutorial here](../tutorials/aperture.ipynb) for an example on defining a complex aperture.
 2. We then attach the aperture to an {py:class}`.Optics` object via {py:meth}`.Optics.set_aperture_model`.
 3. For each wavelength, we form one Pupil Function (essentially a Wavefront with an Amplitude and a Phase Error) and attach it to the {py:class}`.Optics` object via {py:meth}`.Optics.add_mono_pupil_function` or {py:meth}`.Optics.add_poly_pupil_function`.
 4. We call {py:meth}`.Optics.compute_psf` to compute the PSF. The result is a `prysm` `RichData` object. It is possible to plot this 2D PSF using the `RichData.plot2d` method.
@@ -149,7 +149,7 @@ mtf_edge    = optics.field_mtf_model_1d(field_model, h=1.0, wavelength=wvl)
 
 Usually more than one MTF contributor is present, and we sum them properly to either group them (for example Imager MTF or Dynamic MTF) or eventually to combine all of them (End-to-End or System MTF).
 
-The process is detailed for a Satellite Imager [here](../examples/sat_mtf_budget.ipynb). Essentially, all MTF sources are initialised via various flavours of the {py:class}`.MTF_Model_1D` object classmethods, and they are then combined via the {py:meth}`.MTF_Model_1D.combined` method.
+The process is detailed for [a Satellite Imager here](../examples/sat_mtf_budget.ipynb). Essentially, all MTF sources are initialised via various flavours of the {py:class}`.MTF_Model_1D` object classmethods, and they are then combined via the {py:meth}`.MTF_Model_1D.combined` method.
 
 For example the following is the final step of the MTF computation in the along-track and across-track directions, combining imager, single image dynamic and TDI MTF contributions.
 
