@@ -216,3 +216,45 @@ class TestFieldAberrationModel:
                 f"MTF not non-increasing: h={h_values[i]}: {mtf_values[i]}, "
                 f"h={h_values[i + 1]}: {mtf_values[i + 1]}"
             )
+
+    # ---- Field-coordinate helpers ----
+
+    def test_normalised_field_from_angle_axis_is_zero(self, optics):
+        """A zero-angle field point maps to (0, 0)."""
+        h_x, h_y = optics.normalised_field_from_angle(0 * u.deg, 0 * u.deg)
+        assert h_x == pytest.approx(0.0, abs=1e-15)
+        assert h_y == pytest.approx(0.0, abs=1e-15)
+
+    def test_normalised_field_from_angle_edge_is_unity(self, optics):
+        """The half-FoV angle maps to H = 1 along that axis."""
+        half_fov = optics.full_optical_fov / 2.0
+        h_x, h_y = optics.normalised_field_from_angle(half_fov, 0 * u.deg)
+        assert h_x == pytest.approx(1.0, rel=1e-12)
+        assert h_y == pytest.approx(0.0, abs=1e-15)
+
+    def test_normalised_field_from_angle_signed(self, optics):
+        """Negative angles produce negative normalised coordinates."""
+        half_fov = optics.full_optical_fov / 2.0
+        h_x, h_y = optics.normalised_field_from_angle(-half_fov / 2, half_fov / 2)
+        assert h_x == pytest.approx(-0.5, rel=1e-12)
+        assert h_y == pytest.approx(0.5, rel=1e-12)
+
+    def test_normalised_field_from_focal_plane_xy_axis_is_zero(self, optics):
+        """The optical-axis intercept maps to (0, 0)."""
+        h_x, h_y = optics.normalised_field_from_focal_plane_xy(0 * u.mm, 0 * u.mm)
+        assert h_x == pytest.approx(0.0, abs=1e-15)
+        assert h_y == pytest.approx(0.0, abs=1e-15)
+
+    def test_normalised_field_from_focal_plane_xy_edge_is_unity(self, optics):
+        """The image radius on the focal plane maps to H = 1."""
+        r_max = optics.image_diam_on_focal_plane / 2.0
+        h_x, h_y = optics.normalised_field_from_focal_plane_xy(r_max, 0 * u.mm)
+        assert h_x == pytest.approx(1.0, rel=1e-12)
+        assert h_y == pytest.approx(0.0, abs=1e-15)
+
+    def test_normalised_field_from_focal_plane_xy_signed(self, optics):
+        """Negative coordinates produce negative normalised values."""
+        r_max = optics.image_diam_on_focal_plane / 2.0
+        h_x, h_y = optics.normalised_field_from_focal_plane_xy(-r_max / 2, r_max / 2)
+        assert h_x == pytest.approx(-0.5, rel=1e-12)
+        assert h_y == pytest.approx(0.5, rel=1e-12)

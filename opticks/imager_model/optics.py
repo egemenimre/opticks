@@ -340,6 +340,58 @@ class Optics(ImagerComponent):
             wavelength=wavelength,
         )
 
+    @u.quantity_input(theta_x="angle", theta_y="angle")
+    def normalised_field_from_angle(
+        self, theta_x: Quantity, theta_y: Quantity
+    ) -> tuple[float, float]:
+        """Convert a field angle to normalised field coordinates.
+
+        Maps a (theta_x, theta_y) field angle (relative to the optical
+        axis) to dimensionless field coordinates ``(H_x, H_y)`` in
+        ``[-1, 1]``, where ``H = 1`` corresponds to the edge of the
+        full optical field of view.
+
+        Parameters
+        ----------
+        theta_x, theta_y : Quantity["angle"]
+            Field angles measured from the optical axis
+
+        Returns
+        -------
+        tuple[float, float]
+            Normalised field coordinates ``(H_x, H_y)``
+        """
+        h_max = self.full_optical_fov / 2.0
+        h_x = (theta_x / h_max).decompose().value
+        h_y = (theta_y / h_max).decompose().value
+        return float(h_x), float(h_y)
+
+    @u.quantity_input(x="length", y="length")
+    def normalised_field_from_focal_plane_xy(
+        self, x: Quantity, y: Quantity
+    ) -> tuple[float, float]:
+        """Convert a focal-plane position to normalised field coordinates.
+
+        Maps a focal-plane location ``(x, y)`` (relative to the optical
+        axis intercept) to dimensionless field coordinates
+        ``(H_x, H_y)`` in ``[-1, 1]``, using the image diameter on the
+        focal plane to set ``H = 1``.
+
+        Parameters
+        ----------
+        x, y : Quantity["length"]
+            Focal-plane coordinates measured from the optical axis
+
+        Returns
+        -------
+        tuple[float, float]
+            Normalised field coordinates ``(H_x, H_y)``
+        """
+        r_max = self.image_diam_on_focal_plane / 2.0
+        h_x = (x / r_max).decompose().value
+        h_y = (y / r_max).decompose().value
+        return float(h_x), float(h_y)
+
     @property
     def f_number(self) -> float:
         """
