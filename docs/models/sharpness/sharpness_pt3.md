@@ -1,6 +1,6 @@
 # Dynamic Contributors to the MTF
 
-The topic of sharpness and contrast performance is continued from [here](sharpness_pt2_det.md).
+The topic of sharpness and contrast performance is [continued from here](sharpness_pt2_det.md).
 
 ## Overview
 
@@ -137,7 +137,7 @@ Finally, if some of the images are more blurry than others (for example due to "
 
 ---
 
-The topic of sharpness and contrast performance is continued [here](sharpness_pt4.md).
+The topic of sharpness and contrast performance is [continued here](sharpness_pt4.md).
 
 [^1]: The Infrared & Electro-Optical Systems Handbook; J. S. Accetta, David L. Shumaker (Ed.); Infrared Information Analysis Center, 1993.
 
