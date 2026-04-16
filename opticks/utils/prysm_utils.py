@@ -15,7 +15,13 @@ from astropy.units import Quantity, Unit
 from numpy import ndarray
 from prysm._richdata import RichData
 from prysm.coordinates import cart_to_polar, make_xy_grid
-from prysm.polynomials import ansi_j_to_nm, sum_of_2d_modes, zernike_nm_seq
+from prysm.polynomials import (
+    ansi_j_to_nm,
+    fringe_to_nm,
+    noll_to_nm,
+    sum_of_2d_modes,
+    zernike_nm_seq,
+)
 
 from opticks import u
 
@@ -193,7 +199,11 @@ class OptPathDiff:
 
     @classmethod
     def from_zernike(
-        cls, wfe_rms: Quantity, aperture_diameter: Quantity, grid: Grid
+        cls,
+        wfe_rms: Quantity,
+        aperture_diameter: Quantity,
+        grid: Grid,
+        ordering: str = "ansi",
     ) -> "OptPathDiff":
         """Computes the Optical Path Difference via Zernike Polynomials.
 
@@ -204,14 +214,32 @@ class OptPathDiff:
         The result is the monochromatic OPD for a single location
         on the PSF plane.
 
+        The input coefficients may be supplied in any of the three
+        orderings supported by ``prysm``: ANSI/OSA (0-based), Noll
+        (1-based), or Fringe (1-based). The selected ordering
+        determines the (n, m) mapping used for each coefficient.
+
+        Common optical-design tool defaults:
+
+        - **Zemax OpticStudio** — Fringe by default (the "Zernike Fringe"
+          surface and Wavefront Analysis outputs). A "Zernike Standard"
+          surface uses ANSI/OSA instead.
+        - **CODE V** — Fringe by default (University of Arizona / Fringe
+          convention). Noll is also available as an option.
+
         Parameters
         ----------
         wfe_rms : Quantity
-            ANSI list of aberration coefficients (WFE RMS) (in nm)
+            list of aberration coefficients (WFE RMS) (in nm), in the
+            order specified by ``ordering``
         diameter : Quantity
             aperture diameter in mm
         grid : Grid
             aperture grid (in mm and rad)
+        ordering : str, optional
+            Zernike index ordering of ``wfe_rms``. One of
+            ``"ansi"`` (default), ``"noll"``, or ``"fringe"``.
+            Zemax and CODE V default to ``"fringe"``.
 
         Returns
         -------
@@ -222,8 +250,20 @@ class OptPathDiff:
         # mode n = (n+1) elements
         elems = len(wfe_rms)
 
-        # Generate the (n,m) tuples in ANSI order
-        nms = [ansi_j_to_nm(i) for i in range(0, elems)]
+        # Generate the (n,m) tuples in the requested ordering.
+        # ANSI is 0-based; Noll and Fringe are 1-based.
+        ordering = ordering.lower()
+        if ordering == "ansi":
+            nms = [ansi_j_to_nm(i) for i in range(0, elems)]
+        elif ordering == "noll":
+            nms = [noll_to_nm(i) for i in range(1, elems + 1)]
+        elif ordering == "fringe":
+            nms = [fringe_to_nm(i) for i in range(1, elems + 1)]
+        else:
+            raise ValueError(
+                f"Unknown Zernike ordering {ordering!r}; expected one of "
+                f"'ansi', 'noll', 'fringe'."
+            )
 
         # radial coords normalised by aperture radius
         # normalisation required by the polynomials

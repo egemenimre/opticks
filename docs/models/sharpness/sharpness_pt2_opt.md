@@ -93,7 +93,7 @@ Three practical paths are available, in decreasing order of fidelity:
 **Tier A — Measurements or ray-trace data (highest fidelity).** When lab MTF measurements or Zemax-exported data exist for multiple field points, they can be ingested directly:
 
 - **Per-field MTF curves** via {py:meth}`.MTF_Model_1D.external_data` — the user supplies spatial-frequency and MTF arrays for each field point.
-- **Per-field Zernike coefficients** from Zemax — each coefficient set is converted to an OPD via {py:meth}`.OptPathDiff.from_zernike`, attached to the optics via {py:meth}`.Optics.add_mono_pupil_function`, and the PSF/MTF computed via {py:meth}`.Optics.compute_psf` / {py:meth}`.Optics.mtf`. The Zernike ordering convention must match: `OptPathDiff.from_zernike` expects **ANSI** ordering, so Zemax Fringe-ordered coefficients must be re-ordered before ingestion.
+- **Per-field Zernike coefficients** from Zemax or CODE V — each coefficient set is converted to an OPD via {py:meth}`.OptPathDiff.from_zernike`, attached to the optics via {py:meth}`.Optics.add_mono_pupil_function`, and the PSF/MTF computed via {py:meth}`.Optics.compute_psf` / {py:meth}`.Optics.mtf`. `OptPathDiff.from_zernike` accepts three index orderings via the `ordering` argument — **ANSI/OSA** (default, 0-based), **Noll** (1-based), and **Fringe** (1-based). Both Zemax OpticStudio and CODE V default to Fringe ordering, so coefficients exported from either tool can be ingested directly by setting `ordering="fringe"`.
 
 No new API is needed for Tier A — all required methods already exist. The user manages a collection of per-field models keyed by the field position.
 
