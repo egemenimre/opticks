@@ -379,9 +379,7 @@ def detector_crosstalk_mtf(
     # the factor of 2π implicitly (1 cycle ≡ 2π rad).
     cos_x = np.cos(fx * pixel_pitch)
     cos_y = np.cos(fy * pixel_pitch)
-    mtf = (
-        (1 - 4 * xs - 4 * xd) + 2 * xs * (cos_x + cos_y) + 4 * xd * cos_x * cos_y
-    )
+    mtf = (1 - 4 * xs - 4 * xd) + 2 * xs * (cos_x + cos_y) + 4 * xd * cos_x * cos_y
 
     mtf_array = np.atleast_1d(np.asarray(mtf, dtype=float))
     _check_mtf_range(mtf_array, f"crosstalk (xs={xs}, xd={xd})")
@@ -402,6 +400,4 @@ def detector_crosstalk_mtf_1d(
     When ``xd = 0`` this reduces to the classical nearest-neighbour formula
     ``1 - 2Xs(1 - cos(2π f P))``.
     """
-    return detector_crosstalk_mtf(
-        input_line_freq, 0 * u.cy / u.mm, xs, xd, pixel_pitch
-    )
+    return detector_crosstalk_mtf(input_line_freq, 0 * u.cy / u.mm, xs, xd, pixel_pitch)
