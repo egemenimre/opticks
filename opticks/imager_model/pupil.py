@@ -14,7 +14,8 @@ from prysm.polynomials import sum_of_2d_modes
 from prysm.propagation import Wavefront
 
 from opticks import u
-from opticks.contrast_model.mtf import MTF_Model_1D, _psf_to_mtf
+from opticks.contrast_model.mtf import MTF_Model_1D
+from opticks.contrast_model.optics_mtf import _psf_to_mtf  # type: ignore[attr-defined]
 from opticks.imager_model.aperture import Aperture
 from opticks.utils.prysm_utils import OptPathDiff
 from opticks.utils.unit_utils import split_value_and_force_unit
@@ -302,7 +303,7 @@ class PupilFunction:
         if self._mtf is None:
             self._mtf = _psf_to_mtf(self._psf, with_units=True)
 
-        return self._mtf
+        return self._mtf  # type: ignore[return-value]
 
     def to_MTF_Model_1D(self, slice: str) -> MTF_Model_1D:
         """Convert the cached 2D MTF to a 1D MTF model.
