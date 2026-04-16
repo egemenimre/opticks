@@ -115,6 +115,36 @@ For this, [`prysm`](https://github.com/brandondube/prysm/) is used as the Wavefr
 
 This process is illustrated in an [example notebook](../examples/optics_aperture_psf.ipynb).
 
+## Off-Axis / Field-Dependent MTF
+
+The PSF and MTF computed above apply to a single point on the image plane. Off-axis pixels see different — and generally worse — wavefront errors due to field-dependent aberrations (coma, astigmatism, field curvature). The [theory and modelling tiers](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf) are discussed in the optics MTF documentation.
+
+`opticks` supports three paths for computing field-dependent MTF:
+
+**Tier A — Measurements / ray-trace data.** Ingest per-field MTF curves via {py:meth}`.MTF_Model_1D.external_data`, or per-field Zernike coefficients via {py:meth}`.OptPathDiff.from_zernike` and {py:meth}`.Optics.add_mono_pupil_function`. The user registers one pupil function per field point using a naming convention like `f"field_{hx:.2f}_{hy:.2f}"` — `Optics.pupil_functs` already supports multiple named entries.
+
+**Tier B — Analytical Seidel + prysm PSF.** Use {py:meth}`.FieldAberrationModel.to_zernikes` to get the Zernike vector at any field point, then follow the standard `OptPathDiff.from_zernike` → `add_mono_pupil_function` → `compute_psf` pipeline.
+
+**Tier C — Analytical Seidel + empirical ATF (fastest).** Use {py:meth}`.Optics.field_mtf_model_1d` for a one-call path that computes $W_{\mathrm{rms}}(H)$ from the Seidel model and feeds it into the ATF:
+
+```python
+from opticks import u
+from opticks.contrast_model.optics_mtf import FieldAberrationModel
+
+# define Seidel coefficients (in waves, at the edge of the field)
+field_model = FieldAberrationModel.from_waves(
+    w040=0.02, w131_edge=0.08, w222_edge=0.05, w220_edge=0.03,
+    reference_wavelength=650 * u.nm,
+)
+
+wvl = 650 * u.nm
+
+# MTF at on-axis (h=0), mid-field (h=0.5), and edge (h=1.0)
+mtf_on_axis = optics.field_mtf_model_1d(field_model, h=0.0, wavelength=wvl)
+mtf_mid     = optics.field_mtf_model_1d(field_model, h=0.5, wavelength=wvl)
+mtf_edge    = optics.field_mtf_model_1d(field_model, h=1.0, wavelength=wvl)
+```
+
 ## Combining MTF Models
 
 Usually more than one MTF contributor is present, and we sum them properly to either group them (for example Imager MTF or Dynamic MTF) or eventually to combine all of them (End-to-End or System MTF).

@@ -11,7 +11,7 @@ Imager MTF (as tested in the lab):
 - Optics
   - Diffraction
   - Aberrations
-  - Off-Axis
+  - Off-Axis (field-dependent aberrations: coma, astigmatism, field curvature — see [field dependence of the optical MTF](sharpness_pt2_opt.md#field-dependence-of-the-optical-mtf))
 - Detector
   - Detector Sampling
   - Detector Diffusion
