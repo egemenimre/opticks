@@ -210,7 +210,7 @@ where:
 - $p$ is pixel pitch
 - $f$ is the spatial frequency
 
-It is also possible to convert the equation to Nyquist frequency, where $f_{ny}= 1 / 2p$.
+It is also possible to write the equation in terms of Nyquist frequency, where $f_{ny}= 1 / 2p$.
 
 Note that, Boreman [^2] uses a reversed terminology, where $\varepsilon$ is the fractional charge left behind at each transfer, or CTI as defined here.
 
