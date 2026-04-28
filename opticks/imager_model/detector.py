@@ -57,6 +57,7 @@ class Channel(BaseModel):
     frame_duration: Quantity | None = Field(default=None, exclude=True)
     frame_rate: Quantity | None = Field(default=None, exclude=True)
     integration_duration: Quantity | None = Field(default=None, exclude=True)
+    max_integration_duration: Quantity | None = Field(default=None, exclude=True)
     total_tdi_col_duration: Quantity | None = Field(default=None, exclude=True)
 
     def pixel_pitch(self, with_binning: bool = True) -> Quantity:
@@ -256,7 +257,6 @@ class Timings(BaseModel):
 
     # Derived (set by Detector in model_post_init)
     frame_duration: Quantity | None = Field(default=None, exclude=True)
-    max_integration_duration: Quantity | None = Field(default=None, exclude=True)
 
 
 class Noise(BaseModel):
@@ -439,12 +439,6 @@ class Detector(ImagerComponent):
 
         # frame duration: inverse of the frame rate
         timings.frame_duration = (1 / timings.frame_rate).to(u.ms)  # type: ignore[operator]
-        # max integration duration possible
-        timings.max_integration_duration = (  # type: ignore[misc]
-            timings.frame_duration
-            - timings.frame_overhead_duration
-            + timings.frame_overlap_duration
-        )
 
         # per channel params
         for channel in self.channels.values():
@@ -465,6 +459,12 @@ class Detector(ImagerComponent):
             # total exposure duration (with binning and blocks)
             channel.integration_duration = (
                 timings.integration_duration * channel.binning  # type: ignore[operator]
+            )
+            # max integration duration possible
+            channel.max_integration_duration = (  # type: ignore[misc]
+                channel.frame_duration
+                - timings.frame_overhead_duration
+                + timings.frame_overlap_duration
             )
             # total TDI column duration
             # total tdi col duration = line/frame duration (w/bin) x Nr of TDI stages
