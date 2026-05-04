@@ -18,6 +18,43 @@ from opticks.imager_model.optics import Optics
 from tests import process_paths
 
 
+class TestOpticsMTF:
+    pushbr_file_dir = Path("sat_pushbroom_data")
+    pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
+
+    ref_wavelength: Quantity = 650 * u.nm
+    input_line_freq: Quantity = 30 * u.cy / u.mm
+
+    @pytest.fixture(scope="class")
+    def optics(self) -> Optics:
+        file_path = Path("optics.yaml")
+        file_path = process_paths(
+            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
+        )
+        return Optics.from_yaml_file(file_path)
+
+    def test_mtf_ideal_optics(self, optics: Optics):
+        """Tests the ideal optics MTF."""
+        truth = 0.5196720931409163
+
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(self.ref_wavelength)
+        mtf_model = MTF_Model_1D.ideal_optics(spatial_cutoff_freq, self.ref_wavelength)
+
+        assert mtf_model.mtf_value(self.input_line_freq) == pytest.approx(truth, 1e-9)
+
+    def test_mtf_aberrated_optics(self, optics: Optics):
+        """Tests the aberrated optics MTF."""
+        truth = 0.4816165574868274
+
+        w_rms = 0.05
+        spatial_cutoff_freq = optics.spatial_cutoff_freq(self.ref_wavelength)
+        mtf_model = MTF_Model_1D.emp_model_aberrated_optics(
+            spatial_cutoff_freq, w_rms, self.ref_wavelength
+        )
+
+        assert mtf_model.mtf_value(self.input_line_freq) == pytest.approx(truth, 1e-9)
+
+
 class TestFieldAberrationModel:
     """Tests for the Seidel field-dependent aberration model."""
 
