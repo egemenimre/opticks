@@ -216,7 +216,8 @@ class TestOptics:
 
         # monochromatic psf
         wf = propagation.Wavefront.from_amp_and_phase(amp, phs, wvl0, dx)
-        psf_mono_prysm = wf.focus_fixed_sampling(efl, res_el, res).intensity
+        mdft = wf.prepare_executor(efl, res_el, res)
+        psf_mono_prysm = wf.focus_dft(mdft).intensity
 
         # polychromatic psf
         halfbw = 0.2
@@ -228,9 +229,8 @@ class TestOptics:
         components = []
         for wvl in wvls:
             wf = propagation.Wavefront.from_amp_and_phase(amp, phs, wvl, dx)
-            focused = wf.focus_fixed_sampling(
-                efl, res_el, res
-            )  # 512 samples in the output domain
+            mdft = wf.prepare_executor(efl, res_el, res)
+            focused = wf.focus_dft(mdft)  # 512 samples in the output domain
             components.append(
                 focused.intensity.data
             )  # sum of intensities, wvls are incoherent to each other
