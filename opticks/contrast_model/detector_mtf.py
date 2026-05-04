@@ -161,16 +161,22 @@ def validate_diffusion_params(
             )
 
 
-def _check_mtf_range(mtf_array: NDArray[np.float64], model_id: str) -> None:
+def _check_mtf_range(mtf_value: float | NDArray[np.float64], model_id: str) -> None:
     """Raise ValueError if any MTF value is outside [0, 1]."""
-    if np.any(mtf_array > 1) or np.any(mtf_array < 0):
-        max_val = np.max(mtf_array)
-        min_val = np.min(mtf_array)
-        raise ValueError(
-            f"MTF out of range [0, 1] for model '{model_id}': "
-            f"min={min_val:.6g}, max={max_val:.6g}. "
-            f"Check physical parameters."
-        )
+    if np.ndim(mtf_value) == 0:
+        if not (0.0 <= float(mtf_value) <= 1.0):
+            raise ValueError(
+                f"MTF out of range [0, 1] for model '{model_id}': "
+                f"value={float(mtf_value):.6g}. "
+                f"Check physical parameters."
+            )
+    else:
+        if np.any(mtf_value > 1) or np.any(mtf_value < 0):
+            raise ValueError(
+                f"MTF out of range [0, 1] for model '{model_id}': "
+                f"min={np.min(mtf_value):.6g}, max={np.max(mtf_value):.6g}. "
+                f"Check physical parameters."
+            )
 
 
 # ---------- collection efficiency (eta) functions ----------
