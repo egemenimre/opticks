@@ -159,6 +159,12 @@ Taking a 1D slice along one axis ($f_y = 0$) yields:
 
 $$\text{MTF}_\text{xtalk}(f) = 1 - 2(X_s + 2X_d)\left(1 - \cos(2\pi f p)\right)$$
 
+This is equivalently written in terms of the Nyquist frequency $f_\text{nyq} = 1/(2p)$:
+
+$$\text{MTF}_\text{xtalk}(f) = 1 - 2(X_s + 2X_d)\!\left(1 - \cos\!\left(\frac{\pi f}{f_\text{nyq}}\right)\right)$$
+
+since $2\pi f p = \pi f / f_\text{nyq}$. The Nyquist form is numerically preferable when $f_\text{nyq}$ is known directly, as the ratio $f/f_\text{nyq}$ is dimensionless.
+
 When diagonal crosstalk is negligible ($X_d = 0$), this reduces to the classical formula $\text{MTF}_\text{xtalk}(f) = 1 - 2X_s(1 - \cos(2\pi f p))$.
 
 This model has the property that:
@@ -210,11 +216,29 @@ where:
 - $p$ is pixel pitch
 - $f$ is the spatial frequency
 
-It is also possible to write the equation in terms of Nyquist frequency, where $f_{ny}= 1 / 2p$.
+It is also possible to write the equation in terms of Nyquist frequency $f_\text{nyq} = 1/(2p)$:
 
-Note that, Boreman [^2] uses a reversed terminology, where $\varepsilon$ is the fractional charge left behind at each transfer, or CTI as defined here.
+$$\text{MTF}_\text{CTE}(f) = \exp\!\left(-N(1-\varepsilon)\!\left(1 - \cos\!\left(\frac{\pi f}{f_\text{nyq}}\right)\right)\right)$$
+
+This form is numerically preferable because the ratio $f / f_\text{nyq}$ is dimensionless and avoids unit-conversion ambiguity when the Nyquist frequency is known directly.
+
+```{note}
+Boreman [^2] uses a reversed terminology, where $\varepsilon$ is the fractional charge left behind at each transfer (i.e., CTI = $1 - \text{CTE}$). In this document, $\varepsilon$ is the CTE — the fraction successfully transferred. The `MTF_Model_1D.detector_cte` factory uses the same convention: pass `cte=0.99999`, not `cte=0.00001`.
+```
 
 At zero frequency ($f = 0$), the cosine term equals 1 and the MTF is unity — charge is conserved overall. The worst degradation occurs at the Nyquist frequency, where the cosine term equals $-1$, giving $\text{MTF} = \exp(-2N(1-\varepsilon))$.
+
+**One-directional smear.** CTE blur is strictly directional — opposite to the charge transfer direction. Unlike diffusion (isotropic) or aperture (symmetric), CTE produces an asymmetric tail on every point source pointing away from the readout register. In a pushbroom imager this contributes only along the clocking axis: parallel-register clocking drives the ALT CTE MTF; serial-register clocking drives the ACT CTE MTF.
+
+**Position-dependence.** The number of transfers $N$ depends on the pixel's position — pixels close to the readout amplifier undergo few transfers and are sharp, while pixels at the far end undergo $N_\text{max}$ transfers and are most degraded. The CTE MTF therefore varies roughly linearly across the image strip. In `opticks` this is exposed by passing `num_pixels` at runtime, not via `SensorParams`.
+
+**TDI as a transfer multiplier.** For on-chip analog TDI CCDs, charge accumulates through extra parallel-register transfers before reaching the readout register:
+
+$$N = (\text{num\_pixels} + \text{tdi\_stages}) \times \text{num\_phases}$$
+
+This applies only to **on-chip analog TDI** (where each stage is a real charge transfer in silicon). **Digital ("shift-and-add") TDI** — the CMOS approach where each row is read out independently and summed in firmware after the ADC — performs no charge transfer between stages, so no extra transfers contribute to CTE degradation.
+
+**Connection to crosstalk MTF.** The CTE MTF and crosstalk MTF share the same $(1 - \cos)$ kernel. This is not a coincidence: CTE can be viewed as *temporal crosstalk* — instead of charge leaking into a spatial neighbour, a fraction leaks into the next read cycle (the temporal neighbour). The compounding over $N$ transfers turns the linear $(1 - \cos)$ factor into the exponential of the closed-form CTE expression.
 
 #### CTE Values and Impact
 

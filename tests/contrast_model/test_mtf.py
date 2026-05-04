@@ -547,3 +547,193 @@ class TestMTF:
                 crosstalk_xs=0.2,
                 crosstalk_xd=0.1,
             )
+
+    # --- Detector CTE MTF tests ---
+
+    def test_mtf_cte_basic(self):
+        """Basic CTE MTF value against analytic truth (num_phases=1 keeps N=num_pixels)."""
+        # N=500, cte=0.99999, p=13 um, f=30 cy/mm -> 0.991186502379679
+        truth = 0.991186502379679
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=13 * u.um,
+            num_pixels=500,
+            num_phases=1,
+            cte=0.99999,
+        )
+
+        assert mtf_model.mtf_value(30 * u.cy / u.mm) == pytest.approx(truth, rel=1e-9)
+
+    def test_mtf_cte_at_zero_freq(self):
+        """CTE MTF is 1.0 at zero frequency for any valid parameters."""
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=13 * u.um,
+            num_pixels=500,
+            num_phases=3,
+            cte=0.99999,
+        )
+
+        assert mtf_model.mtf_value(0 * u.cy / u.mm) == pytest.approx(1.0)
+
+    def test_mtf_cte_at_nyquist(self):
+        """At Nyquist (f=1/2p), MTF = exp(-2 * N * (1 - cte))."""
+        num_pixels, num_phases, cte = 500, 3, 0.99999
+        pitch = 13 * u.um
+        N = num_pixels * num_phases
+        f_nyq = 1 / (2 * pitch.to(u.mm).value) * u.cy / u.mm  # pyright: ignore[reportAttributeAccessIssue]
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=num_pixels,
+            num_phases=num_phases,
+            cte=cte,
+        )
+
+        expected = np.exp(-2 * N * (1 - cte))
+        assert mtf_model.mtf_value(f_nyq) == pytest.approx(expected, rel=1e-12)
+
+    def test_mtf_cte_perfect(self):
+        """CTE = 1.0 gives MTF = 1.0 at all frequencies."""
+        freqs = np.linspace(0, 38, 50) * u.cy / u.mm
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=13 * u.um,
+            num_pixels=4096,
+            num_phases=3,
+            cte=1.0,
+        )
+
+        assert_allclose(mtf_model.mtf_value(freqs), 1.0, rtol=1e-12)
+
+    def test_mtf_cte_no_transfers(self):
+        """num_pixels=0 (zero transfers) gives MTF = 1.0 at all frequencies."""
+        freqs = np.linspace(0, 38, 50) * u.cy / u.mm
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=13 * u.um,
+            num_pixels=0,
+            num_phases=3,
+            cte=0.99999,
+        )
+
+        assert_allclose(mtf_model.mtf_value(freqs), 1.0, rtol=1e-12)
+
+    def test_mtf_cte_array_input(self):
+        """Array frequency input matches analytic formula element-wise."""
+        num_pixels, num_phases, cte = 500, 1, 0.99999
+        pitch = 13 * u.um
+        p_mm = pitch.to(u.mm).value  # pyright: ignore[reportAttributeAccessIssue]
+        freqs = np.array([0, 10, 20, 30, 38.46]) * u.cy / u.mm
+        N = num_pixels * num_phases
+        f_nyq = 1 / (2 * p_mm)
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=num_pixels,
+            num_phases=num_phases,
+            cte=cte,
+        )
+
+        expected = np.exp(-N * (1 - cte) * (1 - np.cos(np.pi * freqs.value / f_nyq)))
+        result = mtf_model.mtf_value(freqs)
+        assert_allclose(result, expected, rtol=1e-12)
+
+    def test_mtf_cte_in_range(self):
+        """CTE MTF stays in [0, 1] over a frequency sweep."""
+        freqs = np.linspace(0, 40, 100) * u.cy / u.mm
+
+        mtf_model = MTF_Model_1D.detector_cte(
+            pixel_pitch=13 * u.um,
+            num_pixels=4096,
+            num_phases=3,
+            cte=0.99999,
+        )
+
+        result = mtf_model.mtf_value(freqs)
+        assert np.all(result >= 0)
+        assert np.all(result <= 1)
+
+    def test_mtf_cte_tdi_stages_compound(self):
+        """tdi_stages adds to num_pixels: (4096+0) and (4064+32) give equal MTF."""
+        pitch = 13 * u.um
+        freqs = np.linspace(0, 38, 50) * u.cy / u.mm
+
+        mtf_no_tdi = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=4096,
+            num_phases=3,
+            cte=0.99999,
+            tdi_stages=0,
+        )
+        mtf_with_tdi = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=4064,
+            num_phases=3,
+            cte=0.99999,
+            tdi_stages=32,
+        )
+
+        assert_allclose(
+            mtf_no_tdi.mtf_value(freqs), mtf_with_tdi.mtf_value(freqs), rtol=1e-12
+        )
+
+        # Adding TDI stages at same num_pixels should strictly lower MTF above f=0
+        mtf_base = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=4096,
+            num_phases=3,
+            cte=0.99999,
+            tdi_stages=0,
+        )
+        mtf_tdi = MTF_Model_1D.detector_cte(
+            pixel_pitch=pitch,
+            num_pixels=4096,
+            num_phases=3,
+            cte=0.99999,
+            tdi_stages=32,
+        )
+        freqs_nonzero = np.linspace(1, 38, 50) * u.cy / u.mm
+        assert np.all(
+            mtf_tdi.mtf_value(freqs_nonzero) < mtf_base.mtf_value(freqs_nonzero)
+        )
+
+    def test_mtf_cte_invalid_negative_n(self):
+        """Negative num_pixels raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_cte(
+                pixel_pitch=13 * u.um,
+                num_pixels=-1,
+                num_phases=3,
+                cte=0.99999,
+            )
+
+    def test_mtf_cte_invalid_negative_tdi(self):
+        """Negative tdi_stages raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_cte(
+                pixel_pitch=13 * u.um,
+                num_pixels=500,
+                num_phases=3,
+                cte=0.99999,
+                tdi_stages=-1,
+            )
+
+    def test_mtf_cte_invalid_cte_high(self):
+        """CTE > 1.0 raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_cte(
+                pixel_pitch=13 * u.um,
+                num_pixels=500,
+                num_phases=3,
+                cte=1.001,
+            )
+
+    def test_mtf_cte_invalid_cte_low(self):
+        """CTE < 0 raises ValueError."""
+        with pytest.raises(ValueError):
+            MTF_Model_1D.detector_cte(
+                pixel_pitch=13 * u.um,
+                num_pixels=500,
+                num_phases=3,
+                cte=-0.001,
+            )

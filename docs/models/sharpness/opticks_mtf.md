@@ -30,6 +30,7 @@ The following MTF types are supported:
 - Detector Diffusion ({py:meth}`.MTF_Model_1D.detector_diffusion`): Carrier diffusion MTF model (Crowell & Labuda 1969), with five geometry/boundary variants
 - Detector Diffusion Preset ({py:meth}`.MTF_Model_1D.detector_diffusion_preset`): Detector diffusion MTF from a predefined detector category (BSI CCD, BSI sCMOS, BSI IR FPA, FSI CMOS, FSI CCD)
 - Detector Crosstalk ({py:meth}`.MTF_Model_1D.detector_crosstalk`): Nearest-neighbour crosstalk MTF model with separate side and diagonal coupling coefficients
+- Detector CTE ({py:meth}`.MTF_Model_1D.detector_cte`): Charge transfer efficiency MTF for CCDs (direction-dependent — instantiate one model per direction)
 - Motion Blur ({py:meth}`.MTF_Model_1D.motion_blur`): Motion blur MTF model
 - Drift/Smear ({py:meth}`.MTF_Model_1D.smear`): Drift/Smear MTF model, the more generalised form of motion blur
 - Jitter ({py:meth}`.MTF_Model_1D.jitter`): Jitter MTF model
@@ -38,7 +39,7 @@ The following MTF types are supported:
 
 The full [System MTF example](../examples/sat_mtf_budget.ipynb) illustrates the use of almost all of them. "Slicing an External 2D MTF" is explained in the next section, as it enables detailed Wavefront models to be incorporated.
 
-## Detector Diffusion and Crosstalk MTF
+## Detector Diffusion, Crosstalk, and CTE MTF
 
 ### Detector Diffusion MTF
 
@@ -99,6 +100,59 @@ When only side crosstalk is relevant (the common case), omit `crosstalk_xd` or p
 ```{note}
 The diffusion MTF and the electrical component of crosstalk describe the same underlying physics. Do not multiply them in an MTF budget unless the crosstalk coefficient refers to optical crosstalk only. See [Detector MTF](sharpness_pt2_det.md) for guidance.
 ```
+
+### Detector CTE MTF
+
+The CTE MTF models charge transfer inefficiency in CCD detectors. During readout, charge is clocked through neighbouring pixels toward the output amplifier; each transfer leaves a small fraction behind in silicon traps. The effect is cumulative and **strictly directional** — it produces an asymmetric tail on every point source pointing away from the readout register. Unlike diffusion (isotropic) or aperture (symmetric), CTE blur applies only along the clocking axis.
+
+$$\text{MTF}_\text{CTE}(f) = \exp\!\left(-N(1-\varepsilon)\!\left(1 - \cos\!\left(\frac{\pi f}{f_\text{nyq}}\right)\right)\right)$$
+
+where $N = (\text{num\_pixels} + \text{tdi\_stages}) \times \text{num\_phases}$, $\varepsilon$ = CTE per transfer, and $f_\text{nyq} = 1/(2p)$.
+
+**CTE MTF is not constant across the image** — it degrades roughly linearly from pixels nearest the readout (sharp) to those at the far end (blurry). This is why `num_pixels` is a runtime argument, not a fixed sensor property: instantiate one model per pixel position of interest.
+
+```python
+from opticks import u
+from opticks.contrast_model.mtf import MTF_Model_1D
+
+pitch = 13 * u.um
+
+# Non-TDI 3-phase CCD: ALT (parallel register), worst-case pixel
+mtf_cte_alt = MTF_Model_1D.detector_cte(
+    pixel_pitch=pitch,
+    num_pixels=4096,   # rows from pixel to readout edge
+    num_phases=3,      # 3-phase CCD
+    cte=0.99999,       # high-quality CTE (not CTI — pass 0.99999, not 0.00001)
+)
+
+# TDI CCD with 32 on-chip analog stages: ALT only — each stage adds transfers
+mtf_cte_alt_tdi = MTF_Model_1D.detector_cte(
+    pixel_pitch=pitch,
+    num_pixels=4096,
+    num_phases=3,
+    cte=0.99999,
+    tdi_stages=32,     # analog TDI stages in the parallel register
+)
+
+# ACT (across-track) MTF — serial register only, no TDI
+mtf_cte_act = MTF_Model_1D.detector_cte(
+    pixel_pitch=pitch,
+    num_pixels=6000,   # columns from pixel to readout amplifier
+    num_phases=3,
+    cte=0.99999,
+)
+```
+
+```{note}
+`tdi_stages` applies only to **on-chip analog TDI** in CCDs, where each stage is a real charge transfer in the parallel register. For **digital ("shift-and-add") TDI** — CMOS sensors that read out each row independently and accumulate in firmware — set `tdi_stages = 0`, since no charge transfer occurs between stages. TDI is also parallel-register only, so always pass `tdi_stages = 0` for the ACT direction.
+```
+
+**Radiation aging.** Space radiation creates traps in the silicon lattice that capture and re-emit electrons, increasing CTI ($1 - \varepsilon$) over the mission lifetime. EO satellite MTF budgets should use the predicted End-of-Life (EOL) CTE, not the launch (BOL) value.
+
+| Condition | CTE ($\varepsilon$) | Inefficiency $1-\varepsilon$ | MTF at Nyquist ($N=2000$) |
+| --- | --- | --- | --- |
+| High quality (BOL) | $0.999999$ | $10^{-6}$ | $\approx 0.996$ (negligible) |
+| Degraded (EOL, post-radiation) | $0.99995$ | $5 \times 10^{-5}$ | $\approx 0.818$ (severe) |
 
 ## Point Spread Functions and Optics MTF
 

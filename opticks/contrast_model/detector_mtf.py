@@ -6,9 +6,13 @@
 """
 Detector-level MTF models (diffusion, CTE, crosstalk, etc.).
 
-Currently includes diffusion MTF based on Crowell & Labuda (1969)
-with five simplified cases covering BSI and FSI detector geometries,
-plus preset parameter sets for common detector categories.
+Currently includes:
+
+- Diffusion MTF based on Crowell & Labuda (1969) with five simplified cases
+  covering BSI and FSI detector geometries, plus preset parameter sets for
+  common detector categories.
+- Crosstalk MTF for the center-pixel 8-neighbour model.
+- CTE (Charge Transfer Efficiency) MTF for CCD detectors.
 """
 
 from enum import Enum
@@ -401,3 +405,83 @@ def detector_crosstalk_mtf_1d(
     ``1 - 2Xs(1 - cos(2π f P))``.
     """
     return detector_crosstalk_mtf(input_line_freq, 0 * u.cy / u.mm, xs, xd, pixel_pitch)
+
+
+# ---------- CTE MTF (Charge Transfer Efficiency) ----------
+
+
+def validate_cte_params(
+    num_pixels: int, num_phases: int, cte: float, tdi_stages: int
+) -> None:
+    """Validate parameters for the CTE MTF model.
+
+    Parameters
+    ----------
+    num_pixels : int
+        Number of pixels between the target pixel and the readout register.
+    num_phases : int
+        Number of clock phases per pixel (typically 3 for 3-phase CCDs).
+    cte : float
+        Charge transfer efficiency per transfer (dimensionless, 0 to 1).
+    tdi_stages : int
+        Number of on-chip analog TDI stages (0 for non-TDI or digital TDI).
+    """
+    if num_pixels < 0:
+        raise ValueError(f"num_pixels must be >= 0, got {num_pixels}.")
+    if num_phases < 1:
+        raise ValueError(f"num_phases must be >= 1, got {num_phases}.")
+    if tdi_stages < 0:
+        raise ValueError(f"tdi_stages must be >= 0, got {tdi_stages}.")
+    if not (0.0 <= cte <= 1.0):
+        raise ValueError(f"cte must be in [0, 1], got {cte}.")
+
+
+def detector_cte_mtf_1d(
+    input_line_freq: Quantity,
+    num_pixels: int,
+    num_phases: int,
+    cte: float,
+    pixel_pitch: Quantity,
+    tdi_stages: int = 0,
+) -> float | NDArray[np.float64]:
+    """1D CTE MTF for a CCD detector (Janesick 2001).
+
+    Models charge transfer inefficiency in the parallel or serial register.
+    The MTF degrades with the number of charge transfers and the per-transfer
+    inefficiency (1 - CTE):
+
+        MTF(f) = exp(-N * (1 - cte) * (1 - cos(π f / f_nyq)))
+
+    where N = (num_pixels + tdi_stages) * num_phases and
+    f_nyq = 1 / (2 * pixel_pitch).
+
+    Parameters
+    ----------
+    input_line_freq : Quantity
+        Spatial frequency (e.g. in cy/mm).
+    num_pixels : int
+        Number of pixels between the target pixel and the readout register.
+    num_phases : int
+        Number of clock phases per pixel (typically 3 for 3-phase CCDs).
+    cte : float
+        Charge transfer efficiency per transfer (dimensionless, 0 to 1).
+    pixel_pitch : Quantity["length"]
+        Pixel pitch.
+    tdi_stages : int, optional
+        Number of on-chip analog TDI stages. Default is 0. Pass 0 for
+        digital ("shift-and-add") TDI and for the ACT direction.
+
+    Returns
+    -------
+    float | NDArray[np.float64]
+        CTE MTF value(s).
+    """
+    num_transfers = (num_pixels + tdi_stages) * num_phases
+    f_nyq = u.cy / (2 * pixel_pitch)
+    cos_term = np.cos(np.pi * (input_line_freq / f_nyq).decompose())
+    arg = num_transfers * (1.0 - cte) * (1.0 - cos_term)
+    mtf = np.exp(-arg)
+    _check_mtf_range(mtf, f"cte (N={num_transfers}, cte={cte:.6g})")
+
+    scalar_input = np.ndim(input_line_freq) == 0
+    return float(mtf) if scalar_input else np.asarray(mtf, dtype=float)

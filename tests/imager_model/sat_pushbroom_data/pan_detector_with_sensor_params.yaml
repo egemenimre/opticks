@@ -34,3 +34,6 @@ sensor_params:
   depletion_depth: 7 um
   absorption_data:
     file: data/absorption/silicon_300k.txt
+  cte_num_phases: 3
+  cte_value: 0.999995
+  cte_tdi_stages: 0

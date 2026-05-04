@@ -296,6 +296,13 @@ class SensorParams(BaseModel):
     crosstalk_xs: float | None = None
     crosstalk_xd: float | None = None
 
+    # CTE (Charge Transfer Efficiency) — CCD only
+    cte_num_phases: int | None = None
+    cte_value: float | None = None
+    cte_tdi_stages: int | None = (
+        None  # on-chip analog TDI stages; None or 0 for non-TDI / digital TDI
+    )
+
     # Absorption data file (relative to cwd)
     absorption_data: AbsorptionData | None = None
 
@@ -743,3 +750,76 @@ class Detector(ImagerComponent):
         xd = sp.crosstalk_xd if sp.crosstalk_xd is not None else 0.0
 
         return MTF_Model_1D.detector_crosstalk(pixel_pitch, sp.crosstalk_xs, xd)
+
+    def get_cte_mtf_1d(
+        self,
+        num_pixels: int,
+        channel_id: str,
+        with_binning: bool = True,
+        tdi_stages: int | None = None,
+    ) -> MTF_Model_1D:
+        """Generate CTE MTF model for this detector.
+
+        Uses ``cte_num_phases`` and ``cte_value`` from ``sensor_params`` and
+        the pixel pitch for the given channel.
+
+        ``num_pixels`` is a required runtime argument: the number of pixel
+        shifts from the target pixel to the readout register, which is both
+        position-dependent and direction-dependent. ``cte_tdi_stages`` from
+        ``sensor_params`` is used unless overridden by the *tdi_stages*
+        argument (pass ``tdi_stages=0`` for the ACT direction on a TDI sensor
+        without modifying ``sensor_params``).
+
+        Parameters
+        ----------
+        num_pixels : int
+            Number of pixels between the target pixel and the readout register.
+        channel_id : str
+            Channel identifier.
+        with_binning : bool, optional
+            If ``True`` (default), use the channel's effective pitch accounting
+            for binning. If ``False``, use the native pixel pitch.
+        tdi_stages : int, optional
+            Override for the number of on-chip analog TDI stages. If ``None``,
+            falls back to ``sensor_params.cte_tdi_stages`` (or 0 if unset).
+
+        Returns
+        -------
+        MTF_Model_1D
+            CTE MTF model.
+
+        Raises
+        ------
+        ValueError
+            If ``sensor_params``, ``cte_num_phases``, or ``cte_value`` is not
+            configured.
+        """
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        sp = self.sensor_params
+        if sp is None:
+            raise ValueError(
+                "sensor_params is not configured on this Detector. "
+                "Add a sensor_params block to the detector YAML."
+            )
+        if sp.cte_num_phases is None:
+            raise ValueError(
+                "cte_num_phases is not set in sensor_params. "
+                "Add cte_num_phases to the sensor_params block."
+            )
+        if sp.cte_value is None:
+            raise ValueError(
+                "cte_value is not set in sensor_params. "
+                "Add cte_value to the sensor_params block."
+            )
+
+        pixel_pitch = self.get_channel(channel_id).pixel_pitch(
+            with_binning=with_binning
+        )
+        resolved_tdi = (
+            tdi_stages if tdi_stages is not None else (sp.cte_tdi_stages or 0)
+        )
+
+        return MTF_Model_1D.detector_cte(
+            pixel_pitch, num_pixels, sp.cte_num_phases, sp.cte_value, resolved_tdi
+        )
