@@ -379,17 +379,15 @@ def detector_crosstalk_mtf(
     float | NDArray[np.float64]
         Crosstalk MTF value(s).
     """
-    # phase = f * p, carried as a ``cycle``-typed Quantity so np.cos absorbs
-    # the factor of 2π implicitly (1 cycle ≡ 2π rad).
-    cos_x = np.cos(fx * pixel_pitch)
-    cos_y = np.cos(fy * pixel_pitch)
+    f_nyq = u.cy / (2 * pixel_pitch)
+    cos_x = np.cos(np.pi * (fx / f_nyq).decompose().value * u.rad)
+    cos_y = np.cos(np.pi * (fy / f_nyq).decompose().value * u.rad)
     mtf = (1 - 4 * xs - 4 * xd) + 2 * xs * (cos_x + cos_y) + 4 * xd * cos_x * cos_y
 
-    mtf_array = np.atleast_1d(np.asarray(mtf, dtype=float))
-    _check_mtf_range(mtf_array, f"crosstalk (xs={xs}, xd={xd})")
+    _check_mtf_range(mtf, f"crosstalk (xs={xs}, xd={xd})")
 
     scalar_input = np.ndim(fx) == 0 and np.ndim(fy) == 0
-    return float(mtf_array[0]) if scalar_input else mtf_array
+    return float(mtf) if scalar_input else np.asarray(mtf, dtype=float)
 
 
 def detector_crosstalk_mtf_1d(
