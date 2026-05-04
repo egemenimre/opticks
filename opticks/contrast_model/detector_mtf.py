@@ -482,7 +482,7 @@ def detector_cte_mtf_1d(
     """
     num_transfers = (num_pixels + tdi_stages) * num_phases
     f_nyq = u.cy / (2 * pixel_pitch)
-    cos_term = np.cos(np.pi * (input_line_freq / f_nyq).decompose())
+    cos_term = np.cos(np.pi * (input_line_freq / f_nyq).decompose() * u.rad)
     arg = num_transfers * (1.0 - cte) * (1.0 - cos_term)
     mtf = np.exp(-arg)
     _check_mtf_range(mtf, f"cte (N={num_transfers}, cte={cte:.6g})")
