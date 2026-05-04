@@ -677,46 +677,47 @@ class Detector(ImagerComponent):
                 "Neither diffusion_model nor diffusion_preset is set in sensor_params."
             )
 
-    def get_det_sampling_mtf_1d(self, channel_id: str | None = None) -> MTF_Model_1D:
+    def get_det_sampling_mtf_1d(
+        self, channel_id: str, with_binning: bool = True
+    ) -> MTF_Model_1D:
         """Generate detector sampling MTF model for this detector.
 
-        The sampling MTF is a sinc function of the effective pixel pitch.
-        If a channel ID is supplied, the channel's effective pitch (native pitch
-        × binning factor) is used. If no channel is supplied, the native
-        detector pixel pitch is used.
+        The sampling MTF is a sinc function of the effective pixel pitch for
+        the given channel.
 
         Parameters
         ----------
-        channel_id : str, optional
-            Channel identifier. If provided, the channel's effective pixel pitch
-            (accounting for binning) is used. If ``None``, the native detector
-            pixel pitch is used.
+        channel_id : str
+            Channel identifier.
+        with_binning : bool, optional
+            If ``True`` (default), use the channel's effective pitch accounting
+            for binning. If ``False``, use the native pixel pitch.
 
         Returns
         -------
         MTF_Model_1D
             Detector sampling MTF model.
         """
-
-        if channel_id is not None:
-            pixel_pitch = self.get_channel(channel_id).pixel_pitch(with_binning=True)
-        else:
-            pixel_pitch = self.pixel_pitch
-
+        pixel_pitch = self.get_channel(channel_id).pixel_pitch(
+            with_binning=with_binning
+        )
         return MTF_Model_1D.detector_sampling(pixel_pitch)
 
-    def get_crosstalk_mtf_1d(self, channel_id: str | None = None) -> MTF_Model_1D:
+    def get_crosstalk_mtf_1d(
+        self, channel_id: str, with_binning: bool = True
+    ) -> MTF_Model_1D:
         """Generate crosstalk MTF model for this detector.
 
         Uses the crosstalk coefficients from ``sensor_params`` and the pixel
-        pitch (optionally adjusted for binning via *channel_id*).
+        pitch for the given channel.
 
         Parameters
         ----------
-        channel_id : str, optional
-            Channel identifier. If provided, the channel's effective pixel
-            pitch (accounting for binning) is used. If ``None``, the native
-            detector pixel pitch is used.
+        channel_id : str
+            Channel identifier.
+        with_binning : bool, optional
+            If ``True`` (default), use the channel's effective pitch accounting
+            for binning. If ``False``, use the native pixel pitch.
 
         Returns
         -------
@@ -742,11 +743,9 @@ class Detector(ImagerComponent):
                 "Add crosstalk_xs to the sensor_params block."
             )
 
-        if channel_id is not None:
-            pixel_pitch = self.get_channel(channel_id).pixel_pitch(with_binning=True)
-        else:
-            pixel_pitch = self.pixel_pitch
-
+        pixel_pitch = self.get_channel(channel_id).pixel_pitch(
+            with_binning=with_binning
+        )
         xd = sp.crosstalk_xd if sp.crosstalk_xd is not None else 0.0
 
         return MTF_Model_1D.detector_crosstalk(pixel_pitch, sp.crosstalk_xs, xd)
