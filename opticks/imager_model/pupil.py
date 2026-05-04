@@ -403,9 +403,8 @@ def _compute_psf(
         # Note: focusing changes aperture sampling,
         # and is a function of wavelength. Therefore we use fixed sampling
         # for multiple wavelengths.
-        coherent_psf = pupil.focus_fixed_sampling(
-            focal_length_val, psf_dx_val, psf_samples
-        )
+        mdft = pupil.prepare_executor(focal_length_val, psf_dx_val, psf_samples)
+        coherent_psf = pupil.focus_dft(mdft)
         psf_data = coherent_psf.intensity.data
         # sum of intensities, wvls are incoherent to each other
         psf_components.append(psf_data)

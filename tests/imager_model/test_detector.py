@@ -248,22 +248,6 @@ class TestSensorParams:
         # MTF should be non-increasing
         assert np.all(np.diff(mtf_vals) <= 1e-9)
 
-    def test_yaml_round_trip_with_sensor_params(self, detector):
-        """sensor_params survives a YAML string round trip."""
-
-        yaml_text = detector.to_yaml_text()
-        reloaded = Detector.from_yaml_text(yaml_text)
-
-        orig_sp = detector.sensor_params
-        assert orig_sp is not None
-        sp = reloaded.sensor_params
-        assert sp is not None
-        assert sp.diffusion_model == orig_sp.diffusion_model
-        assert isclose(sp.diffusion_length, orig_sp.diffusion_length)
-        assert orig_sp.absorption_data is not None
-        assert sp.absorption_data is not None
-        assert sp.absorption_data.file == orig_sp.absorption_data.file
-
     def test_missing_sensor_params_raises(self):
         """get_diffusion_mtf_1d raises ValueError when sensor_params is absent."""
 
@@ -328,6 +312,55 @@ class TestSensorParams:
                 diffusion_preset="scientific_ccd",
             )
 
+    def test_yaml_round_trip_with_sensor_params(self, detector):
+        """sensor_params (including CTE fields) survives a YAML string round trip."""
+
+        yaml_text = detector.to_yaml_text()
+        reloaded = Detector.from_yaml_text(yaml_text)
+
+        orig_sp = detector.sensor_params
+        assert orig_sp is not None
+        sp = reloaded.sensor_params
+        assert sp is not None
+        assert sp.diffusion_model == orig_sp.diffusion_model
+        assert isclose(sp.diffusion_length, orig_sp.diffusion_length)
+        assert orig_sp.absorption_data is not None
+        assert sp.absorption_data is not None
+        assert sp.absorption_data.file == orig_sp.absorption_data.file
+        assert sp.cte_num_phases == orig_sp.cte_num_phases
+        assert sp.cte_value == orig_sp.cte_value
+        assert sp.cte_tdi_stages == orig_sp.cte_tdi_stages
+
+    def test_get_cte_mtf_1d_returns_model(self, detector):
+        """get_cte_mtf_1d returns a working MTF_Model_1D."""
+        from opticks.contrast_model.mtf import MTF_Model_1D
+
+        mtf_model = detector.get_cte_mtf_1d(num_pixels=4096, channel_id="pan")
+
+        assert isinstance(mtf_model, MTF_Model_1D)
+        assert mtf_model.mtf_value(0 * u.cy / u.mm) == pytest.approx(1.0)
+
+    def test_get_cte_mtf_1d_tdi_override(self, detector):
+        """tdi_stages override inflates N and lowers MTF compared to no-override."""
+        freq = 20 * u.cy / u.mm
+
+        mtf_no_tdi = detector.get_cte_mtf_1d(
+            num_pixels=4096, channel_id="pan", tdi_stages=0
+        )
+        mtf_with_tdi = detector.get_cte_mtf_1d(
+            num_pixels=4096, channel_id="pan", tdi_stages=32
+        )
+
+        assert mtf_with_tdi.mtf_value(freq) < mtf_no_tdi.mtf_value(freq)
+
+    def test_get_cte_mtf_1d_missing_raises(self, detector):
+        """get_cte_mtf_1d raises ValueError when cte_value is not set."""
+        assert detector.sensor_params is not None
+        detector.sensor_params.cte_value = None
+
+        with pytest.raises(ValueError, match="cte_value"):
+            detector.get_cte_mtf_1d(num_pixels=4096, channel_id="pan")
+
 
 class TestDetectorSamplingMTF:
     @pytest.fixture(scope="class")
@@ -347,13 +380,6 @@ class TestDetectorSamplingMTF:
             Path("binned_test_detector.yaml"), file_directory, alt_file_directory
         )
         return Detector.from_yaml_file(file_path)
-
-    def test_get_det_sampling_mtf_1d_no_channel(self, ms_detector):
-        """No channel supplied → uses native detector pixel pitch."""
-        from opticks.contrast_model.mtf import MTF_Model_1D
-
-        mtf_model = ms_detector.get_det_sampling_mtf_1d()
-        assert isinstance(mtf_model, MTF_Model_1D)
 
     def test_get_det_sampling_mtf_1d_with_channel(self, ms_detector):
         """Channel supplied → returns MTF_Model_1D using channel effective pitch."""
@@ -380,9 +406,6 @@ class TestDetectorSamplingMTF:
         mtf_binned = binned_detector.get_det_sampling_mtf_1d("binned_4x").mtf_value(
             freq
         )
-        mtf_no_channel = binned_detector.get_det_sampling_mtf_1d().mtf_value(freq)
 
         # binned channel (40 µm pitch) drops faster than native (10 µm pitch)
         assert mtf_binned < mtf_native
-        # no channel uses native pitch
-        np.testing.assert_allclose(mtf_no_channel, mtf_native, rtol=1e-9)

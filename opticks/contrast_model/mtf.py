@@ -19,8 +19,10 @@ from prysm._richdata import RichData
 from opticks import u
 from opticks.contrast_model.detector_mtf import (
     detector_crosstalk_mtf_1d,
+    detector_cte_mtf_1d,
     detector_diffusion_mtf,
     validate_crosstalk_params,
+    validate_cte_params,
     validate_diffusion_params,
 )
 from opticks.contrast_model.optics_mtf import (
@@ -653,6 +655,87 @@ class MTF_Model_1D:
                 crosstalk_xs,
                 crosstalk_xd,
                 pixel_pitch,
+            )
+
+        return MTF_Model_1D(id_str, value_func)
+
+    @staticmethod
+    def detector_cte(
+        pixel_pitch: Quantity,
+        num_pixels: int,
+        num_phases: int,
+        cte: float,
+        tdi_stages: int = 0,
+    ) -> "MTF_Model_1D":
+        """
+        Detector CTE (Charge Transfer Efficiency) MTF model for CCDs.
+
+        Models charge transfer inefficiency in the CCD parallel or serial
+        register. The MTF degrades with the total number of transfers and the
+        per-transfer inefficiency (1 - CTE):
+
+            MTF(f) = exp(-N * (1 - cte) * (1 - cos(π f / f_nyq)))
+
+        where N = (num_pixels + tdi_stages) * num_phases and
+        f_nyq = 1 / (2 * pixel_pitch).
+
+        **CCD only.** CMOS and IR FPAs read out pixels individually and do not
+        suffer from CTE degradation.
+
+        **Direction-dependent.** Instantiate one model per direction:
+
+        - *ALT MTF* (parallel register): ``num_pixels`` = rows from pixel to
+          readout edge; ``tdi_stages`` = number of on-chip analog TDI stages
+          (0 for non-TDI sensors).
+        - *ACT MTF* (serial register): ``num_pixels`` = columns from pixel to
+          readout amplifier; ``tdi_stages = 0`` (TDI is parallel-register
+          only).
+
+        **On-chip vs digital TDI.** ``tdi_stages`` applies only to on-chip
+        analog TDI in CCDs, where each stage is a real charge transfer in the
+        parallel register. For digital ("shift-and-add") TDI — CMOS sensors
+        that read out each row independently and accumulate in firmware —
+        pass ``tdi_stages = 0`` because no charge transfer occurs between
+        stages.
+
+        **Convention.** The ``cte`` parameter follows Janesick (2001): CTE is
+        the fraction of charge successfully transferred per clock cycle
+        (dimensionless, 0 to 1). A high-quality CCD might have
+        ``cte = 0.99999`` (one electron lost per 100 000 transferred).
+        Some references (e.g. Boreman) use ε to mean the inefficiency
+        CTI = 1 − CTE; do not pass ``1 - cte`` here.
+
+        Parameters
+        ----------
+        pixel_pitch : Quantity["length"]
+            Pixel pitch.
+        num_pixels : int
+            Number of pixels between the target pixel and the readout
+            register (position-dependent, direction-dependent).
+        num_phases : int
+            Number of clock phases per pixel (typically 3 for 3-phase CCDs).
+        cte : float
+            Charge transfer efficiency per transfer (dimensionless, 0 to 1).
+            Example: ``cte = 0.99999`` for a high-quality CCD.
+        tdi_stages : int, optional
+            Number of on-chip analog TDI stages. Default is 0.
+
+        Returns
+        -------
+        MTF_Model_1D
+            CTE MTF model.
+        """
+        validate_cte_params(num_pixels, num_phases, cte, tdi_stages)
+
+        id_str = (
+            f"Detector CTE MTF: "
+            f"pixels={num_pixels}, phases={num_phases}, "
+            f"TDI={tdi_stages}, CTE={cte:.6g}, pitch={pixel_pitch}"
+        )
+
+        def value_func(input_line_freq):
+            return detector_cte_mtf_1d(
+                input_line_freq, num_pixels, num_phases, cte, pixel_pitch, tdi_stages
             )
 
         return MTF_Model_1D(id_str, value_func)
