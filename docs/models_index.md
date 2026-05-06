@@ -23,6 +23,7 @@ models/sharpness/sharpness_pt2_opt
 models/sharpness/sharpness_pt2_det
 models/sharpness/sharpness_pt3
 models/sharpness/sharpness_pt4
+models/sharpness/sharpness_pt5
 models/sharpness/mtf_scenarios
 models/sharpness/opticks_mtf
 models/sharpness/detector_diffusion_derivation.ipynb
