@@ -14,13 +14,13 @@ from astropy.units import isclose as qty_isclose
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.contrast_model.optics_mtf import FieldAberrationModel
-from opticks.imager_model.optics import Optics
+from opticks.imaging_model.optics import Optics
 from tests import process_paths
 
 
 class TestOpticsMTF:
     pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
+    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
 
     ref_wavelength: Quantity = 650 * u.nm
     input_line_freq: Quantity = 30 * u.cy / u.mm
@@ -193,7 +193,7 @@ class TestFieldAberrationModel:
     # ---- Integration: Optics.field_mtf_model_1d ----
 
     pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
+    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
 
     @pytest.fixture(scope="class")
     def optics(self) -> Optics:

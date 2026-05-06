@@ -11,7 +11,7 @@ import pytest
 from astropy.units import Unit, isclose
 
 from opticks import u
-from opticks.imager_model.detector import Detector, SensorParams
+from opticks.imaging_model.detector import Detector, SensorParams
 from tests import process_paths
 
 
@@ -20,7 +20,7 @@ class TestDetector:
     def detector(self) -> Detector:
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("ms_detector.yaml")
 
         # different test environments work with different paths
@@ -33,7 +33,7 @@ class TestDetector:
         """Detector with block read functionality."""
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("block_test_pan_detector.yaml")
 
         # different test environments work with different paths
@@ -192,7 +192,7 @@ class TestSensorParams:
         """PAN detector with sensor_params configured."""
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("pan_detector_with_sensor_params.yaml")
 
         file_path = process_paths(file_path, file_directory, alt_file_directory)
@@ -252,7 +252,7 @@ class TestSensorParams:
         """get_diffusion_mtf_1d raises ValueError when sensor_params is absent."""
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("pan_detector.yaml")
         file_path = process_paths(file_path, file_directory, alt_file_directory)
 
@@ -277,7 +277,7 @@ class TestSensorParams:
         from opticks.contrast_model.mtf import MTF_Model_1D
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("pan_detector_with_preset.yaml")
         file_path = process_paths(file_path, file_directory, alt_file_directory)
 
@@ -292,7 +292,7 @@ class TestSensorParams:
         """get_diffusion_mtf_1d raises ValueError for an unknown diffusion_model label."""
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("pan_detector_with_sensor_params.yaml")
         file_path = process_paths(file_path, file_directory, alt_file_directory)
 
@@ -366,7 +366,7 @@ class TestDetectorSamplingMTF:
     @pytest.fixture(scope="class")
     def ms_detector(self) -> Detector:
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = process_paths(
             Path("ms_detector.yaml"), file_directory, alt_file_directory
         )
@@ -375,7 +375,7 @@ class TestDetectorSamplingMTF:
     @pytest.fixture(scope="class")
     def binned_detector(self) -> Detector:
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = process_paths(
             Path("binned_test_detector.yaml"), file_directory, alt_file_directory
         )

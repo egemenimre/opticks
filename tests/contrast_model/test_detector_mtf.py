@@ -17,13 +17,13 @@ from opticks.contrast_model.detector_mtf import (
     DetectorDiffusionPreset,
 )
 from opticks.contrast_model.mtf import MTF_Model_1D
-from opticks.imager_model.detector import Channel, Detector
+from opticks.imaging_model.detector import Channel, Detector
 from tests import process_paths
 
 
 class TestDetectorMTF:
     pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
+    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
 
     input_line_freq: Quantity = 30 * u.cy / u.mm
 

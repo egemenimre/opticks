@@ -12,9 +12,9 @@ import numpy as np
 from astropy.units import Quantity
 
 from opticks import u
-from opticks.imager_model.detector import Detector
-from opticks.imager_model.optics import Optics
-from opticks.imager_model.rw_electronics import RWElectronics
+from opticks.imaging_model.detector import Detector
+from opticks.imaging_model.optics import Optics
+from opticks.imaging_model.rw_electronics import RWElectronics
 
 
 class Imager:

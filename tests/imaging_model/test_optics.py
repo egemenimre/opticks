@@ -17,7 +17,7 @@ from prysm.propagation import focus
 
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
-from opticks.imager_model.optics import Aperture, Optics
+from opticks.imaging_model.optics import Aperture, Optics
 from opticks.utils.prysm_utils import OptPathDiff
 from tests import process_paths
 
@@ -27,7 +27,7 @@ class TestOptics:
     def optics(self) -> Optics:
 
         file_directory = Path("sat_pushbroom_data")
-        alt_file_directory = Path("tests", "imager_model", "sat_pushbroom_data")
+        alt_file_directory = Path("tests", "imaging_model", "sat_pushbroom_data")
         file_path = Path("optics.yaml")
 
         # different test environments work with different paths

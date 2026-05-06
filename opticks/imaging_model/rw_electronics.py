@@ -6,7 +6,7 @@
 
 from pydantic import field_validator, model_validator
 
-from opticks.imager_model.imager_component import ImagerComponent
+from opticks.imaging_model.imager_component import ImagerComponent
 from opticks.utils.parser_helpers import PydanticQty
 
 

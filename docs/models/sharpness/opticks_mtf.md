@@ -12,7 +12,7 @@ To put {py:class}`.MTF_Model_1D` into use, the following simply generates an Ide
 
 ```python
 from opticks import u
-from opticks.imager_model.optics import Optics
+from opticks.imaging_model.optics import Optics
 
 optics = Optics.from_yaml_file("optics_file.yaml")
 wvl = 650 * u.nm

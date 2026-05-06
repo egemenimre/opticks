@@ -16,7 +16,7 @@ from prysm.propagation import Wavefront
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.contrast_model.optics_mtf import _psf_to_mtf  # type: ignore[attr-defined]
-from opticks.imager_model.aperture import Aperture
+from opticks.imaging_model.aperture import Aperture
 from opticks.utils.prysm_utils import OptPathDiff
 from opticks.utils.unit_utils import split_value_and_force_unit
 
