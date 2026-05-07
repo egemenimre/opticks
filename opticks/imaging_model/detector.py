@@ -26,7 +26,7 @@ from opticks.contrast_model.detector_mtf import (
     DetectorDiffusionPreset,
 )
 from opticks.contrast_model.mtf import MTF_Model_1D
-from opticks.imager_model.imager_component import ImagerComponent
+from opticks.imaging_model.imager_component import ImagerComponent
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 from opticks.utils.parser_helpers import PositivePydanticQty, PydanticQty
 

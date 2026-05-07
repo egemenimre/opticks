@@ -18,14 +18,14 @@ from prysm.propagation import Wavefront
 
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
-from opticks.imager_model.detector import Channel, Detector
-from opticks.imager_model.optics import Optics
+from opticks.imaging_model.detector import Channel, Detector
+from opticks.imaging_model.optics import Optics
 from tests import process_paths
 
 
 class TestMTF:
     pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imager_model", "sat_pushbroom_data")
+    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
 
     perf_model_file_dir = Path("data")
     perf_model_alt_file_dir = Path("tests", "contrast_model", "data")

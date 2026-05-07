@@ -29,6 +29,11 @@ from opticks.contrast_model.optics_mtf import (
     _aberrated_optical_mtf,
     _ideal_optical_mtf,
 )
+from opticks.contrast_model.processing_mtf import (
+    ResamplingKernel,
+    resampling_mtf_1d,
+    validate_resampling_params,
+)
 from opticks.utils.math_utils import InterpolatorWithUnits, InterpolatorWithUnitTypes
 
 
@@ -736,6 +741,79 @@ class MTF_Model_1D:
         def value_func(input_line_freq):
             return detector_cte_mtf_1d(
                 input_line_freq, num_pixels, num_phases, cte, pixel_pitch, tdi_stages
+            )
+
+        return MTF_Model_1D(id_str, value_func)
+
+    @staticmethod
+    def resampling(
+        kernel: ResamplingKernel | str,
+        input_pitch: Quantity,
+        output_pitch: Quantity,
+        bicubic_a: float | None = None,
+        lanczos_n: int | None = None,
+    ) -> "MTF_Model_1D":
+        """
+        Resampling MTF for orthorectification / geometric correction.
+
+        Models the MTF of the interpolation step that resamples from a grid
+        of spacing ``input_pitch`` (= local SSD on the ground) onto a grid
+        of spacing ``output_pitch`` (= ortho grid).  The same expression
+        covers both upsampling and downsampling via::
+
+            p_eff = max(input_pitch, output_pitch)
+            MTF(f) = |H_kernel(f · p_eff)|
+
+        - **Upsample** (``input_pitch > output_pitch``): kernel scaled to
+          ``input_pitch``, bridges the wide input gap.
+        - **Downsample** (``input_pitch < output_pitch``): kernel scaled to
+          ``output_pitch``, acts as an anti-alias prefilter.
+
+        Because some kernels (Bicubic with negative ``a``, Lanczos) have
+        negative spatial-domain side-lobes that produce a slight MTF boost
+        above 1 in mid-frequency bands, this model does not enforce a
+        strict upper bound of 1 — the boost is real and represents the
+        kernel's edge-enhancement / ringing behaviour.
+
+        Parameters
+        ----------
+        kernel : ResamplingKernel or str
+            Interpolation kernel.  Pass a ``ResamplingKernel`` enum member
+            or its string label (e.g. ``"bilinear"``).
+        input_pitch : Quantity["length"]
+            Local input sample spacing (= SSD on the ground for ortho).
+            Vary this per image region to map the SSD-driven MTF variation.
+        output_pitch : Quantity["length"]
+            Output resampling grid pitch (fixed for a given ortho product).
+        bicubic_a : float, optional
+            Keys cubic shape parameter in [-1, 0].  Default is -0.5.
+            Only used when ``kernel == BICUBIC``.
+        lanczos_n : int, optional
+            Lanczos lobe count (integer >= 2).  Default is 3.
+            Only used when ``kernel == LANCZOS``.
+
+        Returns
+        -------
+        MTF_Model_1D
+            Resampling MTF model.
+        """
+        if isinstance(kernel, str):
+            kernel = ResamplingKernel[kernel.upper()]
+
+        validate_resampling_params(kernel, bicubic_a, lanczos_n)
+
+        id_str = (
+            f"Resampling MTF: {kernel.label} (p_in={input_pitch}, p_out={output_pitch})"
+        )
+
+        def value_func(input_line_freq):
+            return resampling_mtf_1d(
+                input_line_freq,
+                kernel,
+                input_pitch,
+                output_pitch,
+                bicubic_a,
+                lanczos_n,
             )
 
         return MTF_Model_1D(id_str, value_func)

@@ -12,7 +12,7 @@ To put {py:class}`.MTF_Model_1D` into use, the following simply generates an Ide
 
 ```python
 from opticks import u
-from opticks.imager_model.optics import Optics
+from opticks.imaging_model.optics import Optics
 
 optics = Optics.from_yaml_file("optics_file.yaml")
 wvl = 650 * u.nm
@@ -34,6 +34,7 @@ The following MTF types are supported:
 - Motion Blur ({py:meth}`.MTF_Model_1D.motion_blur`): Motion blur MTF model
 - Drift/Smear ({py:meth}`.MTF_Model_1D.smear`): Drift/Smear MTF model, the more generalised form of motion blur
 - Jitter ({py:meth}`.MTF_Model_1D.jitter`): Jitter MTF model
+- Resampling ({py:meth}`.MTF_Model_1D.resampling`): Post-acquisition resampling MTF (geometric correction / orthorectification), with five reconstruction kernels (nearest-neighbour, bilinear, bicubic, Lanczos, sinc)
 - Combined ({py:meth}`.MTF_Model_1D.combined`): The MTF model that combines any of the items above, used to group or sum them together
 - Fixed ({py:meth}`.MTF_Model_1D.fixed`): MTF model for a fixed MTF value for the entire spatial domain, used for crude modelling of disturbances and imperfections
 
@@ -197,6 +198,94 @@ wvl = 650 * u.nm
 mtf_on_axis = optics.field_mtf_model_1d(field_model, h=0.0, wavelength=wvl)
 mtf_mid     = optics.field_mtf_model_1d(field_model, h=0.5, wavelength=wvl)
 mtf_edge    = optics.field_mtf_model_1d(field_model, h=1.0, wavelength=wvl)
+```
+
+## Resampling MTF
+
+The resampling MTF models the post-acquisition reconstruction step (typically orthorectification onto a fixed ground grid). The underlying physics, the $p_\text{eff} = \max(p_\text{in}, p_\text{out})$ rule, and per-kernel formulas are in [Processing MTF](sharpness_pt5.md). Five kernels are available via the `ResamplingKernel` enum: `NEAREST_NEIGHBOR`, `BILINEAR`, `BICUBIC`, `LANCZOS`, `SINC`.
+
+For a one-shot model, use {py:meth}`.MTF_Model_1D.resampling`:
+
+```python
+from opticks import u
+from opticks.contrast_model.mtf import MTF_Model_1D
+from opticks.contrast_model.processing_mtf import ResamplingKernel
+
+# Bilinear, downsample (input SSD 0.5 m onto a 1 m ortho grid).
+# p_eff = max(0.5 m, 1.0 m) = 1.0 m  →  the kernel acts as the AA prefilter.
+mtf_resampling = MTF_Model_1D.resampling(
+    kernel=ResamplingKernel.BILINEAR,
+    input_pitch=0.5 * u.m,
+    output_pitch=1.0 * u.m,
+)
+
+# Bicubic with the standard Keys parameter (a = -0.5)
+mtf_bicubic = MTF_Model_1D.resampling(
+    kernel="bicubic",          # string also accepted
+    input_pitch=2.0 * u.m,     # upsample: SSD wider than ortho grid
+    output_pitch=1.0 * u.m,
+    bicubic_a=-0.5,
+)
+
+# Lanczos-3
+mtf_lanczos = MTF_Model_1D.resampling(
+    kernel=ResamplingKernel.LANCZOS,
+    input_pitch=1.0 * u.m,
+    output_pitch=1.0 * u.m,
+    lanczos_n=3,
+)
+```
+
+For pipeline use, the {py:class}`.Processing` component carries the kernel choice and the (default) ortho grid pitch in YAML:
+
+```yaml
+# processing.yaml
+name: Sample Processing
+processing_params:
+  resampling_kernel: bilinear
+  output_pitch: 1 m
+```
+
+```python
+from pathlib import Path
+from opticks import u
+from opticks.imaging_model.processing import Processing
+
+processing = Processing.from_yaml_file(Path("processing.yaml"))
+
+# Sweep input_pitch across the swath to map SSD-driven MTF variation:
+for ssd in (0.5, 0.7, 1.0, 1.5, 2.0) * u.m:
+    mtf = processing.get_resampling_mtf_1d(input_pitch=ssd)
+    # … combine with optics/detector/motion via MTF_Model_1D.combined(...)
+
+# output_pitch can be overridden per call (e.g. to compare grid choices)
+mtf_2m_grid = processing.get_resampling_mtf_1d(
+    input_pitch=0.5 * u.m,
+    output_pitch=2.0 * u.m,
+)
+```
+
+The full imaging pipeline — instrument plus processing — is held by an {py:class}`.ImagingChain`:
+
+```python
+from opticks.imaging_model.imager import Imager
+from opticks.imaging_model.imaging_chain import ImagingChain
+
+imager = Imager.from_yaml_file(
+    "optics.yaml", "pan_detector.yaml", "rw_electronics.yaml"
+)
+processing = Processing.from_yaml_file("processing.yaml")
+
+chain = ImagingChain(imager, processing)
+
+# chain.imager has the hardware (FOV, GSD, data rates, hardware MTFs);
+# chain.processing has the post-acquisition MTFs.
+```
+
+`ImagingChain` is a pure container — there is no `from_yaml_file` factory. Build the components separately and compose. This keeps `Imager` focused on the hardware physics and lets future post-acquisition stages (sharpening, denoising) slot in next to `Processing` without changing the imager.
+
+```{note}
+Bicubic and Lanczos can produce **MTF $> 1$** in the mid-passband (real edge-boost behaviour, not a numerical artefact). For ML / detection inputs prefer Bilinear, which has no overshoot. See the [ringing caveat](sharpness_pt5.md#ringing-and-edge-boost) for the trade-off.
 ```
 
 ## Combining MTF Models

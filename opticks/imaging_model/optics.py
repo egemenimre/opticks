@@ -12,9 +12,9 @@ from pydantic import Field
 from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.contrast_model.optics_mtf import FieldAberrationModel
-from opticks.imager_model.aperture import Aperture
-from opticks.imager_model.imager_component import ImagerComponent
-from opticks.imager_model.pupil import PupilFunction, WvlRef
+from opticks.imaging_model.aperture import Aperture
+from opticks.imaging_model.imager_component import ImagerComponent
+from opticks.imaging_model.pupil import PupilFunction, WvlRef
 from opticks.utils.parser_helpers import PositivePydanticQty
 from opticks.utils.prysm_utils import OptPathDiff
 
