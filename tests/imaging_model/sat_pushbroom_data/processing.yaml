@@ -1,0 +1,4 @@
+name: Sample Processing
+processing_params:
+  resampling_kernel: bilinear
+  output_pitch: 1 m
