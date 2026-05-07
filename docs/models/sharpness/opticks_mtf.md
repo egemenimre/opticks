@@ -282,7 +282,7 @@ chain = ImagingChain(imager, processing)
 # chain.processing has the post-acquisition MTFs.
 ```
 
-`ImagingChain` is a pure container — there is no `from_yaml_file` factory. Build the components separately and compose. This keeps `Imager` focused on the hardware physics and lets future post-acquisition stages (sharpening, denoising) slot in next to `Processing` without changing the imager.
+`ImagingChain` has no `from_yaml_file` factory — build the components separately and compose. Beyond holding the components, it exposes projection methods such as `projected_horiz_img_extent`, `projected_vert_img_extent`, and `spatial_sample_distance` that combine hardware geometry (`Imager`) with the full pipeline context. This keeps `Imager` focused on the hardware physics and lets future post-acquisition stages (sharpening, denoising) slot in next to `Processing` without changing the imager.
 
 ```{note}
 Bicubic and Lanczos can produce **MTF $> 1$** in the mid-passband (real edge-boost behaviour, not a numerical artefact). For ML / detection inputs prefer Bilinear, which has no overshoot. See the [ringing caveat](sharpness_pt5.md#ringing-and-edge-boost) for the trade-off.

@@ -88,37 +88,6 @@ class TestImager:
         # verification
         assert_allclose(ifov, truth, atol=0.00000001 * u.mdeg)
 
-    def test_ssd_centre(self, imager: Imager):
-        """Tests the Spatial Sample Distance."""
-
-        # set up - centre
-        truth_horiz = 0.699055672 * u.m
-        truth_vert = 0.699055672 * u.m
-
-        sat_altitude = 694.0 * u.km
-
-        # computation
-        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
-            sat_altitude, self.band_id, False, "centre"
-        )
-
-        # verification
-        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
-
-        # set up - centre right
-        truth_horiz = 0.699215273 * u.m
-        truth_vert = 0.699135473 * u.m
-
-        # computation
-        ssd_horiz, ssd_vert = imager.spatial_sample_distance(
-            sat_altitude, self.band_id, False, "centre right"
-        )
-
-        # verification
-        assert_allclose(ssd_horiz, truth_horiz, atol=0.00000001 * u.m)
-        assert_allclose(ssd_vert, truth_vert, atol=0.00000001 * u.m)
-
     def test_rw(self, imager: Imager):
         """Tests the read/write rates."""
 

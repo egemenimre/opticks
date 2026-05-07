@@ -8,6 +8,7 @@
 from pathlib import Path
 
 import pytest
+from numpy.testing import assert_allclose
 
 from opticks import u
 from opticks.imaging_model.imager import Imager
@@ -69,3 +70,25 @@ class TestImagingChain:
         assert chain.processing is not None
         mtf_model = chain.processing.get_resampling_mtf_1d(input_pitch=0.5 * u.m)
         assert mtf_model.mtf_value(0.0 * u.cy / u.m) == pytest.approx(1.0, abs=1e-9)
+
+    # --- Projection ---
+
+    def test_ssd(self, imager: Imager):
+        """Tests the Spatial Sample Distance projections."""
+        chain = ImagingChain(imager)
+        band_id = "pan"
+        sat_altitude = 694.0 * u.km
+
+        # centre
+        ssd_horiz, ssd_vert = chain.spatial_sample_distance(
+            sat_altitude, band_id, False, "centre"
+        )
+        assert_allclose(ssd_horiz, 0.699055672 * u.m, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, 0.699055672 * u.m, atol=0.00000001 * u.m)
+
+        # centre right
+        ssd_horiz, ssd_vert = chain.spatial_sample_distance(
+            sat_altitude, band_id, False, "centre right"
+        )
+        assert_allclose(ssd_horiz, 0.699215273 * u.m, atol=0.00000001 * u.m)
+        assert_allclose(ssd_vert, 0.699135473 * u.m, atol=0.00000001 * u.m)
