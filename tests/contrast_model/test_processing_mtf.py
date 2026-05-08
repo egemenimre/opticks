@@ -17,20 +17,19 @@ from opticks.contrast_model.processing_mtf import (
     validate_resampling_params,
 )
 
+RESAMPLING_KERNEL_PARAMS = [
+    (ResamplingKernel.NEAREST_NEIGHBOR, {}),
+    (ResamplingKernel.BILINEAR, {}),
+    (ResamplingKernel.BICUBIC, {"bicubic_a": -0.5}),
+    (ResamplingKernel.LANCZOS, {"lanczos_n": 3}),
+    (ResamplingKernel.SINC, {}),
+]
+
 
 class TestResamplingMTF:
     # --- DC preservation: every kernel must give MTF(0) = 1 ---
 
-    @pytest.mark.parametrize(
-        "kernel,extra",
-        [
-            (ResamplingKernel.NEAREST_NEIGHBOR, {}),
-            (ResamplingKernel.BILINEAR, {}),
-            (ResamplingKernel.BICUBIC, {"bicubic_a": -0.5}),
-            (ResamplingKernel.LANCZOS, {"lanczos_n": 3}),
-            (ResamplingKernel.SINC, {}),
-        ],
-    )
+    @pytest.mark.parametrize("kernel,extra", RESAMPLING_KERNEL_PARAMS)
     def test_resampling_at_zero_freq(self, kernel, extra):
         """Every kernel preserves DC: MTF(f=0) == 1."""
         val = resampling_mtf_1d(0.0 * u.cy / u.m, kernel, 1.0 * u.m, 1.0 * u.m, **extra)
@@ -91,16 +90,7 @@ class TestResamplingMTF:
 
     # --- Sanity / range over a sweep ---
 
-    @pytest.mark.parametrize(
-        "kernel,extra",
-        [
-            (ResamplingKernel.NEAREST_NEIGHBOR, {}),
-            (ResamplingKernel.BILINEAR, {}),
-            (ResamplingKernel.BICUBIC, {"bicubic_a": -0.5}),
-            (ResamplingKernel.LANCZOS, {"lanczos_n": 3}),
-            (ResamplingKernel.SINC, {}),
-        ],
-    )
+    @pytest.mark.parametrize("kernel,extra", RESAMPLING_KERNEL_PARAMS)
     def test_resampling_non_negative_and_finite(self, kernel, extra):
         """All kernels produce finite, non-negative MTF over the passband and beyond."""
         freqs = np.linspace(0.0, 2.0, 201) * u.cy / u.m

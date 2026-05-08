@@ -24,9 +24,6 @@ from tests import process_paths
 
 
 class TestMTF:
-    pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
-
     perf_model_file_dir = Path("data")
     perf_model_alt_file_dir = Path("tests", "contrast_model", "data")
 
@@ -34,28 +31,12 @@ class TestMTF:
     input_line_freq: Quantity = 30 * u.cy / u.mm
 
     @pytest.fixture(scope="class")
-    def optics(self) -> Optics:
-
-        file_path = Path("optics.yaml")
-
-        # different test environments work with different paths
-        file_path = process_paths(
-            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
-        )
-
-        return Optics.from_yaml_file(file_path)
+    def optics(self, pushbroom_yaml) -> Optics:
+        return Optics.from_yaml_file(pushbroom_yaml("optics.yaml"))
 
     @pytest.fixture(scope="class")
-    def detector(self) -> Detector:
-
-        file_path = Path("pan_detector.yaml")
-
-        # different test environments work with different paths
-        file_path = process_paths(
-            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
-        )
-
-        return Detector.from_yaml_file(file_path)
+    def detector(self, pushbroom_yaml) -> Detector:
+        return Detector.from_yaml_file(pushbroom_yaml("pan_detector.yaml"))
 
     def test_mtf_ext_data(self):
         """Tests the external MTF data."""

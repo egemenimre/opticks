@@ -4,8 +4,6 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 from astropy.units import Quantity
@@ -15,23 +13,15 @@ from opticks import u
 from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.contrast_model.optics_mtf import FieldAberrationModel
 from opticks.imaging_model.optics import Optics
-from tests import process_paths
 
 
 class TestOpticsMTF:
-    pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
-
     ref_wavelength: Quantity = 650 * u.nm
     input_line_freq: Quantity = 30 * u.cy / u.mm
 
     @pytest.fixture(scope="class")
-    def optics(self) -> Optics:
-        file_path = Path("optics.yaml")
-        file_path = process_paths(
-            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
-        )
-        return Optics.from_yaml_file(file_path)
+    def optics(self, pushbroom_yaml) -> Optics:
+        return Optics.from_yaml_file(pushbroom_yaml("optics.yaml"))
 
     def test_mtf_ideal_optics(self, optics: Optics):
         """Tests the ideal optics MTF."""
@@ -192,16 +182,9 @@ class TestFieldAberrationModel:
 
     # ---- Integration: Optics.field_mtf_model_1d ----
 
-    pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
-
     @pytest.fixture(scope="class")
-    def optics(self) -> Optics:
-        file_path = Path("optics.yaml")
-        file_path = process_paths(
-            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
-        )
-        return Optics.from_yaml_file(file_path)
+    def optics(self, pushbroom_yaml) -> Optics:
+        return Optics.from_yaml_file(pushbroom_yaml("optics.yaml"))
 
     def test_field_mtf_zero_coeffs_is_ideal(self, optics):
         """With all Seidel coefficients = 0, field MTF equals ideal optics."""

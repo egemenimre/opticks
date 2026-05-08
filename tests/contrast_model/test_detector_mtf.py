@@ -4,8 +4,6 @@
 #
 # Licensed under GNU GPL v3.0. See LICENSE.md for more info.
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 from astropy.units import Quantity
@@ -18,22 +16,14 @@ from opticks.contrast_model.detector_mtf import (
 )
 from opticks.contrast_model.mtf import MTF_Model_1D
 from opticks.imaging_model.detector import Channel, Detector
-from tests import process_paths
 
 
 class TestDetectorMTF:
-    pushbr_file_dir = Path("sat_pushbroom_data")
-    pushbr_alt_file_dir = Path("tests", "imaging_model", "sat_pushbroom_data")
-
     input_line_freq: Quantity = 30 * u.cy / u.mm
 
     @pytest.fixture(scope="class")
-    def detector(self) -> Detector:
-        file_path = Path("pan_detector.yaml")
-        file_path = process_paths(
-            file_path, self.pushbr_file_dir, self.pushbr_alt_file_dir
-        )
-        return Detector.from_yaml_file(file_path)
+    def detector(self, pushbroom_yaml) -> Detector:
+        return Detector.from_yaml_file(pushbroom_yaml("pan_detector.yaml"))
 
     def test_mtf_detector_sampling(self, detector: Detector):
         """Tests the detector sampling MTF."""
