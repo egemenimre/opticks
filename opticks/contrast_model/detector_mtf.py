@@ -23,6 +23,11 @@ from astropy.units import Quantity
 from numpy.typing import NDArray
 
 from opticks import u
+from opticks.contrast_model.mtf_utils import (
+    check_mtf_below_unity,
+    check_mtf_nonneg,
+    reject_unused_params,
+)
 
 
 class DetectorDiffusionModel(Enum):
@@ -146,36 +151,13 @@ def validate_diffusion_params(
     }
     required = model.required_params
 
-    for param_name, value in supplied.items():
-        if value is not None and param_name not in required:
-            raise ValueError(
-                f"Parameter '{param_name}' is not used by model {model}. "
-                f"Remove it or choose a different model."
-            )
+    reject_unused_params(supplied, required, model_name=f"model {model}")
 
     for param_name in required:
         if param_name != "diffusion_length" and supplied.get(param_name) is None:
             raise ValueError(
                 f"Parameter '{param_name}' is required for model {model} "
                 f"but was not supplied."
-            )
-
-
-def _check_mtf_range(mtf_value: float | NDArray[np.float64], model_id: str) -> None:
-    """Raise ValueError if any MTF value is outside [0, 1]."""
-    if np.ndim(mtf_value) == 0:
-        if not (0.0 <= float(mtf_value) <= 1.0):
-            raise ValueError(
-                f"MTF out of range [0, 1] for model '{model_id}': "
-                f"value={float(mtf_value):.6g}. "
-                f"Check physical parameters."
-            )
-    else:
-        if np.any(mtf_value > 1) or np.any(mtf_value < 0):
-            raise ValueError(
-                f"MTF out of range [0, 1] for model '{model_id}': "
-                f"min={np.min(mtf_value):.6g}, max={np.max(mtf_value):.6g}. "
-                f"Check physical parameters."
             )
 
 
@@ -323,7 +305,8 @@ def detector_diffusion_mtf(
 
     mtf = eta / eta0
 
-    _check_mtf_range(mtf, str(model))
+    check_mtf_below_unity(mtf, str(model))
+    check_mtf_nonneg(mtf, str(model))
 
     scalar_input = np.ndim(input_line_freq_cy_mm) == 0
     return float(mtf[0]) if scalar_input else mtf
@@ -390,7 +373,9 @@ def detector_crosstalk_mtf(
     cos_y = np.cos(np.pi * (fy / f_nyq).decompose().value * u.rad)
     mtf = (1 - 4 * xs - 4 * xd) + 2 * xs * (cos_x + cos_y) + 4 * xd * cos_x * cos_y
 
-    _check_mtf_range(mtf, f"crosstalk (xs={xs}, xd={xd})")
+    label = f"crosstalk (xs={xs}, xd={xd})"
+    check_mtf_below_unity(mtf, label)
+    check_mtf_nonneg(mtf, label)
 
     scalar_input = np.ndim(fx) == 0 and np.ndim(fy) == 0
     return float(mtf) if scalar_input else np.asarray(mtf, dtype=float)
@@ -485,7 +470,9 @@ def detector_cte_mtf_1d(
     cos_term = np.cos(np.pi * (input_line_freq / f_nyq).decompose() * u.rad)
     arg = num_transfers * (1.0 - cte) * (1.0 - cos_term)
     mtf = np.exp(-arg)
-    _check_mtf_range(mtf, f"cte (N={num_transfers}, cte={cte:.6g})")
+    label = f"cte (N={num_transfers}, cte={cte:.6g})"
+    check_mtf_below_unity(mtf, label)
+    check_mtf_nonneg(mtf, label)
 
     scalar_input = np.ndim(input_line_freq) == 0
     return float(mtf) if scalar_input else np.asarray(mtf, dtype=float)

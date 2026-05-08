@@ -24,6 +24,7 @@ from numpy.typing import NDArray
 from scipy.integrate import simpson
 
 from opticks import u
+from opticks.contrast_model.mtf_utils import check_mtf_nonneg, reject_unused_params
 
 
 class ResamplingKernel(Enum):
@@ -72,12 +73,7 @@ def validate_resampling_params(
     supplied = {"bicubic_a": bicubic_a, "lanczos_n": lanczos_n}
     required = kernel.required_params
 
-    for name, value in supplied.items():
-        if value is not None and name not in required:
-            raise ValueError(
-                f"Parameter '{name}' is not used by kernel {kernel}. "
-                f"Remove it or choose a different kernel."
-            )
+    reject_unused_params(supplied, required, model_name=f"kernel {kernel}")
 
     if bicubic_a is not None and not (-1.0 <= bicubic_a <= 0.0):
         raise ValueError(f"bicubic_a must be in [-1.0, 0.0], got {bicubic_a}.")
@@ -89,27 +85,6 @@ def validate_resampling_params(
             )
         if lanczos_n < 2:
             raise ValueError(f"lanczos_n must be >= 2, got {lanczos_n}.")
-
-
-def _check_processing_mtf(mtf: NDArray[np.float64], model_id: str) -> None:
-    """Sanity-check processing-stage MTF values: finite and non-negative.
-
-    Unlike strictly passive detector-stage MTFs, processing-stage MTFs
-    (resampling kernels with negative-lobe spatial kernels like Bicubic
-    or Lanczos, and sharpening filters) can produce MTF values above 1
-    in some frequency bands - this is the kernel's edge-boost / ringing
-    behaviour and is physically real, so we do *not* enforce an upper
-    bound of 1 here.
-    """
-    if not np.all(np.isfinite(mtf)):
-        raise ValueError(
-            f"Processing MTF contains non-finite values for model '{model_id}'."
-        )
-    if np.any(mtf < 0):
-        raise ValueError(
-            f"Processing MTF has negative values for model '{model_id}': "
-            f"min={float(np.min(mtf)):.6g}."
-        )
 
 
 # ---------- per-kernel MTF helpers ----------
@@ -245,7 +220,7 @@ def resampling_mtf_1d(
     else:
         raise ValueError(f"Unknown resampling kernel: {kernel}")
 
-    _check_processing_mtf(mtf, str(kernel))
+    check_mtf_nonneg(mtf, str(kernel))
 
     scalar_input = np.ndim(input_line_freq) == 0
     return float(mtf[0]) if scalar_input else np.asarray(mtf, dtype=float)

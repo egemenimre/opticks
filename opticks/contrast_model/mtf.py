@@ -25,6 +25,7 @@ from opticks.contrast_model.detector_mtf import (
     validate_cte_params,
     validate_diffusion_params,
 )
+from opticks.contrast_model.mtf_utils import reject_unused_params
 from opticks.contrast_model.optics_mtf import (
     _aberrated_optical_mtf,
     _ideal_optical_mtf,
@@ -581,12 +582,11 @@ class MTF_Model_1D:
             "surface_recomb_velocity": surface_recomb_velocity,
             "diffusion_coeff": diffusion_coeff,
         }
-        for param_name, value in overrides.items():
-            if value is not None and param_name not in model.required_params:
-                raise ValueError(
-                    f"Parameter '{param_name}' is not used by model {model} "
-                    f"(preset {preset}). Remove it or choose a different preset."
-                )
+        reject_unused_params(
+            overrides,
+            model.required_params,
+            model_name=f"model {model} (preset {preset})",
+        )
 
         # merge overrides into defaults (user-supplied wins)
         merged = dict(preset.params)
