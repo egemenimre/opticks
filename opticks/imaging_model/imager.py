@@ -334,4 +334,3 @@ class Imager:
         )
 
         return write_data_rate.to("Mbit/s")  # type: ignore[union-attr]
-
